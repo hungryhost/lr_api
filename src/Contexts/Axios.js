@@ -1,6 +1,6 @@
 import React, {Fragment} from 'react'
 import axios from 'axios'
-import {BASE_URL} from "../config";
+import {BASE_URL} from "src/config";
 import {useHistory} from "react-router";
 
 const  AxiosInstance = axios.create({
@@ -20,4 +20,4 @@ export const AxiosHandler = ({ children }) => {
     )
 }
 
-export default AxiosInstance()
+export default AxiosInstance
