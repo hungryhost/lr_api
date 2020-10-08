@@ -2,21 +2,27 @@ import React from 'react'
 import {
     Container,
     makeStyles,
-    Card
+    Card,
+    Box,
 } from '@material-ui/core'
 import {Page} from "Components/Page";
 
 const useStyles = makeStyles(theme => ({
     container: {
         height: "100vh",
+        maxHeight: '100vh',
         width: '100%',
         display: "flex",
         justifyContent: "center",
-        alignItems: "center"
+        alignItems: "flex-start",
+        paddingTop: '30vh'
     },
     content: {
-        border: '1px solid red'
-    }
+        minWidth: 350,
+        minHeight: 150,
+        padding: theme.spacing(2),
+        backgroundColor: theme.palette.background.default
+    },
 }))
 
 

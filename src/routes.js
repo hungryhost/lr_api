@@ -8,6 +8,7 @@ import {
     Route
 } from 'react-router-dom';
 import {CircularProgress} from '@material-ui/core';
+import AuthView from "./Views/AuthView";
 
 /**
 * Рендерим роуты с нужными guards
@@ -21,7 +22,6 @@ export const renderRoutes = (routes = []) => (
                 const Guard = route.guard || Fragment;
                 const Layout = route.layout || Fragment;
                 const Component = route.component;
-                const type = route.type;
                 return (
                     <Route
                         key={i}
@@ -29,9 +29,7 @@ export const renderRoutes = (routes = []) => (
                         exact={route.exact}>
                             <Guard>
                                 <Layout>
-                                    <h1>Hey from routes</h1>
-                                    <Component />
-                                    {/*{route.routes ? renderRoutes(route.routes) : <Component/>}*/}
+                                    {route.routes ? renderRoutes(route.routes) : <Component/>}
                                 </Layout>
                             </Guard>
                     </Route>
@@ -46,7 +44,8 @@ export const routes = [
     {
         exact: true,
         path: '/',
-        component: lazy(() => import('Views/AuthView'))
+        component: lazy(() => import('Components/Login')),
+        layout: AuthView
     },
 ];
 

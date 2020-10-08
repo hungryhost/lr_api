@@ -1,10 +1,26 @@
 import React from 'react'
 import {Box, Typography} from "@material-ui/core"
 
-export const Login = () => {
+
+
+const Login = () => {
     return (
         <Box>
-            <Typography variant='h2'>Login</Typography>
+            <Typography
+                color='textPrimary'
+                gutterBottom
+                variant="h2"
+            >
+                Sign in
+            </Typography>
+            <Typography
+                variant="body2"
+                color="textSecondary"
+            >
+                Sign in on the internal platform
+            </Typography>
         </Box>
     )
 }
+
+export default Login
