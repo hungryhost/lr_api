@@ -1,9 +1,9 @@
 import React, {Fragment} from 'react'
 import axios from 'axios'
-import {BASE_URL} from "src/config";
+import {BASE_URL} from "../config";
 import {useHistory} from "react-router";
 
-const  AxiosInstance = axios.create({
+const AxiosInstance = axios.create({
     baseURL: BASE_URL
 })
 
@@ -15,7 +15,7 @@ export const AxiosHandler = ({ children }) => {
     })
     return (
         <Fragment>
-            {children}
+            { children }
         </Fragment>
     )
 }

@@ -1,17 +1,20 @@
 import React from 'react';
 import {AxiosHandler} from 'Contexts/Axios'
 import {BrowserRouter} from "react-router-dom";
+import {renderRoutes, routes} from "./routes";
+import AuthView from "Views/AuthView";
+import {AuthProvider} from "./Contexts/JWT";
 
 
 function App() {
     return (
-        <div>
-            <BrowserRouter>
-                <AxiosHandler>
-
-                </AxiosHandler>
-            </BrowserRouter>
-        </div>
+        <BrowserRouter>
+            <AxiosHandler>
+                <AuthProvider>
+                    {renderRoutes(routes)}
+                </AuthProvider>
+            </AxiosHandler>
+        </BrowserRouter>
     );
 }
 

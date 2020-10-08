@@ -1,5 +1,5 @@
 import {configureStore} from "@reduxjs/toolkit";
-import { ENABLE_REDUX_DEV_TOOLS } from "src/config";
+import { ENABLE_REDUX_DEV_TOOLS } from "../config";
 import {rootReducer} from "./rootReducer";
 
 export const store = configureStore({
