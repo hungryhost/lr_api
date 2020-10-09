@@ -1,0 +1,10 @@
+[1]
+    login:
+        test_account_staff
+    pass:
+        testAccStf001
+[2]
+    login:
+        test_account_np
+    pass:
+        testasg2cntNp001
