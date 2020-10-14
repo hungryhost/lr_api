@@ -5,6 +5,7 @@ from .models import Property
 from .serializers import PropertySerializer
 from .permissions import IsAuthor
 
+# TODO: rewrite views for viewSets
 
 class PropertyList(generics.ListCreateAPIView):
 

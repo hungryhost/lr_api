@@ -4,8 +4,6 @@ from django.contrib.auth.models import User
 
 
 # TODO: Update model for current schema
-#
-
 
 class Property(models.Model):
 	author = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -14,6 +12,7 @@ class Property(models.Model):
 	price = models.PositiveIntegerField()
 	active = models.BooleanField(default=True)
 	image = models.ImageField(upload_to='userpics/', blank=True, null=True)
+	# lock_id
 
 	def __str__(self):
 		return self.title
