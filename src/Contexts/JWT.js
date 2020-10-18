@@ -1,17 +1,8 @@
-import React, {createContext, useEffect} from 'react'
-import Axios from "Contexts/Axios";
+import React, {Fragment, useEffect} from 'react'
+import Axios from "src/Contexts/Axios";
 import jwtDecode from 'jwt-decode'
 import {useDispatch} from "react-redux";
 
-const initialAuthState = {
-    isAuthenticated: false,
-    isInitialised: false,
-    user: null
-}
-
-const AuthContext = createContext({
-    ...initialAuthState
-})
 
 const setSession = (accessToken, refreshToken) => {
     if (accessToken && refreshToken) {
@@ -40,10 +31,11 @@ const refreshOutdatedToken = async () => {
     return true
 }
 
-export const AuthProvider = ({children}) => {
+export const Initialisation = ({children}) => {
     const dispatch = useDispatch();
 
     useEffect(() => {
+        console.log("JWT did mount...");
         (async function initialize() {
             try {
                 console.log("Инициализируем приложение...")
@@ -67,9 +59,9 @@ export const AuthProvider = ({children}) => {
     })
 
     return (
-        <AuthContext.Provider value={null}>
+        <Fragment>
             {children}
-        </AuthContext.Provider>
+        </Fragment>
     )
 }
 

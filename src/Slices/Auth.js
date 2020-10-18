@@ -1,5 +1,5 @@
 import {createSlice} from "@reduxjs/toolkit";
-import Axios from "Contexts/Axios";
+import Axios from "src/Contexts/Axios";
 
 const initialAuthState = {
     isAuthenticated: false,
@@ -22,3 +22,5 @@ export const {actions, reducer} = slice
 export const login = (login, password) => async dispatch => {
     const response = await Axios.post('login');
 }
+
+

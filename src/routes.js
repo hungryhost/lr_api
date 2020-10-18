@@ -8,7 +8,9 @@ import {
     Route
 } from 'react-router-dom';
 import {CircularProgress} from '@material-ui/core';
-import AuthView from "./Views/AuthView";
+import AuthView from "src/Views/AuthView";
+import {GuestGuard} from "src/Components/GuestGuard";
+import {AuthGuard} from "src/Components/AuthGuard";
 
 /**
 * Рендерим роуты с нужными guards
@@ -43,10 +45,24 @@ export const renderRoutes = (routes = []) => (
 export const routes = [
     {
         exact: true,
-        path: '/',
-        component: lazy(() => import('Components/Login')),
-        layout: AuthView
+        path: '/login',
+        component: lazy(() => import('src/Components/Login')),
+        layout: AuthView,
+        guard: GuestGuard
     },
+    {
+        exact: true,
+        path: '/register',
+        component: lazy(() => import('src/Components/Register')),
+        layout: AuthView,
+        guard: GuestGuard
+    },
+    // todo: for testing guards
+    /*{
+        path: "*",
+        component: <div>Hey</div>,
+        guard: AuthGuard
+    }*/
 ];
 
 

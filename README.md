@@ -2,8 +2,10 @@ This project is created with `react-create-app`
 
 ## Project structure and libraries:
 
--State managmen
-
+####General architecture
+    1. Functional components only for comfort work with hooks
+    2. State managment with redux (@redux-toolkit)
+    3. React-router for routing
 ## Available scripts
 
 In the project directory, you can run:
