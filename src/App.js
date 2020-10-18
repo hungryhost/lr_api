@@ -3,7 +3,7 @@ import {MuiThemeProvider} from "@material-ui/core";
 import {AxiosHandler} from 'src/Contexts/Axios'
 import {BrowserRouter} from "react-router-dom";
 import {renderRoutes, routes} from "src/routes";
-import AuthView from "src/Views/AuthView";
+import AuthView from "src/Views/Auth/AuthView";
 import {Initialisation} from "src/Contexts/JWT";
 import {theme} from "src/Theme/theme";
 import 'src/normalize.css'

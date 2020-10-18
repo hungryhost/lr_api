@@ -8,6 +8,7 @@ import {useSelector} from "react-redux";
  * */
 export const GuestGuard = ({ children }) => {
     const { isAuthenticated } = useSelector(state => state.auth);
+    console.log("Guest guard value:", isAuthenticated)
     if (isAuthenticated)
         return <Redirect to='/app'/>
     return (

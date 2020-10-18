@@ -3,14 +3,13 @@ import {Box, Typography, TextField, Button, makeStyles, Divider, Link} from "@ma
 import {Formik} from "formik";
 import * as Yup from 'yup';
 import Axios from "src/Contexts/Axios";
-import {parseName} from "../Utils/auth";
+import {parseName} from "../../../Utils/auth";
 
 const useStyles = makeStyles(theme => ({
     haveMargin: {
         marginBottom: theme.spacing(4)
     }
 }))
-
 
 
 const Register = () => {
@@ -34,19 +33,17 @@ const Register = () => {
             </Typography>
             <Box display='flex' flexDirection='column'>
                 <Formik
-                    initialValues={{email: "", password: "", passwordConfirm: "", name: ""}}
+                    initialValues={{
+                        email: "trigognight@gmail.com",
+                        password: "test123",
+                        passwordConfirm: "test123",
+                        name: "Pavel Lapshin"
+                    }}
                     onSubmit={async (values, {setErrors}) => {
                         const {first_name, last_name} = parseName(values.name);
                         if (values.password !== values.passwordConfirm)
                             setErrors({passwordConfirm: "Пароли не совпадают"})
                         else {
-                            console.log("Data to send: ", {
-                                first_name,
-                                last_name,
-                                email: values.email,
-                                password: values.password,
-                                password2: values.passwordConfirm
-                            })
                             const response = await Axios.post('auth/register/', {
                                 first_name,
                                 last_name,
@@ -77,7 +74,7 @@ const Register = () => {
                                 variant='outlined'
                                 name='name'
                                 error={Boolean(touched.name && errors.name)}
-                                helperText={touched.name && 'Введите валидный email'}
+                                helperText={touched.name && errors.name}
                                 className={classes.haveMargin}
                                 value={values.name}
                                 onChange={handleChange}
@@ -89,11 +86,10 @@ const Register = () => {
                                 type='email'
                                 name='email'
                                 error={Boolean(touched.email && errors.email)}
-                                helperText={touched.email && 'Введите валидный email'}
+                                helperText={touched.email && errors.email}
                                 className={classes.haveMargin}
                                 value={values.email}
                                 onChange={handleChange}
-                                autoFocus
                             />
                             <TextField
                                 label='Пароль'
@@ -123,6 +119,7 @@ const Register = () => {
                                 className={classes.haveMargin}
                                 fullWidth
                                 size='large'
+                                type="submit"
                                 onClick={handleSubmit}
                             >
                                 Зарегистрироваться

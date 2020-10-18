@@ -2,6 +2,7 @@ import React, {Fragment, useEffect} from 'react'
 import Axios from "src/Contexts/Axios";
 import jwtDecode from 'jwt-decode'
 import {useDispatch} from "react-redux";
+import {login, proceedAsAuthenticated} from "src/Slices/Auth";
 
 
 const setSession = (accessToken, refreshToken) => {
@@ -19,6 +20,7 @@ const setSession = (accessToken, refreshToken) => {
 
 const isValidToken = async () => {
     const token = localStorage.getItem("accessToken");
+    console.log("Проверка на валидный токен...")
     if (!token)
         return false
     const decoded = jwtDecode(token);
@@ -42,9 +44,11 @@ export const Initialisation = ({children}) => {
                 const accessToken = localStorage.getItem('accessToken');
                 if (accessToken && await isValidToken(accessToken)) {
                     // Обновляем токены на случай, если у нас в isValidToken произошло их обновление
+                    console.log("Устанавливаем сессию...")
                     const newAccessToken = localStorage.getItem('accessToken');
                     const newRefreshToken = localStorage.getItem('refreshToken');
                     setSession(newAccessToken, newRefreshToken);
+                    dispatch(proceedAsAuthenticated())
                     // todo: здесь диспатчим то, что мы авторизированы
                 }
                 else {

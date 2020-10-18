@@ -5,12 +5,13 @@ import React, {
 } from 'react';
 import {
     Switch,
-    Route
+    Route, Redirect
 } from 'react-router-dom';
 import {CircularProgress} from '@material-ui/core';
-import AuthView from "src/Views/AuthView";
+import AuthView from "src/Views/Auth/AuthView";
 import {GuestGuard} from "src/Components/GuestGuard";
 import {AuthGuard} from "src/Components/AuthGuard";
+import {MainView} from "./Views/Main/MainView";
 
 /**
 * Рендерим роуты с нужными guards
@@ -24,6 +25,7 @@ export const renderRoutes = (routes = []) => (
                 const Guard = route.guard || Fragment;
                 const Layout = route.layout || Fragment;
                 const Component = route.component;
+                const props = route.props;
                 return (
                     <Route
                         key={i}
@@ -31,7 +33,7 @@ export const renderRoutes = (routes = []) => (
                         exact={route.exact}>
                             <Guard>
                                 <Layout>
-                                    {route.routes ? renderRoutes(route.routes) : <Component/>}
+                                    {route.routes ? renderRoutes(route.routes) : <Component {...props}/>}
                                 </Layout>
                             </Guard>
                     </Route>
@@ -46,23 +48,29 @@ export const routes = [
     {
         exact: true,
         path: '/login',
-        component: lazy(() => import('src/Components/Login')),
+        component: lazy(() => import('src/Views/Auth/Components/Login')),
         layout: AuthView,
         guard: GuestGuard
     },
     {
         exact: true,
         path: '/register',
-        component: lazy(() => import('src/Components/Register')),
+        component: lazy(() => import('src/Views/Auth/Components/Register')),
         layout: AuthView,
         guard: GuestGuard
     },
+    {
+        path: '/app',
+        layout: MainView,
+        component: Fragment
+    },
     // todo: for testing guards
-    /*{
+    {
         path: "*",
-        component: <div>Hey</div>,
-        guard: AuthGuard
-    }*/
+        component: Redirect,
+        guard: AuthGuard,
+        props: {to: '/login'}
+    }
 ];
 
 
