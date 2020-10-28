@@ -8,7 +8,9 @@ const useStyles = makeStyles(theme => ({
     container: {
         display: "flex",
         paddingTop: 64,
-        paddingLeft: 256
+        paddingLeft: 15,
+        backgroundColor: theme.palette.background.primary,
+        width: "100%"
     },
     root: {
         display: 'flex',

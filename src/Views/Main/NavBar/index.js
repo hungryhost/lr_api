@@ -18,7 +18,8 @@ const useStyles = makeStyles(theme => ({
         width: 256,
         height: 'calc(100vh - 64px)',
         maxHeight: 'calc(100vh - 64px)',
-        paddingTop: 64
+        paddingTop: 64,
+        backgroundColor: theme.palette.background.secondary
     }
 }))
 

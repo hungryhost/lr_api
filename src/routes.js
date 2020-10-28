@@ -11,7 +11,8 @@ import {CircularProgress} from '@material-ui/core';
 import AuthView from "src/Views/Auth/AuthView";
 import {GuestGuard} from "src/Components/GuestGuard";
 import {AuthGuard} from "src/Components/AuthGuard";
-import {MainView} from "./Views/Main/MainView";
+import {MainView} from "src/Views/Main/MainView";
+import {Page as Title} from "src/Components/Page";
 
 /**
 * Рендерим роуты с нужными guards
@@ -26,15 +27,18 @@ export const renderRoutes = (routes = []) => (
                 const Layout = route.layout || Fragment;
                 const Component = route.component;
                 const props = route.props;
+                const Page = route.title ? Title : Fragment
                 return (
                     <Route
                         key={i}
                         path={route.path}
                         exact={route.exact}>
                             <Guard>
-                                <Layout>
-                                    {route.routes ? renderRoutes(route.routes) : <Component {...props}/>}
-                                </Layout>
+                                <Page title={route.title}>
+                                    <Layout>
+                                        {route.routes ? renderRoutes(route.routes) : <Component {...props}/>}
+                                    </Layout>
+                                </Page>
                             </Guard>
                     </Route>
                 );
@@ -50,19 +54,22 @@ export const routes = [
         path: '/login',
         component: lazy(() => import('src/Views/Auth/Components/Login')),
         layout: AuthView,
-        guard: GuestGuard
+        guard: GuestGuard,
+        title: "Авторизация"
     },
     {
         exact: true,
         path: '/register',
         component: lazy(() => import('src/Views/Auth/Components/Register')),
         layout: AuthView,
-        guard: GuestGuard
+        guard: GuestGuard,
+        title: "Регистрация"
     },
     {
         path: '/app',
         layout: MainView,
-        component: Fragment
+        component: Fragment,
+        title: "Сервис аренды помещений"
     },
     // todo: for testing guards
     {

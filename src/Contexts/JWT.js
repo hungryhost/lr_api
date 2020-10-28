@@ -35,9 +35,7 @@ const refreshOutdatedToken = async () => {
 
 export const Initialisation = ({children}) => {
     const dispatch = useDispatch();
-
     useEffect(() => {
-        console.log("JWT did mount...");
         (async function initialize() {
             try {
                 console.log("Инициализируем приложение...")

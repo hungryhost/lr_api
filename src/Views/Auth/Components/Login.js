@@ -39,13 +39,7 @@ const Login = () => {
                         password: Yup.string().min(6).max(32).required("Введите пароль"),
                     })}
                     onSubmit={async (values, {setErrors}) => {
-                        /*const response = await Axios.post('auth/token/', {
-                            username: values.email,
-                            password: values.password,
-                        })
-                        console.log("Response for login: ", response)*/
                         dispatch(login(values.email, values.password));
-
                     }}>
                     {({
                           values,

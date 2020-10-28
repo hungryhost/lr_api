@@ -13,6 +13,9 @@ const slice = createSlice({
     reducers: {
         login(state, action) {
             state.isAuthenticated = action.payload
+        },
+        logout(state) {
+            state.isAuthenticated = false;
         }
     }
 })
@@ -36,4 +39,7 @@ export const login = (login, password) => async dispatch => {
     console.log("Log for login: ", response)
 }
 
+export const logout = () => async dispatch => {
+    dispatch(actions.logout());
 
+}

@@ -4,6 +4,8 @@ import {Formik} from "formik";
 import * as Yup from 'yup';
 import Axios from "src/Contexts/Axios";
 import {parseName} from "../../../Utils/auth";
+import {useDispatch} from "react-redux";
+import {proceedAsAuthenticated} from "../../../Slices/Auth";
 
 const useStyles = makeStyles(theme => ({
     haveMargin: {
@@ -14,7 +16,7 @@ const useStyles = makeStyles(theme => ({
 
 const Register = () => {
     const classes = useStyles();
-
+    const dispatch = useDispatch();
     return (
         <Box>
             <Typography
@@ -51,6 +53,7 @@ const Register = () => {
                                 password: values.password,
                                 password2: values.passwordConfirm
                             })
+                            dispatch(proceedAsAuthenticated())
                             console.log("Response object: ", response)
                         }
                     }}

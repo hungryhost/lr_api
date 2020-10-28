@@ -3,10 +3,14 @@ import {Toolbar, AppBar, IconButton, makeStyles, Box, Avatar, Typography} from "
 import {Menu as MenuIcon} from '@material-ui/icons'
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
+import {useDispatch} from "react-redux";
+import {logout} from "../Slices/Auth";
 
 const useStyles = makeStyles(theme => ({
     root: {
-        flexGrow: 1,
+        display: "flex",
+        backgroundColor: theme.palette.background.secondary,
+        justifyContent: "space-between"
     },
     menuButton: {
         marginRight: theme.spacing(2),
@@ -19,10 +23,11 @@ const useStyles = makeStyles(theme => ({
 
 export const TopBar = () => {
     const classes = useStyles();
+    const dispatch = useDispatch();
     const [isMenuOpen, toggleMenu] = useState(false);
     return (
         <AppBar position='fixed'>
-            <Toolbar>
+            <Toolbar className={classes.root}>
                 <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
                     <MenuIcon />
                 </IconButton>
@@ -41,7 +46,7 @@ export const TopBar = () => {
                     >
                         <MenuItem>Профиль</MenuItem>
                         <MenuItem>Помещения</MenuItem>
-                        <MenuItem>Выйти</MenuItem>
+                        <MenuItem onClick={() => dispatch(logout())}>Выйти</MenuItem>
                     </Menu>
                 </Box>
             </Toolbar>
