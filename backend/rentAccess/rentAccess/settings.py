@@ -13,6 +13,11 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> backend-profile
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -26,7 +31,11 @@ SECRET_KEY = '#!h))0gh(jjswxelzryv9)mg)a=#-fe=8qd26+5yczb-_!@l8u'
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+<<<<<<< HEAD
 
+=======
+CORS_ORIGIN_ALLOW_ALL = True
+>>>>>>> backend-profile
 
 # Application definition
 
@@ -42,6 +51,10 @@ INSTALLED_APPS = [
     'properties',
     'jwtauth',
     'userAccount',
+<<<<<<< HEAD
+=======
+    'corsheaders',
+>>>>>>> backend-profile
 ]
 
 MIDDLEWARE = [
@@ -52,6 +65,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+<<<<<<< HEAD
+=======
+    'corsheaders.middleware.CorsMiddleware',
+
+>>>>>>> backend-profile
 ]
 
 ROOT_URLCONF = 'rentAccess.urls'
@@ -124,6 +142,18 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+<<<<<<< HEAD
+=======
+DEFAULT_RENDERER_CLASSES = (
+    'rest_framework.renderers.JSONRenderer',
+)
+
+if DEBUG:
+    DEFAULT_RENDERER_CLASSES = DEFAULT_RENDERER_CLASSES + (
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    )
+
+>>>>>>> backend-profile
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -135,6 +165,11 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
+<<<<<<< HEAD
+=======
+    'EXCEPTION_HANDLER': 'rentAccess.error_handler.custom_exception_handler',
+    'DEFAULT_RENDERER_CLASSES': DEFAULT_RENDERER_CLASSES
+>>>>>>> backend-profile
 }
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1440),

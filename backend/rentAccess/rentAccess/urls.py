@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework_simplejwt import views as jwt_views
 from rest_framework_simplejwt.views import TokenVerifyView
+<<<<<<< HEAD
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -24,4 +25,12 @@ urlpatterns = [
     path('auth/', include('rest_framework.urls')),
     path('api/auth/', include('jwtauth.urls'), name='jwtauth'),
     path('api/profile/', include('userAccount.urls')),
+=======
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/v1/property/', include('properties.urls')),
+    path('auth/', include('rest_framework.urls')),
+    path('api/v1/auth/', include('jwtauth.urls'), name='jwtauth'),
+    path('api/v1/profile/', include('userAccount.urls')),
+>>>>>>> backend-profile
 ]

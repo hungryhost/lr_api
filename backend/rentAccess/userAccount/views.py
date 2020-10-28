@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+>>>>>>> backend-profile
 from rest_framework import generics, permissions
 from .models import Profile
 from .serializers import ProfileSerializer
