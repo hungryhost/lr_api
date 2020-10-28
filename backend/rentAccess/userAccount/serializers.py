@@ -1,6 +1,7 @@
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import Profile
+
 
 # TODO: add read only fields
 #
@@ -20,5 +21,5 @@ class ProfileSerializer(serializers.ModelSerializer):
 	id = serializers.IntegerField(source='user.id', read_only=True)
 
 	class Meta:
-		fields = ('id', 'first_name', 'last_name', 'username', 'owner', 'email')
+		fields = ('id', 'first_name', 'last_name', 'username', 'account_type', 'email')
 		model = Profile

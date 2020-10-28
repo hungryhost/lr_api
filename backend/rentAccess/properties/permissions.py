@@ -6,7 +6,9 @@ from rest_framework import permissions
 #
 
 
-class IsAuthor(permissions.BasePermission):
+class IsOwnerOrSuperuser(permissions.BasePermission):
+	message = {'Forbidden': ['You do not have necessary permissions']}
+
 	def has_permission(self, request, view):
 		return request.user and request.user.is_authenticated
 

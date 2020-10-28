@@ -25,3 +25,6 @@ yarn-error.log*
 # idea settings
 
 /.idea/
+backend/.idea/
+backend/venv/
+backend/rentAccess/**/*.sqlite3
