@@ -1,17 +1,3 @@
-<<<<<<< HEAD
-from rest_framework import generics, permissions
-from rest_framework.permissions import IsAuthenticated
-
-from .models import Property
-from .serializers import PropertySerializer
-from .permissions import IsAuthor
-
-# TODO: rewrite views for viewSets
-
-class PropertyList(generics.ListCreateAPIView):
-
-	permission_classes = (IsAuthor, )
-=======
 from datetime import datetime
 
 from django.core.handlers import exception
@@ -28,24 +14,10 @@ from .models import PropertyLog
 
 class PropertyList(generics.ListCreateAPIView):
 	permission_classes = (IsOwnerOrSuperuser, )
->>>>>>> backend-profile
 	queryset = Property.objects.all()
 	serializer_class = PropertySerializer
 
 	def perform_create(self, serializer):
-<<<<<<< HEAD
-		serializer.save(author=self.request.user)
-
-	def get_queryset(self, *args, **kwargs):
-		if self.request.user.is_staff or self.request.user.is_superuser:
-			return Property.objects.all()
-		else:
-			return Property.objects.all().filter(author=self.request.user)
-
-
-class PropertyDetail(generics.RetrieveUpdateDestroyAPIView):
-	permission_classes = (IsAuthor, )
-=======
 		my_p = Profile.objects.get(user=self.request.user)
 		serializer.save(author=my_p)
 		curr_prop = serializer.save(author=my_p)
@@ -69,6 +41,5 @@ class PropertyDetail(generics.RetrieveUpdateDestroyAPIView):
 
 class PropertyDetail(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (IsOwnerOrSuperuser, )
->>>>>>> backend-profile
 	queryset = Property.objects.filter()
 	serializer_class = PropertySerializer

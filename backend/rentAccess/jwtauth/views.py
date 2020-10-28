@@ -1,13 +1,4 @@
 from django.contrib.auth import get_user_model
-<<<<<<< HEAD
-from rest_framework import permissions
-from rest_framework import response, decorators, permissions, status
-from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserCreateSerializer
-
-# TODO: create new accounts when user registers
-#
-=======
 from rest_framework import response, decorators, permissions, status
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -15,7 +6,6 @@ from .serializers import UserCreateSerializer
 from userAccount.models import Profile
 # TODO: create new accounts when user registers
 # TODO: add user and role to response
->>>>>>> backend-profile
 
 
 User = get_user_model()
@@ -24,12 +14,6 @@ User = get_user_model()
 @decorators.api_view(["POST"])
 @decorators.permission_classes([permissions.AllowAny])
 def registration(request):
-<<<<<<< HEAD
-	serializer = UserCreateSerializer(data=request.data)
-	if not serializer.is_valid():
-		return response.Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-	user = serializer.save()
-=======
 	"""
 	this method is implemented for user registration
 	:param request: incoming POST request
@@ -42,13 +26,10 @@ def registration(request):
 	user = serializer.save()
 	curr_user = User.objects.get(username=user.username)
 	profile = Profile.objects.get(user=curr_user)
->>>>>>> backend-profile
 	refresh = RefreshToken.for_user(user)
 	res = {
 		"refresh": str(refresh),
 		"access": str(refresh.access_token),
-<<<<<<< HEAD
-=======
 		"personal_info": {
 			"account_id": profile.id,
 			"username": str(user.email),
@@ -56,6 +37,5 @@ def registration(request):
 			"last_name": str(user.last_name),
 			"account_type": str(profile.account_type),
 		},
->>>>>>> backend-profile
 	}
 	return response.Response(res, status.HTTP_201_CREATED)
