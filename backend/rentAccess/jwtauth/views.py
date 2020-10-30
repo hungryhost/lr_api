@@ -4,21 +4,16 @@ from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserCreateSerializer
 from userAccount.models import Profile
+
 # TODO: create new accounts when user registers
 # TODO: add user and role to response
 
 
 User = get_user_model()
 
-
 @decorators.api_view(["POST"])
 @decorators.permission_classes([permissions.AllowAny])
 def registration(request):
-	"""
-	this method is implemented for user registration
-	:param request: incoming POST request
-	:return: "400 Bad Request" or "201 Created" codes
-	"""
 	serializer = UserCreateSerializer(data=request.data)
 	permission_classes = (AllowAny,)
 	if not serializer.is_valid():
