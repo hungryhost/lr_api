@@ -1,12 +1,13 @@
 openapi: 3.0.2
 info:
-  title: ''
-  version: ''
+  title: '294 API documentation'
+  version: '0.0.1'
 paths:
   /api/v1/property/{id}/:
     get:
       operationId: retrieveProperty
-      description: ''
+      description: 'This method is used for retrieving information about a
+      particular property'
       parameters:
       - name: id
         in: path
@@ -222,21 +223,15 @@ paths:
   /api/v1/auth/register/:
     post:
       operationId: createregistration
-      description: ''
-      parameters:
-        - name: first_name
-          in: query
-          required: true
-          description: A unique integer value identifying this profile.
-          schema:
-            type: string
+      description: 'This method allows to a person register an account'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Register'
       responses:
-        201:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/201_OK'
+        '201':
+          $ref: '#/components/responses/200_OK'
       tags:
       - api
   /api/v1/auth/token/:
@@ -253,12 +248,8 @@ paths:
             schema:
               $ref: '#/components/schemas/TokenObtainPair'
       responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TokenObtainPair'
-          description: ''
+        '200':
+          $ref: '#/components/responses/200_OK'
       tags:
       - api
   /api/v1/auth/token/refresh/:
@@ -406,31 +397,31 @@ components:
       - password
       - password2
 
-    201_OK:
-      title: Successful response
-      type: object
-      properties:
-        access:
-          type: string
-          example:
-        refresh:
-          type: string
-          example:
-        personal_info:
-          $ref: '#/components/schemas/personal_info'
-    personal_info:
-      title: personal_info
-      type: object
-      properties:
-        account_id:
-          type: number
-          example: 1
-        first_name:
-          type: string
-          example: "Jane"
-        last_name:
-          type: string
-          example: "Doe"
-        account_type:
-          type: string
-          example: "OWNER"
+  responses:
+    200_OK:
+      description: Responce was processed
+      content:
+        application/json:
+          schema:
+            properties:
+              access:
+                type: string
+                example:
+              refresh:
+                type: string
+                example:
+              personal_info:
+                properties:
+                  account_id:
+                    type: number
+                    example: 1
+                  first_name:
+                    type: string
+                    example: "Jane"
+                  last_name:
+                    type: string
+                    example: "Doe"
+                  account_type:
+                    type: string
+                    example: "OWNER"
+            
