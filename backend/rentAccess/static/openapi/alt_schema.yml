@@ -2,6 +2,11 @@ openapi: 3.0.2
 info:
   title: '294 API documentation'
   version: '0.0.1'
+servers:
+  #- url: http://api.example.com/v1
+   # description: Optional server description, e.g. Main (production) server
+  - url: http://api.yuiborodin.xyz
+    description: main url for testing API
 paths:
   /api/v1/property/{id}/:
     get:
@@ -224,11 +229,38 @@ paths:
     post:
       operationId: createregistration
       description: 'This method allows to a person register an account'
+      parameters:
+       - $ref: '#/components/parameters/firstNameParam'
+       - $ref: '#/components/parameters/lastNameParam'
+       - $ref: '#/components/parameters/emailParam'
+       - $ref: '#/components/parameters/passwordParam'
+       - $ref: '#/components/parameters/password2Param'
+
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Register'
+              properties:
+                first_name:
+                  type: string
+                  writeOnly: true
+                last_name:
+                  type: string
+                  writeOnly: true
+                email:
+                  type: string
+                  writeOnly: true
+                password:
+                  type: string
+                  writeOnly: true
+                password2:
+                  type: string
+                  writeOnly: true
+              required:
+              - first_name
+              - last_name
+              - password
+              - password2
       responses:
         '201':
           $ref: '#/components/responses/200_OK'
@@ -396,6 +428,48 @@ components:
       - last_name
       - password
       - password2
+  parameters:
+    # parameters for regestration and logging
+    emailParam:
+      name: email
+      in: query
+      description: Email of the user.
+      required: true
+      schema:
+        type: string
+        example: "test@test.com"
+    firstNameParam:
+      name: first_name
+      in: query
+      description: First name of the user.
+      required: true
+      schema:
+        type: string
+        example: "Jane"
+    lastNameParam:
+      name: last_name
+      in: query
+      description: Last of the user.
+      required: true
+      schema:
+        type: string
+        example: "Doe"
+    passwordParam:
+      name: password
+      in: query
+      description: Password for the user.
+      required: true
+      schema:
+        type: string
+        example: "qwerty1234"
+    password2Param:
+      name: password2
+      in: query
+      description: Password confirmation for the user.
+      required: true
+      schema:
+        type: string
+        example: "querty1234"
 
   responses:
     200_OK:
