@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 
 # TODO: make username generated from email and separate them
-#
+# TODO: customize login response for the one in the docs
 #
 #
 #
