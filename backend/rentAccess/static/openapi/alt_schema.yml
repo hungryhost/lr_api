@@ -1,7 +1,8 @@
 openapi: 3.0.2
 info:
-  title: '294 API documentation'
+  title: '294 Internal API Documentation'
   version: '0.0.1'
+  description: "This API references methods that are implemented to the current date and are tested. Note that each method has a version and a date of release which is important in terms of correct requests and responces"
 servers:
   #- url: http://api.example.com/v1
    # description: Optional server description, e.g. Main (production) server
@@ -27,8 +28,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/Property'
           description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
       tags:
-      - api
+      - Poperty API
     put:
       operationId: updateProperty
       description: ''
@@ -51,8 +65,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/Property'
           description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
       tags:
-      - api
+      - Poperty API
     patch:
       operationId: partialUpdateProperty
       description: ''
@@ -75,8 +102,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/Property'
           description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
       tags:
-      - api
+      - Poperty API
     delete:
       operationId: destroyProperty
       description: ''
@@ -90,8 +130,21 @@ paths:
       responses:
         '204':
           description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
       tags:
-      - api
+      - Poperty API
   /api/v1/property/:
     get:
       operationId: listPropertys
@@ -107,7 +160,7 @@ paths:
                   $ref: '#/components/schemas/Property'
           description: ''
       tags:
-      - api
+      - Poperty API
     post:
       operationId: createProperty
       description: ''
@@ -125,7 +178,7 @@ paths:
                 $ref: '#/components/schemas/Property'
           description: ''
       tags:
-      - api
+      - Poperty API
   /api/v1/profile/{id}/:
     get:
       operationId: retrieveProfile
@@ -145,7 +198,7 @@ paths:
                 $ref: '#/components/schemas/Profile'
           description: ''
       tags:
-      - api
+      - Profile API
     put:
       operationId: updateProfile
       description: ''
@@ -169,7 +222,7 @@ paths:
                 $ref: '#/components/schemas/Profile'
           description: ''
       tags:
-      - api
+      - Profile API
     patch:
       operationId: partialUpdateProfile
       description: ''
@@ -193,7 +246,7 @@ paths:
                 $ref: '#/components/schemas/Profile'
           description: ''
       tags:
-      - api
+      - Profile API
     delete:
       operationId: destroyProfile
       description: ''
@@ -208,7 +261,7 @@ paths:
         '204':
           description: ''
       tags:
-      - api
+      - Profile API
   /api/v1/profile/:
     get:
       operationId: listProfiles
@@ -224,7 +277,7 @@ paths:
                   $ref: '#/components/schemas/Profile'
           description: ''
       tags:
-      - api
+      - Profile API
   /api/v1/auth/register/:
     post:
       operationId: createregistration
@@ -265,7 +318,7 @@ paths:
         '201':
           $ref: '#/components/responses/200_OK'
       tags:
-      - api
+      - Token-Related API
   /api/v1/auth/token/:
     post:
       operationId: createTokenObtainPair
@@ -283,7 +336,7 @@ paths:
         '200':
           $ref: '#/components/responses/200_OK'
       tags:
-      - api
+      - Token-Related API
   /api/v1/auth/token/refresh/:
     post:
       operationId: createTokenRefresh
@@ -305,7 +358,7 @@ paths:
                 $ref: '#/components/schemas/TokenRefresh'
           description: ''
       tags:
-      - api
+      - Token-Related API
   /api/v1/auth/token/verify/:
     post:
       operationId: createTokenVerify
@@ -327,7 +380,7 @@ paths:
                 $ref: '#/components/schemas/TokenVerify'
           description: ''
       tags:
-      - api
+      - Token-Related API
 components:
   schemas:
     Property:
@@ -354,6 +407,7 @@ components:
       - title
       - body
       - price
+
     Profile:
       type: object
       properties:
@@ -405,6 +459,34 @@ components:
           type: string
       required:
       - token
+    401BadToken:
+      description: "Invalid Token. Given token is not valid"
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+          example: [
+                  "Invalid Token : Given token is not valid"
+                  ]
+        status_code:
+          type: integer
+          example: 401
+    401Unauthorized:
+      description: "Unauthorized : Authentication not provided."
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+          example: [
+                  "Unauthorized : Authentication not provided."
+                  ]
+        status_code:
+          type: integer
+          example: 401
     Register:
       type: object
       properties:
@@ -498,4 +580,31 @@ components:
                   account_type:
                     type: string
                     example: "OWNER"
-            
+    404_Not_Found:
+      description: "404 not found: resource doesn't exist."
+      content:
+        application/json:
+          schema:
+            properties:
+              errors:
+                type: array
+                example: [
+                  "Not Found : Resource does not exist"
+                  ]
+              status_code:
+                type: integer
+                example: 404
+    403_Forbidden:
+      description: "403 Forbidden : You do not have necessary permissions"
+      content:
+        application/json:
+          schema:
+            properties:
+              errors:
+                type: array
+                example: [
+                  "Forbidden : You do not have necessary permissions"
+                  ]
+              status_code:
+                type: integer
+                example: 403
