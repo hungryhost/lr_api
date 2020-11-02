@@ -25,3 +25,11 @@ yarn-error.log*
 # idea settings
 
 /.idea/
+__pycache__/
+migrations/
+*.py[cod]
+backend/.idea/
+backend/rentAccess/__pycache__/
+backend/venv/
+backend/rentAccess/**/*.sqlite3
+
