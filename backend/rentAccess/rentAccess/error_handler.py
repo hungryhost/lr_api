@@ -15,9 +15,16 @@ def custom_exception_handler(exc, context):
 		response.data['errors'] = errors
 		response.data['status_code'] = 404
 		return response
+
 	if isinstance(exc, rest_framework_simplejwt.exceptions.InvalidToken):
 		response.data = {}
 		errors = ["Invalid Token : Given token is not valid"]
+		response.data['errors'] = errors
+		response.data['status_code'] = 401
+		return response
+	if isinstance(exc, exceptions.NotAuthenticated):
+		response.data = {}
+		errors = ["Unauthorized : Authentication not provided."]
 		response.data['errors'] = errors
 		response.data['status_code'] = 401
 		return response
