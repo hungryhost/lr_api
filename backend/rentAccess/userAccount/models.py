@@ -34,7 +34,7 @@ class Profile(models.Model):
     account_type = models.CharField(max_length=300, choices=CHOICES_1, default="OWNER")
     is_confirmed = models.BooleanField(default=False)
     id_document = models.TextField(max_length=300)
-    dob = models.DateField()
+    dob = models.DateField(null=True)
     main_address = models.TextField(max_length=200)
     patronymic = models.CharField(max_length=50)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
