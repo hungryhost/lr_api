@@ -12,9 +12,8 @@ info:
     <br>Tested methods marked as <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
     <br> Depricated methods that will be removed in the future marked as <img src="https://www.flaticon.com/svg/static/icons/svg/1309/1309506.svg" width="30" height="30" alt="Computer Hope">
     ---
-    __Current issues to consider__:
-      *
-      *
+    ## Current issues to consider:
+      * *Replace http for https for the server url in order to securely use API from outside.*
 
 servers:
   - url: http://api.yuiborodin.xyz
