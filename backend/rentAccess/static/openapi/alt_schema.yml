@@ -2,10 +2,21 @@ openapi: 3.0.2
 info:
   title: '294 Internal API Documentation'
   version: '0.0.1'
-  description: "This API references methods that are implemented to the current date and are tested. Note that each method has a version and a date of release which is important in terms of correct requests and responces and could be seen at gitlab changelog"
+  description: |
+    # General Information
+    ## About the API
+    This API references methods that are __implemented or _to be implemented_ to the current date__. API will reference not only methods that are used for front-end development but also for the embedded developers. For more information about the changes in methods please refer to __CHANGELOG__ in the Gitlab internal [repository](https://git.miem.hse.ru/294/web-294).
+    ## Conventions
+    In this documentation file accepted conventions are as listed below. <br>
+    Completed methods are marked as <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+    <br>Tested methods marked as <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+    <br> Depricated methods that will be removed in the future marked as <img src="https://www.flaticon.com/svg/static/icons/svg/1309/1309506.svg" width="30" height="30" alt="Computer Hope">
+    ---
+    __Current issues to consider__:
+      *
+      *
+
 servers:
-  #- url: http://api.example.com/v1
-   # description: Optional server description, e.g. Main (production) server
   - url: http://api.yuiborodin.xyz
     description: main url for testing API
 paths:
@@ -37,10 +48,17 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/401BadToken'
                   - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
 
           description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
         '403':
           $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Poperty API
     put:
@@ -74,10 +92,17 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/401BadToken'
                   - $ref: '#/components/schemas/401Unauthorized'
-
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
           description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
         '403':
           $ref: '#/components/responses/403_Forbidden'
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Poperty API
     patch:
@@ -111,10 +136,17 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/401BadToken'
                   - $ref: '#/components/schemas/401Unauthorized'
-
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
           description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
         '403':
           $ref: '#/components/responses/403_Forbidden'
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Poperty API
     delete:
@@ -129,7 +161,7 @@ paths:
           type: string
       responses:
         '204':
-          description: ''
+          $ref: '#/components/responses/204_Deleted'
         '404':
           $ref: '#/components/responses/404_Not_Found'
         '401':
@@ -139,10 +171,16 @@ paths:
                 oneOf:
                   - $ref: '#/components/schemas/401BadToken'
                   - $ref: '#/components/schemas/401Unauthorized'
-
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
           description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
         '403':
           $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+
       tags:
       - Poperty API
   /api/v1/property/:
@@ -177,6 +215,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Property'
           description: ''
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Poperty API
   /api/v1/profile/{id}/:
@@ -197,6 +239,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Profile'
           description: ''
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Profile API
     put:
@@ -221,6 +265,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Profile'
           description: ''
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Profile API
     patch:
@@ -245,6 +291,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Profile'
           description: ''
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Profile API
     delete:
@@ -259,7 +307,9 @@ paths:
           type: string
       responses:
         '204':
-          description: ''
+          $ref: '#/components/responses/204_Deleted'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Profile API
   /api/v1/profile/:
@@ -276,6 +326,8 @@ paths:
                 items:
                   $ref: '#/components/schemas/Profile'
           description: ''
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Profile API
   /api/v1/auth/register/:
@@ -317,6 +369,8 @@ paths:
       responses:
         '201':
           $ref: '#/components/responses/200_OK'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Auth API
   /api/v1/auth/token/:
@@ -335,6 +389,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/200_OK'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Auth API
   /api/v1/auth/token/refresh/:
@@ -357,6 +413,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenRefresh'
           description: ''
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Auth API
   /api/v1/auth/token/verify/:
@@ -379,6 +437,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenVerify'
           description: ''
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Auth API
 components:
@@ -608,4 +668,41 @@ components:
               status_code:
                 type: integer
                 example: 403
+    422_Invalid_Data_Property:
+      description: "Invalid Data : Invalid data has been submitted"
+      content:
+        application/json:
+          schema:
+            properties:
+              errors:
+                type: array
+                example: [
+                  "price : price parameter cannot be negative"
+                  ]
+              status_code:
+                type: integer
+                example: 422
+    400_Bad_Request_Property:
+      description: "400 Bad request"
+      content:
+        application/json:
+          schema:
+            properties:
+              errors:
+                type: array
+                example: [
+                  "Bad Request : Request was malformed or data was unacceptable. Try again with changed request."
+                  ]
+              status_code:
+                type: integer
+                example: 400
+    204_Deleted:
+      description: "204 Deleted"
+      content:
+        application/json:
+          schema:
+            properties:
+              status_code:
+                type: integer
+                example: 204
     
