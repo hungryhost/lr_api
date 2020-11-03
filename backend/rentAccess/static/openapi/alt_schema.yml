@@ -2,7 +2,7 @@ openapi: 3.0.2
 info:
   title: '294 Internal API Documentation'
   version: '0.0.1'
-  description: "This API references methods that are implemented to the current date and are tested. Note that each method has a version and a date of release which is important in terms of correct requests and responces"
+  description: "This API references methods that are implemented to the current date and are tested. Note that each method has a version and a date of release which is important in terms of correct requests and responces and could be seen at gitlab changelog"
 servers:
   #- url: http://api.example.com/v1
    # description: Optional server description, e.g. Main (production) server
@@ -608,3 +608,4 @@ components:
               status_code:
                 type: integer
                 example: 403
+    
