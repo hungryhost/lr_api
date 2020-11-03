@@ -318,7 +318,7 @@ paths:
         '201':
           $ref: '#/components/responses/200_OK'
       tags:
-      - Token-Related API
+      - Auth API
   /api/v1/auth/token/:
     post:
       operationId: createTokenObtainPair
@@ -336,7 +336,7 @@ paths:
         '200':
           $ref: '#/components/responses/200_OK'
       tags:
-      - Token-Related API
+      - Auth API
   /api/v1/auth/token/refresh/:
     post:
       operationId: createTokenRefresh
@@ -358,7 +358,7 @@ paths:
                 $ref: '#/components/schemas/TokenRefresh'
           description: ''
       tags:
-      - Token-Related API
+      - Auth API
   /api/v1/auth/token/verify/:
     post:
       operationId: createTokenVerify
@@ -380,7 +380,7 @@ paths:
                 $ref: '#/components/schemas/TokenVerify'
           description: ''
       tags:
-      - Token-Related API
+      - Auth API
 components:
   schemas:
     Property:
