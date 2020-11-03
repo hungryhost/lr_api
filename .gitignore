@@ -23,7 +23,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # idea settings
-
+############### backend ##############
 /.idea/
 __pycache__/
 migrations/
@@ -32,3 +32,4 @@ backend/.idea/
 backend/rentAccess/__pycache__/
 backend/venv/
 backend/rentAccess/**/*.sqlite3
+.env.development.server
