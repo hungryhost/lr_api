@@ -11,6 +11,7 @@ from rest_framework import serializers
 #
 #
 #
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
 
@@ -65,4 +66,30 @@ class UserCreateSerializer(serializers.ModelSerializer):
                     last_name=last_name)
         user.set_password(password)
         user.save()
+        return user
+
+
+class UserLoginSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(write_only=True, required=True, style={
+        "input_type": "username"})
+    password = serializers.CharField(write_only=True, required=True, style={
+        "input_type": "password"})
+
+    class Meta:
+        model = User
+        fields = [
+            "username",
+            "password",
+        ]
+        extra_kwargs = {"password": {"write_only": True}}
+
+    def create(self, validated_data):
+        username = validated_data["username"]
+        password = validated_data["password"]
+        if not User.objects.filter(username=username).exists():
+            raise serializers.ValidationError(
+                {"email": "User with given email does not exist."})
+        user = User.objects.get(username=username)
+        if not user.check_password(password):
+            raise serializers.ValidationError({"password": "Invalid password"})
         return user
