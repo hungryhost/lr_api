@@ -332,7 +332,10 @@ paths:
   /api/v1/auth/register/:
     post:
       operationId: createregistration
-      description: 'This method allows to a person register an account'
+      description: |
+        This method is used for account registration
+        <br>
+        <br><img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Completed"> <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Tested">
       parameters:
        - $ref: '#/components/parameters/firstNameParam'
        - $ref: '#/components/parameters/lastNameParam'
@@ -375,10 +378,11 @@ paths:
   /api/v1/auth/token/:
     post:
       operationId: createTokenObtainPair
-      description: 'Takes a set of user credentials and returns an access and refresh
-        JSON web
-
-        token pair to prove the authentication of those credentials.'
+      description: |
+        Takes a set of user credentials and returns an access and refresh
+        JSON web token pair to prove the authentication of those credentials.
+        <br>
+        <br><img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Completed"> <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Tested">
       parameters: []
       requestBody:
         content:
@@ -436,6 +440,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenVerify'
           description: ''
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - Auth API
+  /api/v1/auth/logout/:
+    post:
+      description: |
+        Takes a given refresh token and blacklists it.
+        - Requires access token (isAuthenticated permission) passed with the request.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+      responses:
+        '205':
+          description: '205 Reset Content'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - Auth API
+  /api/v1/auth/logoutall/:
+    post:
+      description: |
+        Blacklists all tokens associated with the user that sent the request.
+        - Requires access token (isAuthenticated permission) passed with the request.
+      parameters: []
+      responses:
+        '205':
+          description: '205 Reset Content'
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
