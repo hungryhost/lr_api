@@ -11,7 +11,8 @@
 - Added logout method. `api/v1/auth/logout/` <br>Now, when a POST request from authenticated user is sent 
 to `api/v1/auth/logout/` with a refresh token in request body and with access 
 token as authorization, a refresh token for that user is added to blacklist. 
-Also, for that purpose a lifetime of access token is now 5 minutes.
+   - Also, for that purpose a lifetime of access token is now 5 minutes.
+   - Refresh token now lasts one (1) day.
    - Example of request:
     ```json
     {
