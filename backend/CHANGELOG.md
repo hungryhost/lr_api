@@ -5,7 +5,7 @@
 - [Property Changelog](#property-changelog)
 ### *Authorization Changelog* 
 [Last Update 10.11.2020]
-#### Added logout and logout_all methods *[10.11.2020]*
+#### Added change_password method and minor changes with permissions and Profile model *[10.11.2020]*
 - Added method for changing user's password. `api/v1/profile/change_password/<profile_id>/`
 <br>Uses Django User model for it is the one used for authentication.
 Requires authorization passed with PUT request. 
