@@ -19,7 +19,7 @@ class AccountTypes(models.Model):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
     CHOICES_1 = [
         ('ADMIN', 'Admin User'),
         ('STAFF', 'Staff User'),
