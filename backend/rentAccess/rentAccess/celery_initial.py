@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 import os
-import celery
+import celery as cel
 from django.conf import settings
 
 # set the default Django settings module for the 'celery_' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'rentAccess.settings')
-app = celery.Celery('rentAccess')
+app = cel.Celery('rentAccess')
 
 # Using a string here means the worker will not have to
 # pickle the object when using Windows.
