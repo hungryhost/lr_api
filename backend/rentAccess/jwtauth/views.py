@@ -29,7 +29,7 @@ def registration(request):
 		"refresh": str(refresh),
 		"access": str(refresh.access_token),
 		"personal_info": {
-			"account_id": profile.id,
+			"account_id": profile.user.id,
 			"username": str(user.email),
 			"first_name": str(user.first_name),
 			"last_name": str(user.last_name),
@@ -55,7 +55,7 @@ def login(request):
 		"refresh": str(refresh),
 		"access": str(refresh.access_token),
 		"personal_info": {
-			"account_id": profile.id,
+			"account_id": profile.user.id,
 			"username": str(user.email),
 			"first_name": str(user.first_name),
 			"last_name": str(user.last_name),
