@@ -24,3 +24,11 @@ class ResultTypes(models.Model):
 	res_type = models.CharField(max_length=30, primary_key=True)
 	description = models.CharField(max_length=150)
 
+
+class AccountTypes(models.Model):
+	"""
+	This model defines types of account types used for permissions
+	across the app.
+	WARNING: MUST BE FILLED OUT INITIALLY
+	"""
+	acc_type = models.CharField(max_length=50, primary_key=True)
