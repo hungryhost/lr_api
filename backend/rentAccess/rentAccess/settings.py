@@ -118,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
@@ -127,17 +127,24 @@ USE_L10N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.1/howto/static-files/
-
-STATIC_URL = '/static/'
-#STATIC_ROOT = '/home/test/web-294/backend/rentAccess/static/'
 DEFAULT_RENDERER_CLASSES = (
     'rest_framework.renderers.JSONRenderer',
 )
+# Media root and url definitions
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
+
+# Static root and file definitions
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
+STATIC_URL = '/static/'
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/3.1/howto/static-files/
+
+# STATIC_ROOT = '/home/test/web-294/backend/rentAccess/static/'
+
+# when DEBUG == True DRF will render errors as html pages
 if DEBUG:
     DEFAULT_RENDERER_CLASSES = DEFAULT_RENDERER_CLASSES + (
         'rest_framework.renderers.BrowsableAPIRenderer',
@@ -157,28 +164,71 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'rentAccess.error_handler.custom_exception_handler',
     'DEFAULT_RENDERER_CLASSES': DEFAULT_RENDERER_CLASSES
 }
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': True,
+if DEBUG:
+    SIMPLE_JWT = {
+        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=3600),
+        'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+        'ROTATE_REFRESH_TOKENS': False,
+        'BLACKLIST_AFTER_ROTATION': True,
 
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': None,
+        'ALGORITHM': 'HS256',
+        'SIGNING_KEY': SECRET_KEY,
+        'VERIFYING_KEY': None,
+        'AUDIENCE': None,
+        'ISSUER': None,
 
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
+        'AUTH_HEADER_TYPES': ('Bearer',),
+        'USER_ID_FIELD': 'id',
+        'USER_ID_CLAIM': 'user_id',
 
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
+        'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+        'TOKEN_TYPE_CLAIM': 'token_type',
 
-    'JTI_CLAIM': 'jti',
+        'JTI_CLAIM': 'jti',
 
-    'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-}
+        'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+        'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+        'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    }
+else:
+    SIMPLE_JWT = {
+        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+        'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+        'ROTATE_REFRESH_TOKENS': False,
+        'BLACKLIST_AFTER_ROTATION': True,
+
+        'ALGORITHM': 'HS256',
+        'SIGNING_KEY': SECRET_KEY,
+        'VERIFYING_KEY': None,
+        'AUDIENCE': None,
+        'ISSUER': None,
+
+        'AUTH_HEADER_TYPES': ('Bearer',),
+        'USER_ID_FIELD': 'id',
+        'USER_ID_CLAIM': 'user_id',
+
+        'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+        'TOKEN_TYPE_CLAIM': 'token_type',
+
+        'JTI_CLAIM': 'jti',
+
+        'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
+        'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+        'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    }
+
+# CELERY CONFIG
+BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Europe/Moscow'
+
+# EMAIL SETTINGS
+EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'your_account@gmail.com'
+EMAIL_HOST_PASSWORD = ''
