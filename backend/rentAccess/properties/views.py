@@ -7,16 +7,24 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Property, Profile
-from .serializers import PropertySerializer
+from .serializers import PropertySerializer, PropertyCreateSerializer, PropertyUpdateSerializer
 from .permissions import IsOwnerOrSuperuser
 from .models import PropertyLog
 
 
-class PropertyList(generics.ListCreateAPIView):
-	permission_classes = (IsOwnerOrSuperuser, )
+class PropertyList(generics.ListAPIView):
+	"""
+	Generic API View class. Lists all objects.
+	For owners - lists all of the owner's objects.
+	For superusers - lists all objects.
+	Author: Y. Borodin (gitlab: yuiborodin)
+	Version: 1.0
+	Last Update: 16.11.2020
+	"""
+	permission_classes = (IsOwnerOrSuperuser, IsAuthenticated,)
 	queryset = Property.objects.all()
 	serializer_class = PropertySerializer
-
+	"""
 	def perform_create(self, serializer):
 		my_p = Profile.objects.get(user=self.request.user)
 		serializer.save(author=my_p)
@@ -30,6 +38,7 @@ class PropertyList(generics.ListCreateAPIView):
 			result=True
 		)
 		return Response(status=status.HTTP_201_CREATED)
+	"""
 
 	def get_queryset(self, *args, **kwargs):
 		my_p = Profile.objects.get(user=self.request.user)
@@ -39,7 +48,49 @@ class PropertyList(generics.ListCreateAPIView):
 			return Property.objects.all().filter(author=my_p)
 
 
-class PropertyDetail(generics.RetrieveUpdateDestroyAPIView):
-	permission_classes = (IsOwnerOrSuperuser, )
+class PropertyCreate(generics.CreateAPIView):
+	"""
+	Generic API View class. Used for creating objects.
+	Author: Y. Borodin (gitlab: yuiborodin)
+	Version: 1.0
+	Last Update: 16.11.2020
+	"""
+	permission_classes = (IsOwnerOrSuperuser, IsAuthenticated)
+	queryset = Property.objects.filter()
+	serializer_class = PropertyCreateSerializer
+
+
+class PropertyUpdate(generics.UpdateAPIView):
+	"""
+	Generic API View class. Used for updating objects.
+	Author: Y. Borodin (gitlab: yuiborodin)
+	Version: 1.0
+	Last Update: 16.11.2020
+	"""
+	permission_classes = (IsAuthenticated, IsOwnerOrSuperuser, )
+	queryset = Property.objects.filter()
+	serializer_class = PropertyUpdateSerializer
+
+
+class PropertyDetail(generics.RetrieveAPIView):
+	"""
+		Generic API View class. Used for retrieving details about an object.
+		Author: Y. Borodin (gitlab: yuiborodin)
+		Version: 1.0
+		Last Update: 16.11.2020
+	"""
+	permission_classes = (IsOwnerOrSuperuser, IsAuthenticated, )
+	queryset = Property.objects.filter()
+	serializer_class = PropertySerializer
+
+
+class PropertyDelete(generics.DestroyAPIView):
+	"""
+	Generic API View class. Used for deleting an object.
+	Author: Y. Borodin (gitlab: yuiborodin)
+	Version: 1.0
+	Last Update: 16.11.2020
+	"""
+	permission_classes = (IsOwnerOrSuperuser, IsAuthenticated,)
 	queryset = Property.objects.filter()
 	serializer_class = PropertySerializer
