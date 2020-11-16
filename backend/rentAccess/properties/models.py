@@ -4,8 +4,6 @@ from django.contrib.auth.models import User
 # Create your models here.
 from userAccount.models import *
 
-# TODO: Update model for current schema
-
 
 class Property(models.Model):
 	author = models.ForeignKey(Profile, on_delete=models.CASCADE)
@@ -13,8 +11,9 @@ class Property(models.Model):
 	body = models.TextField()
 	price = models.PositiveIntegerField()
 	active = models.BooleanField(default=True)
-	image = models.TextField(blank=True)
+	image = models.TextField(blank=True)  # TODO: convert to main_image
 	# lock_id
+	# TODO: add multiple images that would be available with details view
 
 	def __str__(self):
 		return self.title
