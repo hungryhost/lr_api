@@ -20,7 +20,7 @@ class PropertySerializer(serializers.ModelSerializer):
 		read_only_fields = ['author_id', 'id']
 
 
-class PropertyCreateSerializer(serializers.ModelSerializer):
+class PropertyCreateUpdateSerializer(serializers.ModelSerializer):
 	"""
 	Serializer class for creating a property.
 	Author: Y. Borodin (gitlab: yuiborodin)
@@ -69,33 +69,11 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 		property_to_create.save()
 		return property_to_create
 
-
-class PropertyUpdateSerializer(serializers.ModelSerializer):
-	"""
-	Serializer class for updating a property.
-	Author: Y. Borodin (gitlab: yuiborodin)
-	Version: 1.0
-	Last Update: 16.11.2020
-	"""
-	price = serializers.IntegerField(required=True, validators=[validate_price])
-
-	class Meta:
-		model = Property
-		author_id = serializers.Field(source='author')
-		fields = [
-			'author_id',
-			'id',
-			"title",
-			"body",
-			"price",
-			"active",
-			"image"
-		]
-		read_only_fields = ['author_id', 'id']
-
 	def update(self, instance, validated_data):
 		"""
 		Explicitly created method. Seed docs on serializers.
+		:param instance:
+		:return:
 		:param validated_data
 		:return:
 		"""
@@ -110,6 +88,9 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			instance.image = validated_data["image"]
 		instance.save()
 		return instance
+
+
+
 
 
 

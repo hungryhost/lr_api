@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Property, Profile
-from .serializers import PropertySerializer, PropertyCreateSerializer, PropertyUpdateSerializer
+from .serializers import PropertySerializer, PropertyCreateUpdateSerializer
 from .permissions import IsOwnerOrSuperuser
 from .models import PropertyLog
 
@@ -57,7 +57,7 @@ class PropertyCreate(generics.CreateAPIView):
 	"""
 	permission_classes = (IsOwnerOrSuperuser, IsAuthenticated)
 	queryset = Property.objects.filter()
-	serializer_class = PropertyCreateSerializer
+	serializer_class = PropertyCreateUpdateSerializer
 
 
 class PropertyUpdate(generics.UpdateAPIView):
@@ -69,7 +69,7 @@ class PropertyUpdate(generics.UpdateAPIView):
 	"""
 	permission_classes = (IsAuthenticated, IsOwnerOrSuperuser, )
 	queryset = Property.objects.filter()
-	serializer_class = PropertyUpdateSerializer
+	serializer_class = PropertyCreateUpdateSerializer
 
 
 class PropertyDetail(generics.RetrieveAPIView):
