@@ -38,11 +38,12 @@ class PropertyLog(models.Model):
 		('GIVE_ACC', 'Give access to property'),
 	]
 	action = models.CharField(max_length=300, choices=CHOICES)
-	act_time = models.DateTimeField('act_time', null=False)
+	act_time = models.DateTimeField('act_time', null=False, auto_now_add=True)
 	result = models.BooleanField('result', null=False)
 
 
 class PremisesImages(models.Model):
 	premises = models.ForeignKey(Property, on_delete=models.CASCADE)
 	filepath = models.CharField(max_length=200, null=False, blank=False)
+	uploaded_at = models.DateTimeField(auto_now_add=True)
 	is_deleted = models.BooleanField(default=False)
