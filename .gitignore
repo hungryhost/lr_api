@@ -33,3 +33,4 @@ backend/rentAccess/__pycache__/
 backend/venv/
 backend/rentAccess/**/*.sqlite3
 .env.development.server
+.env
