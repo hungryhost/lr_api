@@ -57,10 +57,9 @@ def registration(request):
 		"body": email_body,
 		"first_name": user.first_name,
 		"confirmation_link": absolute_url,
-		"email": "hiphop973@gmail.com"
+		"email": user.email
 	}
 	email_confirmation_task.delay(0, data)
-
 	return response.Response(res, status.HTTP_201_CREATED)
 
 

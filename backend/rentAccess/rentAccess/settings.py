@@ -15,6 +15,7 @@ from pathlib import Path
 from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 from celery.schedules import crontab
+from kombu import Exchange, Queue
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -230,13 +231,26 @@ else:
     }
 
 # CELERY CONFIG
-BROKER_URL = 'redis://localhost:6379'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Europe/Moscow'
+# default_exchange = Exchange('default', type='direct')
+# priority_exchange = Exchange('priority_queue', type='direct')
 
+# CELERY_QUEUES = (
+#    Queue('default', default_exchange, routing_key='default', consumer_arguments={'x-priority': 0}),
+#    Queue('priority_queue', priority_exchange, routing_key='priority_queue', consumer_arguments={'x-priority': 10}),
+# )
+# CELERY_ROUTES = ({'jwtauth.tasks.test_task': {
+#                        'queue': 'priority_queue',
+#                        'routing_key': 'priority_queue'
+#                }}, )
+# CELERY_DEFAULT_QUEUE = 'default'
+# CELERY_DEFAULT_EXCHANGE = 'default'
+# CELERY_DEFAULT_ROUTING_KEY = 'default'
 # EMAIL SETTINGS
 EMAIL_USE_TLS = True
 EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'

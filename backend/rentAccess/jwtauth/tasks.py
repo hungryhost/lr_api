@@ -9,6 +9,7 @@ from django.template.loader import get_template
 from rentAccess.settings import EMAIL_HOST_USER
 logger = get_task_logger(__name__)
 
+
 @task(name='send_email_confirmation')
 def email_confirmation_task(duration, data):
     """
@@ -38,4 +39,4 @@ def delete_blacklisted_tokens():
     # local import of model, otherwise it won't work
     from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
     BlacklistedToken.objects.all().delete()
-    # print('Deleted')
+    print('Deleted')
