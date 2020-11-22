@@ -60,6 +60,7 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Poperty API
+  /api/v1/property/update/{id}/:
     put:
       operationId: updateProperty
       description: ''
@@ -148,6 +149,7 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Poperty API
+  /api/v1/property/delete/{id}/:
     delete:
       operationId: destroyProperty
       description: ''
@@ -182,7 +184,7 @@ paths:
 
       tags:
       - Poperty API
-  /api/v1/property/:
+  /api/v1/property/list/:
     get:
       operationId: listPropertys
       description: ''
@@ -198,6 +200,7 @@ paths:
           description: ''
       tags:
       - Poperty API
+  /api/v1/property/create/:
     post:
       operationId: createProperty
       description: ''
@@ -375,6 +378,35 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - Auth API
+  /api/v1/profile/change_password/{id}/:
+    put:
+      operationId: changePassword
+      description: |
+        Takes new password and it's confirmation as well as the old password and
+        changes user's password to the new one.
+        <br>
+
+        <h4>The request must be sent with a valid access token.</h4>
+        <br><img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Completed"> <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Tested">
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: A unique integer value identifying the profile.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+      responses:
+        '204':
+          description: '204 No Content'
+        #'400':
+          #$ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - Profile API
   /api/v1/auth/token/:
     post:
       operationId: createTokenObtainPair
@@ -604,6 +636,18 @@ components:
       - last_name
       - password
       - password2
+    ChangePassword:
+      type: object
+      properties:
+        old_password:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        password2:
+          type: string
+          writeOnly: true
   parameters:
     # parameters for regestration and logging
     emailParam:
@@ -731,7 +775,7 @@ components:
                 type: integer
                 example: 400
     204_Deleted:
-      description: "204 Deleted"
+      description: "204 No Content"
       content:
         application/json:
           schema:
