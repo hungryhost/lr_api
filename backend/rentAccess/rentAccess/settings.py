@@ -231,7 +231,9 @@ else:
     }
 
 # CELERY CONFIG
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+if not DEBUG:
+    CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -257,4 +259,3 @@ EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')

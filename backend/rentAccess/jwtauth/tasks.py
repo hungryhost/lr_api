@@ -39,4 +39,4 @@ def delete_blacklisted_tokens():
     # local import of model, otherwise it won't work
     from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
     BlacklistedToken.objects.all().delete()
-    print('Deleted')
+    # print('Deleted')

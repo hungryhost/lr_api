@@ -59,7 +59,7 @@ def registration(request):
 		"confirmation_link": absolute_url,
 		"email": user.email
 	}
-	email_confirmation_task.delay(0, data)
+	# email_confirmation_task.delay(0, data)
 	return response.Response(res, status.HTTP_201_CREATED)
 
 
