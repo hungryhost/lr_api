@@ -1,9 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-# TODO: Rewrite Profile model to accommodate all required functionality
-# TODO: add all required fields
-# TODO: add read only and extra fields/validation
+# TODO: separate docs and addresses into their own models
 #
 #
 #
@@ -15,7 +13,8 @@ from django.dispatch import receiver
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE,
+                                primary_key=True, related_name='user_profile')
     CHOICES_1 = [
         ('ADMIN', 'Admin User'),
         ('STAFF', 'Staff User'),
@@ -62,6 +61,7 @@ class UserImages(models.Model):
     account = models.ForeignKey(Profile, on_delete=models.RESTRICT)
     filepath = models.CharField(max_length=200, null=False, blank=False)
     is_deleted = models.BooleanField(default=False)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
 
 
 class PhoneTypes(models.Model):
