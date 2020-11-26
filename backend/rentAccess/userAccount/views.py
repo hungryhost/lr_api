@@ -9,12 +9,12 @@ from .serializers import (ProfileSerializer, ChangePasswordSerializer,
 						ProfileUpdateSerializer, ProfileDetailSerializer)
 
 
-# TODO: add separate classes for POST, GET, PUT, PATCH
+# TODO: consider simplifying update/delete/get into one class
 
 
 class ProfileList(generics.ListAPIView):
 	permission_classes = (permissions.IsAdminUser, )
-	queryset = Profile.objects.all()
+	queryset = Profile.objects.get_queryset().order_by('user_id')
 	serializer_class = ProfileListSerializer
 
 
