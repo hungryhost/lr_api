@@ -26,8 +26,8 @@ class Profile(models.Model):
         ('M', 'Male'),
         ('F', 'Female'),
     ]
-    bio = models.CharField(null=True, blank=True)
-    account_type = models.CharField(max_length=300, choices=CHOICES_1, default="OWNER")
+    bio = models.CharField(null=True, blank=True, max_length=1024)
+    account_type = models.CharField(max_length=100, choices=CHOICES_1, default="OWNER")
     is_confirmed = models.BooleanField(default=False)
     dob = models.DateField(null=True, blank=True)
     patronymic = models.CharField(max_length=50, null=True, blank=True)
