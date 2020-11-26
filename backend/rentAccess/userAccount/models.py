@@ -26,13 +26,13 @@ class Profile(models.Model):
         ('M', 'Male'),
         ('F', 'Female'),
     ]
+    bio = models.CharField(null=True, blank=True)
     account_type = models.CharField(max_length=300, choices=CHOICES_1, default="OWNER")
     is_confirmed = models.BooleanField(default=False)
-    id_document = models.TextField(max_length=300)
-    dob = models.DateField(null=True)
-    main_address = models.TextField(max_length=200)
-    patronymic = models.CharField(max_length=50)
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
+    dob = models.DateField(null=True, blank=True)
+    patronymic = models.CharField(max_length=50, null=True, blank=True)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True,
+                              blank=True)
 
     def __str__(self):
         return self.user.username
@@ -74,3 +74,36 @@ class Phones(models.Model):
     phone_number = models.CharField(max_length=10, null=False, blank=False)
     phone_type = models.ForeignKey(PhoneTypes, on_delete=models.RESTRICT)
     is_deleted = models.BooleanField(default=False)
+
+
+class DocumentTypes(models.Model):
+    doc_type = models.CharField(max_length=40, primary_key=True)
+    description = models.CharField(max_length=100, null=True, blank=True)
+
+
+class AddressTypes(models.Model):
+    addr_type = models.CharField(max_length=40, primary_key=True)
+    description = models.CharField(max_length=100, null=True, blank=True)
+
+
+class Documents(models.Model):
+    account = models.ForeignKey(Profile, on_delete=models.RESTRICT)
+    doc_type = models.ForeignKey(DocumentTypes, on_delete=models.RESTRICT)
+    doc_serial = models.PositiveIntegerField(null=True, blank=True)
+    doc_number = models.PositiveIntegerField(null=True, blank=True)
+    doc_issued_at = models.DateField(null=True, blank=True)
+    doc_issued_by = models.CharField(max_length=100, blank=True, null=True)
+    doc_is_confirmed = models.BooleanField(default=False)
+
+
+class BillingAddresses(models.Model):
+    account = models.ForeignKey(Profile, on_delete=models.RESTRICT)
+    addr_type = models.ForeignKey(AddressTypes, on_delete=models.RESTRICT)
+    addr_country = models.CharField(max_length=100, blank=True, null=True)
+    addr_city = models.CharField(max_length=100, blank=True, null=True)
+    addr_street_1 = models.CharField(max_length=100, blank=True, null=True)
+    addr_street_2 = models.CharField(max_length=100, blank=True, null=True)
+    addr_building = models.CharField(max_length=20, blank=True, null=True)
+    addr_floor = models.CharField(max_length=20, blank=True, null=True)
+    addr_number = models.CharField(max_length=30, blank=True, null=True)
+    zip_code = models.CharField(max_length=10, blank=True)
