@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
 
-# TODO: separate docs and addresses into their own models
 #
 #
 #
@@ -33,6 +32,7 @@ class Profile(models.Model):
     patronymic = models.CharField(max_length=50, null=True, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True,
                               blank=True)
+    last_updated = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.user.username
@@ -50,7 +50,8 @@ class Profile(models.Model):
 
 
 class UserLogs(models.Model):
-    user = models.ForeignKey(User, on_delete=models.RESTRICT)
+    user = models.ForeignKey(User, related_name='user_logs',
+                             on_delete=models.RESTRICT)
     account = models.ForeignKey(Profile, on_delete=models.RESTRICT)
     timestamp = models.DateTimeField()
     # action =
@@ -58,7 +59,8 @@ class UserLogs(models.Model):
 
 
 class UserImages(models.Model):
-    account = models.ForeignKey(Profile, on_delete=models.RESTRICT)
+    account = models.ForeignKey(Profile, related_name='account_images',
+                                on_delete=models.RESTRICT)
     filepath = models.CharField(max_length=200, null=False, blank=False)
     is_deleted = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -68,10 +70,14 @@ class PhoneTypes(models.Model):
     phone_type = models.CharField(max_length=20, primary_key=True)
     description = models.CharField(max_length=300, null=True, blank=True)
 
+    def __str__(self):
+        return self.phone_type
+
 
 class Phones(models.Model):
-    account = models.ForeignKey(Profile, on_delete=models.RESTRICT)
-    phone_number = models.CharField(max_length=10, null=False, blank=False)
+    account = models.ForeignKey(Profile, related_name='account_phones',
+                                on_delete=models.RESTRICT)
+    phone_number = models.CharField(max_length=13, null=False, blank=False)
     phone_type = models.ForeignKey(PhoneTypes, on_delete=models.RESTRICT)
     is_deleted = models.BooleanField(default=False)
 
@@ -80,24 +86,30 @@ class DocumentTypes(models.Model):
     doc_type = models.CharField(max_length=40, primary_key=True)
     description = models.CharField(max_length=100, null=True, blank=True)
 
+    def __str__(self):
+        return self.doc_type
+
 
 class AddressTypes(models.Model):
     addr_type = models.CharField(max_length=40, primary_key=True)
     description = models.CharField(max_length=100, null=True, blank=True)
 
+    def __str__(self):
+        return self.addr_type
+
 
 class Documents(models.Model):
-    account = models.ForeignKey(Profile, on_delete=models.RESTRICT)
-    doc_type = models.ForeignKey(DocumentTypes, on_delete=models.RESTRICT)
-    doc_serial = models.PositiveIntegerField(null=True, blank=True)
-    doc_number = models.PositiveIntegerField(null=True, blank=True)
+    account = models.ForeignKey(Profile, related_name='documents', on_delete=models.RESTRICT)
+    doc_type = models.ForeignKey(DocumentTypes, to_field='doc_type', on_delete=models.RESTRICT)
+    doc_serial = models.PositiveIntegerField(null=True, blank=True, unique=True)
+    doc_number = models.PositiveIntegerField(null=True, blank=True, unique=True)
     doc_issued_at = models.DateField(null=True, blank=True)
     doc_issued_by = models.CharField(max_length=100, blank=True, null=True)
     doc_is_confirmed = models.BooleanField(default=False)
 
 
 class BillingAddresses(models.Model):
-    account = models.ForeignKey(Profile, on_delete=models.RESTRICT)
+    account = models.ForeignKey(Profile, related_name='billing_addresses', on_delete=models.RESTRICT)
     addr_type = models.ForeignKey(AddressTypes, on_delete=models.RESTRICT)
     addr_country = models.CharField(max_length=100, blank=True, null=True)
     addr_city = models.CharField(max_length=100, blank=True, null=True)
@@ -107,3 +119,4 @@ class BillingAddresses(models.Model):
     addr_floor = models.CharField(max_length=20, blank=True, null=True)
     addr_number = models.CharField(max_length=30, blank=True, null=True)
     zip_code = models.CharField(max_length=10, blank=True)
+    addr_is_active = models.BooleanField(default=True)
