@@ -1,10 +1,91 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from .models import Profile, UserImages
+from .models import (
+	Profile,
+	UserImages,
+	BillingAddresses,
+	Documents, Phones, DocumentTypes
+)
+# TODO: add validation for each field with documents
+# TODO: add urls for properties
+
+
+class PhonesSerializer(serializers.ModelSerializer):
+	phone_number = serializers.CharField(max_length=13, required=False)
+	phone_type = serializers.CharField(max_length=20, required=False)
+
+	class Meta:
+		model = Phones
+		fields = [
+			'phone_number',
+			'phone_type',
+		]
+
+
+class UserImagesSerializer(serializers.ModelSerializer):
+	filepath = serializers.CharField(max_length=200, required=False)
+	uploaded_at = serializers.DateTimeField(required=False)
+
+	class Meta:
+		model = UserImages
+		fields = [
+			'filepath',
+			'uploaded_at',
+		]
+
+
+class DocumentsSerializer(serializers.ModelSerializer):
+	doc_type = serializers.CharField(max_length=100, required=False)
+	doc_serial = serializers.IntegerField(required=False)
+	doc_number = serializers.IntegerField(required=False)
+	doc_issued_at = serializers.DateField(required=False)
+	doc_issued_by = serializers.CharField(max_length=100, required=False)
+	doc_is_confirmed = serializers.BooleanField(required=False)
+
+	class Meta:
+		model = Documents
+		fields = [
+			'id',
+			'doc_type',
+			'doc_serial',
+			'doc_number',
+			'doc_issued_at',
+			'doc_issued_by',
+			'doc_is_confirmed'
+		]
+
+
+class BillingAddressSerializer(serializers.ModelSerializer):
+	addr_type = serializers.CharField(max_length=100, required=False)
+	addr_country = serializers.CharField(max_length=100, required=False)
+	addr_city = serializers.CharField(max_length=100, required=False)
+	addr_street_1 = serializers.CharField(max_length=100, required=False)
+	addr_street_2 = serializers.CharField(max_length=100, required=False)
+	addr_building = serializers.CharField(max_length=20, required=False)
+	addr_floor = serializers.CharField(max_length=20, required=False)
+	addr_number = serializers.CharField(max_length=30, required=False)
+	zip_code = serializers.CharField(max_length=10, required=False)
+	addr_is_active = serializers.BooleanField(required=False)
+
+	class Meta:
+		model = BillingAddresses
+		fields = [
+			'addr_type',
+			'addr_country',
+			'addr_city',
+			'addr_street_1',
+			'addr_street_2',
+			'addr_building',
+			'addr_floor',
+			'addr_number',
+			'zip_code',
+			'addr_is_active'
+		]
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+	# using nested serializers for convenience
 	account_type = serializers.CharField()
 	is_confirmed = serializers.BooleanField()
 	id_document = serializers.CharField()
@@ -35,60 +116,40 @@ class ProfileListSerializer(serializers.ModelSerializer):
 		fields = ('id', 'username', 'email')
 		model = Profile
 
-"""
-class UserUpdateSerializer(serializers.ModelSerializer):
-	username = serializers.CharField(required=False, read_only=True)
-	first_name = serializers.CharField(required=False, read_only=False)
-	last_name = serializers.CharField(required=False, read_only=False)
-	email = serializers.EmailField(required=False, read_only=True)
-	id = serializers.IntegerField(required=False, read_only=True)
-	profile = ProfileSerializer(many=False)
-
-	class Meta:
-		model = User
-		fields = ('id', 'first_name', 'last_name', 'username', 'email', 'profile')
-
-	def update(self, instance, validated_data):
-		first_name = validated_data.get("first_name", None)
-		last_name = validated_data.get("last_name", None)
-		email = validated_data.get("last_name", None)
-		if first_name is not None:
-			instance.first_name = validated_data['first_name']
-		if last_name is not None:
-			instance.last_name = validated_data['last_name']
-		if email is not None:
-			instance.email = validated_data['email']
-		instance.save()
-		return instance
-"""
-
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
 	id = serializers.IntegerField(source='user.id', read_only=True)
 	username = serializers.CharField(read_only=True, source='user.username')
 	email = serializers.CharField(read_only=True, source='user.email')
-	first_name = serializers.CharField(read_only=False, required=False)
-
-	last_name = serializers.CharField(read_only=False, required=False)
-	account_type = serializers.CharField(read_only=False, required=False)
 	is_confirmed = serializers.BooleanField(read_only=True, required=False)
-	id_document = serializers.CharField(read_only=False, required=False)
+	last_updated = serializers.DateTimeField(read_only=True)
+	first_name = serializers.CharField(read_only=False, required=False)
+	last_name = serializers.CharField(read_only=False, required=False)
+	account_type = serializers.CharField(max_length=100,
+										read_only=False, required=False)
 	dob = serializers.DateField(read_only=False, required=False)
-	main_address = serializers.CharField(read_only=False, required=False)
-	patronymic = serializers.CharField(read_only=False, required=False)
-	gender = serializers.CharField(read_only=False, required=False)
+	patronymic = serializers.CharField(max_length=50,
+									read_only=False, required=False)
+	gender = serializers.CharField(max_length=1,
+								read_only=False, required=False)
 	date_created = serializers.DateTimeField(source='user.date_joined', read_only=True)
+	bio = serializers.CharField(read_only=False, max_length=1024, required=False)
+
+	documents = DocumentsSerializer(read_only=False, many=True)
+	billing_addresses = BillingAddressSerializer(read_only=False, many=False, required=False)
+	account_phones = PhonesSerializer(read_only=False, many=False, required=False)
+	account_images = UserImagesSerializer(read_only=True, many=True, required=False)
 
 	def update(self, instance, validated_data):
+
 		user_object = User.objects.get(id=self.context['request'].user.id)
 		first_name = validated_data.get('first_name', None)
 		last_name = validated_data.get('last_name', None)
 		account_type = validated_data.get('account_type', None)
-		id_document = validated_data.get('id_document', None)
 		dob = validated_data.get('dob', None)
-		main_address = validated_data.get('main_address', None)
 		patronymic = validated_data.get('patronymic', None)
 		gender = validated_data.get('gender', None)
+		bio = validated_data.get('bio', None)
 
 		if first_name is not None:
 			user_object.first_name = first_name
@@ -98,38 +159,42 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 			instance.last_name = last_name
 		if account_type is not None:
 			instance.account_type = account_type
-		if id_document is not None:
-			instance.id_document = id_document
 		if dob is not None:
 			instance.dob = dob
-		if main_address is not None:
-			instance.main_address = main_address
 		if patronymic is not None:
 			instance.patronymic = patronymic
 		if gender is not None:
 			instance.gender = gender
+		if bio is not None:
+			instance.bio = bio
 
-		instance.save()
+		# TODO: add create/update for nested serializers
+
 		user_object.save()
+		instance.save()
 		return instance
 
 	class Meta:
-		model = Profile
-		fields = (
+		fields = [
 			'id',
 			'username',
 			'email',
 			'first_name',
 			'last_name',
 			'patronymic',
+			'bio',
 			'account_type',
 			'is_confirmed',
-			'id_document',
 			'dob',
-			'main_address',
 			'gender',
-			'date_created'
-		)
+			'documents',
+			'billing_addresses',
+			'account_phones',
+			'account_images',
+			'date_created',
+			'last_updated'
+		]
+		model = Profile
 
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
@@ -139,30 +204,39 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 	email = serializers.EmailField(read_only=True, source='user.email')
 	id = serializers.IntegerField(source='user.id', read_only=True)
 	date_created = serializers.DateTimeField(source='user.date_joined', read_only=True)
-	# profilePicture
-	account_type = serializers.CharField(read_only=True)
+	last_updated = serializers.DateTimeField(read_only=True)
+	account_type = serializers.CharField(read_only=True, max_length=100)
 	is_confirmed = serializers.BooleanField(read_only=True)
-	id_document = serializers.CharField(read_only=True)
 	dob = serializers.DateField(read_only=True)
-	main_address = serializers.CharField(read_only=True)
-	patronymic = serializers.CharField(read_only=True)
-	gender = serializers.CharField(read_only=True)
+	patronymic = serializers.CharField(read_only=True, max_length=50)
+	gender = serializers.CharField(read_only=True, max_length=1)
+	bio = serializers.CharField(read_only=True, max_length=1024)
+
+	documents = DocumentsSerializer(read_only=True, many=True)
+	billing_addresses = BillingAddressSerializer(read_only=True, many=True)
+	account_phones = PhonesSerializer(read_only=True, many=True)
+	account_images = UserImagesSerializer(read_only=True, many=True)
 
 	class Meta:
-		fields = (
+		fields = [
 			'id',
 			'username',
 			'email',
 			'first_name',
 			'last_name',
 			'patronymic',
+			'bio',
 			'account_type',
 			'is_confirmed',
-			'id_document',
 			'dob',
-			'main_address',
 			'gender',
-			'date_created')
+			'documents',
+			'billing_addresses',
+			'account_phones',
+			'account_images',
+			'date_created',
+			'last_updated'
+		]
 		model = Profile
 
 
