@@ -17,7 +17,7 @@ class PropertySerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Property
 		author_id = serializers.Field(source='author')
-		fields = ('author_id', 'id', 'title', 'body', 'price', 'active', 'image',)
+		fields = ('author_id', 'id', 'title', 'body', 'price', 'active',)
 		read_only_fields = ['author_id', 'id']
 
 
