@@ -11,8 +11,6 @@ class Property(models.Model):
 	body = models.TextField()
 	price = models.PositiveIntegerField()
 	active = models.BooleanField(default=True)
-	image = models.TextField(blank=True)  # TODO: convert to main_image
-	# lock_id
 	# TODO: add multiple images that would be available with details view
 
 	def __str__(self):
@@ -47,3 +45,16 @@ class PremisesImages(models.Model):
 	filepath = models.CharField(max_length=200, null=False, blank=False)
 	uploaded_at = models.DateTimeField(auto_now_add=True)
 	is_deleted = models.BooleanField(default=False)
+	is_main = models.BooleanField(default=False)
+
+
+class PremisesAddresses(models.Model):
+	premises = models.ForeignKey(Property, on_delete=models.CASCADE)
+	paddr_country = models.CharField(max_length=100, blank=True, null=True)
+	paddr_city = models.CharField(max_length=100, blank=True, null=True)
+	paddr_street_1 = models.CharField(max_length=100, blank=True, null=True)
+	paddr_street_2 = models.CharField(max_length=100, blank=True, null=True)
+	paddr_building = models.CharField(max_length=20, blank=True, null=True)
+	paddr_floor = models.CharField(max_length=20, blank=True, null=True)
+	paddr_number = models.CharField(max_length=30, blank=True, null=True)
+	pzip_code = models.CharField(max_length=10, blank=True)
