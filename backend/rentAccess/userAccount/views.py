@@ -5,15 +5,39 @@ from rest_framework.permissions import IsAuthenticated
 from .permissions import IsOwnerOrSuperuser, IsCurrentUserOrSuperuser
 from .models import Profile
 from .serializers import (ProfileSerializer, ChangePasswordSerializer,
-						FileUploadSerializer, ProfileListSerializer,
-						ProfileUpdateSerializer, ProfileDetailSerializer)
+						  FileUploadSerializer, ProfileListSerializer,
+						  ProfileUpdateSerializer, ProfileDetailSerializer)
 
 
 # TODO: consider simplifying update/delete/get into one class
 
 
+class AccountPhonesListCreate(generics.ListCreateAPIView):
+	pass
+
+
+class AccountPhonesDetails(generics.ListCreateAPIView):
+	pass
+
+
+class BillingAddressesDetail(generics.RetrieveUpdateDestroyAPIView):
+	pass
+
+
+class BillingAddressesListCreate(generics.ListCreateAPIView):
+	pass
+
+
+class DocumentsListCreate(generics.ListCreateAPIView):
+	pass
+
+
+class DocumentDetail(generics.RetrieveUpdateDestroyAPIView):
+	pass
+
+
 class ProfileList(generics.ListAPIView):
-	permission_classes = (permissions.IsAdminUser, )
+	permission_classes = (permissions.IsAdminUser,)
 	queryset = Profile.objects.get_queryset().order_by('user_id')
 	serializer_class = ProfileListSerializer
 
@@ -42,10 +66,13 @@ class ChangePasswordView(generics.UpdateAPIView):
 	serializer_class = ChangePasswordSerializer
 
 
+
+
 class ProfileUploadUserPic(generics.CreateAPIView):
 	# TODO: finish upload class
 	parser_classes = (FormParser, MultiPartParser)
 	serializer_class = FileUploadSerializer
+	permission_classes = (IsAuthenticated, IsCurrentUserOrSuperuser,)
 
 
 class ProfileDeleteUserPic(generics.DestroyAPIView):
