@@ -1,6 +1,8 @@
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
-
+import os
+from uuid import uuid4
 #
 #
 #
@@ -15,9 +17,6 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE,
                                 primary_key=True, related_name='user_profile')
     CHOICES_1 = [
-        ('ADMIN', 'Admin User'),
-        ('STAFF', 'Staff User'),
-        ('OWNER', 'Owner User'),
         ('CLIENT', 'Client User'),
         ('OTHER', 'Other User'),
     ]
@@ -58,10 +57,24 @@ class UserLogs(models.Model):
     # result =
 
 
+def path_and_rename(path=''):
+    def wrapper(instance, filename):
+        ext = filename.split('.')[-1]
+        # get filename
+        if instance.pk:
+            filename = '{}.{}'.format(instance.pk, ext)
+        else:
+            # set filename as random string
+            filename = '{}.{}'.format(uuid4().hex, ext)
+        # return the whole path to the file
+        return os.path.join(path, filename)
+    return wrapper
+
+
 class UserImages(models.Model):
     account = models.ForeignKey(Profile, related_name='account_images',
                                 on_delete=models.RESTRICT)
-    filepath = models.CharField(max_length=200, null=False, blank=False)
+    image = models.ImageField(upload_to=path_and_rename(), blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
