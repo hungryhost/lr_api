@@ -1,3 +1,6 @@
+import datetime
+from time import timezone
+
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
@@ -7,6 +10,8 @@ from .models import (
 	BillingAddresses,
 	Documents, Phones, DocumentTypes
 )
+
+
 # TODO: add validation for each field with documents
 # TODO: add urls for properties
 
@@ -126,12 +131,12 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 	first_name = serializers.CharField(read_only=False, required=False)
 	last_name = serializers.CharField(read_only=False, required=False)
 	account_type = serializers.CharField(max_length=100,
-										read_only=False, required=False)
+										 read_only=False, required=False)
 	dob = serializers.DateField(read_only=False, required=False)
 	patronymic = serializers.CharField(max_length=50,
-									read_only=False, required=False)
+									   read_only=False, required=False)
 	gender = serializers.CharField(max_length=1,
-								read_only=False, required=False)
+								   read_only=False, required=False)
 	date_created = serializers.DateTimeField(source='user.date_joined', read_only=True)
 	bio = serializers.CharField(read_only=False, max_length=1024, required=False)
 
@@ -210,6 +215,7 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 	gender = serializers.CharField(read_only=True, max_length=1)
 	bio = serializers.CharField(read_only=True, max_length=1024)
 	userpic = serializers.SerializerMethodField('get_userpic')
+
 	# documents = DocumentsSerializer(read_only=True, many=True)
 	# billing_addresses = BillingAddressSerializer(read_only=True, many=True)
 	# account_phones = PhonesSerializer(read_only=True, many=True)
@@ -219,7 +225,6 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 		image_object = UserImages.objects.get(account=obj, is_deleted=False)
 		request = self.context.get('request')
 		return request.build_absolute_uri(image_object.image.url)
-
 
 	def to_representation(self, data):
 		representation = super(ProfileDetailSerializer, self).to_representation(data)
@@ -289,16 +294,25 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
 
 
 class FileUploadSerializer(serializers.ModelSerializer):
-
 	class Meta:
 		model = UserImages
 		fields = ('account', 'image', 'is_deleted', 'uploaded_at')
 		read_only_fields = ['account']
 
 	def create(self, validated_data):
+		# TODO: separate update mechanisms
 		image = validated_data.get('image', None)
-		user_image_object = UserImages.objects.create(
-			account=Profile.objects.get(user=self.context['request'].user),
-			image=image
-		)
-		return user_image_object
+		current_profile = Profile.objects.get(user=self.context['request'].user)
+		if not UserImages.objects.filter(account=current_profile).exists():
+			user_image_object = UserImages.objects.create(
+				account=current_profile,
+				image=image)
+			return user_image_object
+		else:
+			UserImages.objects.filter(account=current_profile).delete()
+			UserImages.objects.create(
+				account=current_profile,
+				image=image,
+				uploaded_at=datetime.datetime.now()
+			)
+			return UserImages.objects.get(account=current_profile)
