@@ -29,7 +29,7 @@ class PhonesSerializer(serializers.ModelSerializer):
 
 
 class UserImagesSerializer(serializers.ModelSerializer):
-	filepath = serializers.CharField(max_length=200, required=False)
+	filepath = serializers.CharField(max_length=200, required=True)
 	uploaded_at = serializers.DateTimeField(required=False)
 
 	class Meta:
@@ -41,17 +41,18 @@ class UserImagesSerializer(serializers.ModelSerializer):
 
 
 class DocumentsSerializer(serializers.ModelSerializer):
-	doc_type = serializers.CharField(max_length=100, required=False)
-	doc_serial = serializers.IntegerField(required=False)
-	doc_number = serializers.IntegerField(required=False)
-	doc_issued_at = serializers.DateField(required=False)
-	doc_issued_by = serializers.CharField(max_length=100, required=False)
-	doc_is_confirmed = serializers.BooleanField(required=False)
+	doc_type = serializers.CharField(max_length=100, required=True)
+	doc_serial = serializers.IntegerField(required=True)
+	doc_number = serializers.IntegerField(required=True)
+	doc_issued_at = serializers.DateField(required=True)
+	doc_issued_by = serializers.CharField(max_length=100, required=True)
+	doc_is_confirmed = serializers.BooleanField(read_only=True)
 
 	class Meta:
 		model = Documents
 		fields = [
 			'id',
+			'account',
 			'doc_type',
 			'doc_serial',
 			'doc_number',
@@ -59,6 +60,20 @@ class DocumentsSerializer(serializers.ModelSerializer):
 			'doc_issued_by',
 			'doc_is_confirmed'
 		]
+		read_only_fields = ['id', 'account']
+
+	def create(self, validated_data):
+		# TODO: separate update mechanisms
+		doc_type = DocumentTypes.objects.get(doc_type="passport_rus")
+		obj = Documents.objects.create(
+			account=self.context['request'].user,
+			doc_type=doc_type,
+			doc_serial=validated_data["doc_serial"],
+			doc_number=validated_data["doc_number"],
+			doc_issued_at=validated_data["doc_issued_at"],
+			doc_issued_by=validated_data["doc_issued_by"]
+		)
+		return obj
 
 
 class BillingAddressSerializer(serializers.ModelSerializer):
@@ -93,9 +108,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 	# using nested serializers for convenience
 	account_type = serializers.CharField()
 	is_confirmed = serializers.BooleanField()
-	id_document = serializers.CharField()
 	dob = serializers.DateField()
-	main_address = serializers.CharField()
 	patronymic = serializers.CharField(read_only=False)
 	gender = serializers.CharField()
 
@@ -104,9 +117,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 		fields = (
 			'account_type',
 			'is_confirmed',
-			'id_document',
 			'dob',
-			'main_address',
 			'patronymic',
 			'gender',
 		)
@@ -214,7 +225,7 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 	patronymic = serializers.CharField(read_only=True, max_length=50)
 	gender = serializers.CharField(read_only=True, max_length=1)
 	bio = serializers.CharField(read_only=True, max_length=1024)
-	userpic = serializers.SerializerMethodField('get_userpic')
+	userpic = serializers.SerializerMethodField('get_userpic', default="")
 
 	# documents = DocumentsSerializer(read_only=True, many=True)
 	# billing_addresses = BillingAddressSerializer(read_only=True, many=True)
@@ -222,9 +233,11 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 	# account_images = UserImagesSerializer(read_only=True, many=True)
 
 	def get_userpic(self, obj):
-		image_object = UserImages.objects.get(account=obj, is_deleted=False)
-		request = self.context.get('request')
-		return request.build_absolute_uri(image_object.image.url)
+		try:
+			image_object = UserImages.objects.get(account=self.context['request'].user, is_deleted=False)
+			return self.context['request'].build_absolute_uri(image_object.image.url)
+		except Exception as e:
+			return ""
 
 	def to_representation(self, data):
 		representation = super(ProfileDetailSerializer, self).to_representation(data)
@@ -272,10 +285,10 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
 		fields = ('old_password', 'password', 'password2')
 
 	def validate(self, attrs):
-		if attrs['old_password'] == attrs['password2']:
-			raise serializers.ValidationError({"password": "New Password is the same as old"})
 		if attrs['password'] != attrs['password2']:
 			raise serializers.ValidationError({"password": "Password fields didn't match"})
+		if attrs['old_password'] == attrs['password2']:
+			raise serializers.ValidationError({"password": "New Password is the same as old"})
 		return attrs
 
 	def validate_old_password(self, value):
@@ -294,6 +307,8 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
 
 
 class FileUploadSerializer(serializers.ModelSerializer):
+	image = serializers.ImageField(required=True)
+
 	class Meta:
 		model = UserImages
 		fields = ('account', 'image', 'is_deleted', 'uploaded_at')
@@ -302,17 +317,16 @@ class FileUploadSerializer(serializers.ModelSerializer):
 	def create(self, validated_data):
 		# TODO: separate update mechanisms
 		image = validated_data.get('image', None)
-		current_profile = Profile.objects.get(user=self.context['request'].user)
-		if not UserImages.objects.filter(account=current_profile).exists():
+		if not UserImages.objects.filter(account=self.context['request'].user).exists():
 			user_image_object = UserImages.objects.create(
-				account=current_profile,
+				account=self.context['request'].user,
 				image=image)
 			return user_image_object
 		else:
-			UserImages.objects.filter(account=current_profile).delete()
+			UserImages.objects.filter(account=self.context['request'].user).delete()
 			UserImages.objects.create(
-				account=current_profile,
+				account=self.context['request'].user,
 				image=image,
 				uploaded_at=datetime.datetime.now()
 			)
-			return UserImages.objects.get(account=current_profile)
+			return UserImages.objects.get(account=self.context['request'].user)
