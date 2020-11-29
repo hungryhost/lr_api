@@ -45,7 +45,10 @@ urlpatterns = [
 """
 change_password = ProfileDetailViewSet.as_view({'patch': 'change_password'})
 documents_list = ProfileDocumentsViewSet.as_view({'get': 'list'})
-documents_post = ProfileImageViewSet.as_view({'put': 'update_user_picture'})
+documents_post = ProfileImageViewSet.as_view({
+    'put': 'update_user_picture',
+    'delete': 'delete_user_picture'
+    })
 urlpatterns = [
     path('', ProfileDetailViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update'})),
     path('change_password/', change_password),

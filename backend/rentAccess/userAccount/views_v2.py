@@ -109,6 +109,11 @@ class ProfileImageViewSet(viewsets.ViewSet):
 		serializer.save()
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
+	@action(detail=True, methods=['delete'])
+	def delete_user_picture(self, request):
+		UserImages.objects.get(account=self.request.user).delete()
+		return Response(status=status.HTTP_204_NO_CONTENT)
+
 	def get_permissions(self):
 		permission_classes = [PersonalInfoAccessList, ]
 		return [permission() for permission in permission_classes]
