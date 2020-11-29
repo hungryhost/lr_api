@@ -51,30 +51,28 @@ class Profile(models.Model):
 class UserLogs(models.Model):
     user = models.ForeignKey(User, related_name='user_logs',
                              on_delete=models.RESTRICT)
-    account = models.ForeignKey(Profile, on_delete=models.RESTRICT)
+    account = models.ForeignKey(Profile, on_delete=models.CASCADE)
     timestamp = models.DateTimeField()
     # action =
     # result =
 
-
-def path_and_rename(path=''):
-    def wrapper(instance, filename):
-        ext = filename.split('.')[-1]
+def path_and_rename(instance, filename):
+    path = ''
+    ext = filename.split('.')[-1]
         # get filename
-        if instance.pk:
-            filename = '{}.{}'.format(instance.pk, ext)
-        else:
-            # set filename as random string
-            filename = '{}.{}'.format(uuid4().hex, ext)
-        # return the whole path to the file
-        return os.path.join(path, filename)
-    return wrapper
+    if instance.pk:
+        filename = '{}.{}'.format(instance.pk, ext)
+    else:
+       # set filename as random string
+        filename = '{}.{}'.format(uuid4().hex, ext)
+    # return the whole path to the file
+    return os.path.join(path, filename)
 
 
 class UserImages(models.Model):
-    account = models.ForeignKey(Profile, related_name='account_images',
-                                on_delete=models.RESTRICT)
-    image = models.ImageField(upload_to=path_and_rename(), blank=True, null=True)
+    account = models.ForeignKey(User, related_name='account_images',
+                                on_delete=models.CASCADE)
+    image = models.ImageField(upload_to=path_and_rename, blank=True, null=True)
     is_deleted = models.BooleanField(default=False)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
@@ -88,8 +86,8 @@ class PhoneTypes(models.Model):
 
 
 class Phones(models.Model):
-    account = models.ForeignKey(Profile, related_name='account_phones',
-                                on_delete=models.RESTRICT)
+    account = models.ForeignKey(User, related_name='account_phones',
+                                on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=13, null=False, blank=False)
     phone_type = models.ForeignKey(PhoneTypes, on_delete=models.RESTRICT)
     is_deleted = models.BooleanField(default=False)
@@ -112,8 +110,8 @@ class AddressTypes(models.Model):
 
 
 class Documents(models.Model):
-    account = models.ForeignKey(Profile, related_name='documents', on_delete=models.RESTRICT)
-    doc_type = models.ForeignKey(DocumentTypes, to_field='doc_type', on_delete=models.RESTRICT)
+    account = models.ForeignKey(User, related_name='documents', on_delete=models.CASCADE)
+    doc_type = models.ForeignKey(DocumentTypes, to_field='doc_type', on_delete=models.CASCADE)
     doc_serial = models.PositiveIntegerField(null=True, blank=True, unique=True)
     doc_number = models.PositiveIntegerField(null=True, blank=True, unique=True)
     doc_issued_at = models.DateField(null=True, blank=True)
@@ -122,7 +120,7 @@ class Documents(models.Model):
 
 
 class BillingAddresses(models.Model):
-    account = models.ForeignKey(Profile, related_name='billing_addresses', on_delete=models.RESTRICT)
+    account = models.ForeignKey(User, related_name='billing_addresses', on_delete=models.CASCADE)
     addr_type = models.ForeignKey(AddressTypes, on_delete=models.RESTRICT)
     addr_country = models.CharField(max_length=100, blank=True, null=True)
     addr_city = models.CharField(max_length=100, blank=True, null=True)
