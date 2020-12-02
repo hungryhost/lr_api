@@ -43,7 +43,7 @@ CORS_ORIGIN_WHITELIST = (
 
 # Application definition
 
-
+SETTINGS_PATH = os.path.normpath(os.path.dirname(__file__))
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -97,6 +97,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rentAccess.wsgi.application'
 
+TEMPLATE_DIRS = (
+    os.path.join(SETTINGS_PATH, 'templates'),
+)
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
