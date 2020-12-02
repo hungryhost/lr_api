@@ -32,7 +32,6 @@ class PropertyCreateUpdateSerializer(serializers.ModelSerializer):
 	body = serializers.CharField(required=True)
 	price = serializers.IntegerField(required=True, validators=[validate_price])
 	active = serializers.BooleanField(required=False)
-	image = serializers.CharField(required=False)
 
 	class Meta:
 		model = Property
@@ -44,7 +43,6 @@ class PropertyCreateUpdateSerializer(serializers.ModelSerializer):
 			"body",
 			"price",
 			"active",
-			"image"
 		]
 		read_only_fields = ['author_id', 'id']
 
@@ -59,14 +57,12 @@ class PropertyCreateUpdateSerializer(serializers.ModelSerializer):
 		price = validated_data["price"]
 
 		active = validated_data.get("active", None)
-		image = validated_data.get("image", None)
-		if image is None:
-			image = "/media/defaults/property_default.png"
+
 		if active is None:
 			active = True
 		property_to_create = Property(
 			author=Profile.objects.get(user=self.context['request'].user),
-			title=title, body=body, price=price, active=active, image=image)
+			title=title, body=body, price=price, active=active)
 		property_to_create.save()
 		return property_to_create
 
@@ -76,7 +72,6 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 	body = serializers.CharField(required=False)
 	price = serializers.IntegerField(required=False, validators=[validate_price])
 	active = serializers.BooleanField(required=False)
-	image = serializers.CharField(required=False)
 
 	class Meta:
 		model = Property
@@ -88,7 +83,6 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			"body",
 			"price",
 			"active",
-			"image"
 		]
 		read_only_fields = ['author_id', 'id']
 
@@ -103,7 +97,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 		body = validated_data.get("body", None)
 		price = validated_data.get("price", None)
 		active = validated_data.get("active", None)
-		image = validated_data.get("image", None)
+
 
 		if title is not None:
 			instance.title = validated_data["title"]
@@ -113,8 +107,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			instance.price = validated_data["price"]
 		if active is not None:
 			instance.active = validated_data["active"]
-		if image is not None:
-			instance.image = validated_data["image"]
+
 		instance.save()
 		return instance
 
