@@ -24,8 +24,7 @@ class PropertyList(generics.ListAPIView):
 	permission_classes = (IsOwnerOrSuperuser, IsAuthenticated,)
 	queryset = Property.objects.all()
 	serializer_class = PropertySerializer
-	lookup_field = 'pk'
-	lookup_url_kwarg = 'property_pk'
+
 	"""
 	def perform_create(self, serializer):
 		my_p = Profile.objects.get(user=self.request.user)
@@ -57,8 +56,7 @@ class PropertyCreate(generics.CreateAPIView):
 	Version: 1.0
 	Last Update: 16.11.2020
 	"""
-	lookup_field = 'pk'
-	lookup_url_kwarg = 'property_pk'
+
 	permission_classes = (IsOwnerOrSuperuser, IsAuthenticated)
 	queryset = Property.objects.filter()
 	serializer_class = PropertyCreateUpdateSerializer
@@ -71,8 +69,6 @@ class PropertyUpdate(generics.UpdateAPIView):
 	Version: 1.0
 	Last Update: 16.11.2020
 	"""
-	lookup_field = 'pk'
-	lookup_url_kwarg = 'property_pk'
 	permission_classes = (IsAuthenticated, IsOwnerOrSuperuser, )
 	queryset = Property.objects.filter()
 	serializer_class = PropertyUpdateSerializer
@@ -85,8 +81,6 @@ class PropertyDetail(generics.RetrieveAPIView):
 		Version: 1.0
 		Last Update: 16.11.2020
 	"""
-	lookup_field = 'pk'
-	lookup_url_kwarg = 'property_pk'
 	permission_classes = (IsOwnerOrSuperuser, IsAuthenticated, )
 	queryset = Property.objects.filter()
 	serializer_class = PropertySerializer
@@ -99,8 +93,7 @@ class PropertyDelete(generics.DestroyAPIView):
 	Version: 1.0
 	Last Update: 16.11.2020
 	"""
-	lookup_field = 'pk'
-	lookup_url_kwarg = 'property_pk'
+	
 	permission_classes = (IsOwnerOrSuperuser, IsAuthenticated,)
 	queryset = Property.objects.filter()
 	serializer_class = PropertySerializer
