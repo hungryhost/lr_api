@@ -52,13 +52,17 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_swagger',
+    'rest_framework_simplejwt.token_blacklist',
     'properties',
     'jwtauth',
     'userAccount',
     'corsheaders',
-    'rest_framework_swagger',
-    'rest_framework_simplejwt.token_blacklist',
     'common',
+    #'register',
+    #'keys',
+    #'schedule',
+    #'locks',
 ]
 
 MIDDLEWARE = [
@@ -153,7 +157,7 @@ STATIC_URL = '/static/'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-# STATIC_ROOT = '/home/test/web-294/backend/rentAccess/static/'
+STATIC_ROOT = '/static/'
 
 # when DEBUG == True DRF will render errors as html pages
 if DEBUG:
@@ -168,6 +172,14 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/day',
+        'user': '1000/day'
+    },
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
