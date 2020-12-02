@@ -37,7 +37,7 @@ urlpatterns = [
     # path('auth/', include('rest_framework.urls')),
     path('api/v1/auth/', include('jwtauth.urls'), name='jwtauth'),
     path('api/v1/users/', include('userAccount.urls')),
-    path('api/v1/user/', include('userAccount.urls_v2', namespace='userAccount')),
+    path('api/v1/user/', include('userAccount.urls_v2')),
     path('api/v1/admin/users/', include('userAccount.urls_admin')),
     # ------------------- DOCS -------------------
     path('api/v1/service-api-docs/', TemplateView.as_view(
