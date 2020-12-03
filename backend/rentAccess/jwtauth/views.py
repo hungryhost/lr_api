@@ -7,11 +7,12 @@ from rest_framework import response, decorators, permissions, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+
+from .utils import username_generate_from_email
 from .tasks import email_confirmation_task
 from .serializers import UserCreateSerializer, UserLoginSerializer
 from userAccount.models import Profile
 from django.contrib.sites.shortcuts import get_current_site
-# TODO: create blacklist for tokens
 
 
 User = get_user_model()
@@ -22,7 +23,8 @@ User = get_user_model()
 def registration(request):
 	"""
 	This method implements user registration.
-	Version: 1.0
+	Version 1.0
+
 	:param request: incoming POST request
 	:return: JSON object with data
 	"""
@@ -32,6 +34,9 @@ def registration(request):
 		return response.Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 	user = serializer.save()
 	curr_user = User.objects.get(username=user.username)
+	username = username_generate_from_email(curr_user.email, curr_user.id)
+	curr_user.username = username
+	curr_user.save()
 	profile = Profile.objects.get(user=curr_user)
 	refresh = RefreshToken.for_user(user)
 	res = {
@@ -39,12 +44,14 @@ def registration(request):
 		"access": str(refresh.access_token),
 		"personal_info": {
 			"account_id": profile.user.id,
-			"username": str(user.email),
-			"first_name": str(user.first_name),
-			"last_name": str(user.last_name),
+			"username": str(curr_user.username),
+			"email": str(curr_user.email),
+			"first_name": str(curr_user.first_name),
+			"last_name": str(curr_user.last_name),
 			"account_type": str(profile.account_type),
 		},
 	}
+	# TODO: owed refactoring, what's below belongs in another file
 	current_site = get_current_site(request).domain
 	relative_link = reverse('email_verification')
 	absolute_url = 'http://'+current_site+relative_link+'?token='+str(refresh.access_token)
@@ -69,6 +76,7 @@ def login(request):
 	"""
 	This method implements user login action.
 	Version: 1.0
+
 	:param request: incoming POST request
 	:return: JSON object with data
 	"""
@@ -86,7 +94,8 @@ def login(request):
 		"access": str(refresh.access_token),
 		"personal_info": {
 			"account_id": profile.user.id,
-			"username": str(user.email),
+			"username": str(user.username),
+			"email": str(user.email),
 			"first_name": str(user.first_name),
 			"last_name": str(user.last_name),
 			"account_type": str(profile.account_type),
@@ -101,6 +110,7 @@ def logout(request):
 	"""
 	This method implements user logout endpoint.
 	Version: 1.0
+
 	:param request: incoming POST request
 	:return: JSON object with status code
 	"""
@@ -119,6 +129,7 @@ def logout_all(request):
 	"""
 	This method implements user logout_all endpoint.
 	Version: 1.0
+
 	:param request: incoming POST request
 	:return: JSON object with status code
 	"""
@@ -134,6 +145,7 @@ def logout_all(request):
 def email_verification(request):
 	"""
 	This method implements email verification endpoint.
+
 	:param request: incoming GET request.
 	"""
 	token = request.GET.get('token')
@@ -147,6 +159,7 @@ def email_verification(request):
 		return Response({
 			'email': 'Email confirmed'
 		}, status=status.HTTP_200_OK)
+	# TODO: owed refactoring, adjust error handler for these exceptions below
 	except jwt.exceptions.ExpiredSignatureError as identifier:
 		data = {}
 		errors = ["token: Expired token (activation failed)"]
