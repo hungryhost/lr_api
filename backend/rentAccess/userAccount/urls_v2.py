@@ -1,58 +1,32 @@
 from django.contrib import admin
 from django.conf.urls import url
 from django.urls import path, include
+from rest_framework import routers
 from rest_framework.routers import DefaultRouter
 
-from properties.views import (
-    PropertyList,
-    PropertyDetail,
-    PropertyCreate,
-    PropertyUpdate,
-    PropertyDelete
-)
-from .views_v2 import ProfileDetailViewSet, ProfileDocumentsViewSet, ProfileImageViewSet
-
-from .views import (
-    ProfileDetail,
-    ProfileList,
-    # ChangePasswordView,
-   # ProfileUpdate,
-    #ProfileDelete,
-    ProfileUploadUserPic
-)
-
-
-
-"""
-urlpatterns = [
-    path('<int:pk>/', ProfileDetail.as_view(), name='profile_detail'),
-    path('test/', ProfileDetailsView.as_view()),
-    path('change_password/<int:pk>/', ChangePasswordView.as_view(), name='auth_change_password'),
-    path('', ProfileList.as_view()),
-    path('<int:pk>/update/', ProfileUpdate.as_view(), name='profile_update'),
-    path('<int:pk>/delete/', ProfileDelete.as_view(), name='profile_delete'),
-    # TODO: consider using endpoints below:
-    # path('<int:pk>/properties/<property_pk>/', PropertyDetail.as_view()),
-    # path('<int:pk>/properties/', PropertyList.as_view()),
-    # path('<int:pk>/properties/create/', PropertyCreate.as_view()),
-    # path('<int:pk>/properties/update/<property_pk>/', PropertyUpdate.as_view()),
-    # path('<int:pk>/properties/delete/<property_pk>/', PropertyDelete.as_view()),
-    # TODO: uncomment the paths below after adding the views
-    path('<int:pk>/upload_userpic/', ProfileUploadUserPic.as_view()),
-    # path('delete_userpic/<int:pk>/', ProfileDeleteUserPic.as_view()),
-    # path('reset_password/<int:pk>/', ProfileResetPassword.as_view()),
-]
-"""
-change_password = ProfileDetailViewSet.as_view({'patch': 'change_password'})
-documents_list = ProfileDocumentsViewSet.as_view({'get': 'list'})
-documents_post = ProfileImageViewSet.as_view({
+from .addresses_views import ProfileAddressesViewSet
+from .documents_views import ProfileDocumentsViewSet
+from .views_v2 import ProfileDetailViewSet, ProfileImageViewSet
+app_name = 'userAccount'
+change_password = ProfileDetailViewSet.as_view({'put': 'change_password'})
+images_post = ProfileImageViewSet.as_view({
     'put': 'update_user_picture',
     'delete': 'delete_user_picture'
     })
-urlpatterns = [
-    path('', ProfileDetailViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update'})),
-    path('change_password/', change_password),
-    path('documents/', ProfileDocumentsViewSet.as_view({'post': 'create', 'get': 'list'})),
-    path('userpic/', documents_post),
-]
+account_suspend = ProfileDetailViewSet.as_view({'post': 'suspend_user'})
+account_unsuspend = ProfileDetailViewSet.as_view({'post': 'unsuspend_user'})
+router = routers.SimpleRouter()
+# router.register(r'', ProfileDocumentsViewSet, basename='documents')
+router.register(r'documents', ProfileDocumentsViewSet, basename='documents')
 
+
+urlpatterns = [
+    path('', ProfileDetailViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update'}), name='user-details'),
+    path('change_password/', change_password, name='change-password'),
+    path('', include((router.urls, 'userAccount'),)),
+    path('billing_addresses/', ProfileAddressesViewSet.as_view({'post': 'create', 'get': 'list'})),
+    path('userpic/', images_post, name='userpic'),
+    path('suspend/', account_suspend),
+    path('unsuspend/', account_unsuspend),
+    path('change_username/', ProfileDetailViewSet.as_view({'patch': 'change_username'}))
+]
