@@ -4,12 +4,14 @@ from rest_framework import generics, permissions, status, exceptions
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 
+from .documents_serializers import DocumentsSerializer
 from .permissions import IsOwnerOrSuperuser, IsCurrentUserOrSuperuser, PersonalInfoAccessList
 from .models import Profile, Documents, UserImages
 from .serializers import (ProfileSerializer, ChangePasswordSerializer,
 						  FileUploadSerializer, ProfileListSerializer,
-						  ProfileUpdateSerializer, ProfileDetailSerializer, DocumentsSerializer)
+						  ProfileUpdateSerializer, ProfileDetailSerializer)
 
 
 # TODO: consider simplifying update/delete/get into one class with ViewSets
@@ -46,7 +48,8 @@ class DocumentDetail(generics.RetrieveUpdateDestroyAPIView):
 
 
 class ProfileList(generics.ListAPIView):
-	permission_classes = (permissions.IsAuthenticated, )
+	throttle_classes = [UserRateThrottle, AnonRateThrottle]
+	permission_classes = (permissions.IsAdminUser, )
 	queryset = Profile.objects.get_queryset().order_by('user_id')
 	serializer_class = ProfileListSerializer
 
@@ -64,10 +67,9 @@ class ProfileList(generics.ListAPIView):
 
 
 class ProfileDetail(generics.RetrieveUpdateDestroyAPIView):
-	permission_classes = (IsOwnerOrSuperuser,)
 	queryset = Profile.objects.all()
 
-	http_method_names = ['get', 'patch', 'delete', 'head']
+	http_method_names = ['get', 'head']
 
 	def get_serializer_class(self):
 		profile = self.get_object()
@@ -84,6 +86,13 @@ class ProfileDetail(generics.RetrieveUpdateDestroyAPIView):
 		except TypeError:
 			raise exceptions.NotAuthenticated
 		return Response(status=status.HTTP_204_NO_CONTENT)
+
+	def get_permissions(self):
+		if self.request.method == 'GET':
+			permission_classes = [permissions.IsAuthenticated, ]
+		else:
+			permission_classes = [permissions.IsAdminUser, ]
+		return [permission() for permission in permission_classes]
 
 
 class ChangePasswordView(generics.UpdateAPIView):
