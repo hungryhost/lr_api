@@ -2,7 +2,7 @@ from .views import registration, login, logout, logout_all, email_verification
 from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
 from rest_framework_simplejwt.views import TokenVerifyView
-
+app_name = 'jwtauth'
 urlpatterns = [
     path('register/', registration, name='register'),
     path('token/', login, name='token_obtain_pair'),
