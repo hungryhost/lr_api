@@ -15,7 +15,7 @@ from django.dispatch import receiver
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE,
-                                primary_key=True, related_name='user_profile')
+                                primary_key=True, related_name='profile')
     CHOICES_1 = [
         ('CLIENT', 'Client User'),
         ('OTHER', 'Other User'),
@@ -23,14 +23,15 @@ class Profile(models.Model):
     GENDER_CHOICES = [
         ('M', 'Male'),
         ('F', 'Female'),
+        ('', 'Not Set'),
     ]
-    bio = models.CharField(null=True, blank=True, max_length=1024)
+    bio = models.CharField(null=False, blank=True, max_length=1024, default="")
     account_type = models.CharField(max_length=100, choices=CHOICES_1, default="OWNER")
     is_confirmed = models.BooleanField(default=False)
-    dob = models.DateField(null=True, blank=True)
-    patronymic = models.CharField(max_length=50, null=True, blank=True)
-    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, null=True,
-                              blank=True)
+    dob = models.DateField(null=False, blank=True, default="1970-01-01")
+    patronymic = models.CharField(max_length=50, null=False, blank=True, default="")
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, null=False,
+                              blank=True, default='')
     last_updated = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -49,12 +50,15 @@ class Profile(models.Model):
 
 
 class UserLogs(models.Model):
+    class Meta:
+        app_label = 'userAccount'
     user = models.ForeignKey(User, related_name='user_logs',
                              on_delete=models.RESTRICT)
     account = models.ForeignKey(Profile, on_delete=models.CASCADE)
     timestamp = models.DateTimeField()
     # action =
     # result =
+
 
 def path_and_rename(instance, filename):
     path = ''
@@ -70,6 +74,8 @@ def path_and_rename(instance, filename):
 
 
 class UserImages(models.Model):
+    class Meta:
+        app_label = 'userAccount'
     account = models.ForeignKey(User, related_name='account_images',
                                 on_delete=models.CASCADE)
     image = models.ImageField(upload_to=path_and_rename, blank=True, null=True)
@@ -78,6 +84,8 @@ class UserImages(models.Model):
 
 
 class PhoneTypes(models.Model):
+    class Meta:
+        app_label = 'userAccount'
     phone_type = models.CharField(max_length=20, primary_key=True)
     description = models.CharField(max_length=300, null=True, blank=True)
 
@@ -86,6 +94,8 @@ class PhoneTypes(models.Model):
 
 
 class Phones(models.Model):
+    class Meta:
+        app_label = 'userAccount'
     account = models.ForeignKey(User, related_name='account_phones',
                                 on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=13, null=False, blank=False)
@@ -94,6 +104,8 @@ class Phones(models.Model):
 
 
 class DocumentTypes(models.Model):
+    class Meta:
+        app_label = 'userAccount'
     doc_type = models.CharField(max_length=40, primary_key=True)
     description = models.CharField(max_length=100, null=True, blank=True)
 
@@ -102,6 +114,8 @@ class DocumentTypes(models.Model):
 
 
 class AddressTypes(models.Model):
+    class Meta:
+        app_label = 'userAccount'
     addr_type = models.CharField(max_length=40, primary_key=True)
     description = models.CharField(max_length=100, null=True, blank=True)
 
@@ -120,6 +134,8 @@ class Documents(models.Model):
 
 
 class BillingAddresses(models.Model):
+    class Meta:
+        app_label = 'userAccount'
     account = models.ForeignKey(User, related_name='billing_addresses', on_delete=models.CASCADE)
     addr_type = models.ForeignKey(AddressTypes, on_delete=models.RESTRICT)
     addr_country = models.CharField(max_length=100, blank=True, null=True)
