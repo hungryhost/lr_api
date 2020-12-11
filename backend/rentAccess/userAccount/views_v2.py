@@ -7,16 +7,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .permissions import IsOwnerOrSuperuser, IsCurrentUserOrSuperuser, PersonalInfoAccessList
-from .models import Profile, Documents, UserImages
+from .models import Profile, Documents, UserImages, BillingAddresses
 from .serializers import (ProfileSerializer, ChangePasswordSerializer,
 						  FileUploadSerializer, ProfileListSerializer,
-						  ProfileUpdateSerializer, ProfileDetailSerializer, DocumentsSerializer)
+						  ProfileUpdateSerializer, ProfileDetailSerializer)
 
 
 class ProfileDetailViewSet(viewsets.ViewSet):
-
-	def get_queryset(self):
-		return Profile.objects.all()
 
 	def retrieve(self, request):
 		profile = get_object_or_404(Profile, user=self.request.user)
@@ -38,13 +35,24 @@ class ProfileDetailViewSet(viewsets.ViewSet):
 		serializer.save()
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
-	@action(detail=True, methods=['patch'])
+	@action(detail=True, methods=['patch'], url_path='change-username', url_name='change_username')
+	def change_username(self, request):
+		try:
+			user = User.objects.get(pk=self.request.user.id)
+			username = self.request.data["username"]
+			user.username = username
+			user.save()
+			serializer = ProfileDetailSerializer(instance=Profile.objects.get(user=user))
+			return Response(serializer.data, status=status.HTTP_200_OK)
+		except Exception as e:
+			return Response(status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=True, methods=['put'], url_path='change-password', url_name='change_password')
 	def change_password(self, request, *args, **kwargs):
 		instance = User.objects.get(id=self.request.user.id)
 		serializer = ChangePasswordSerializer(
 			instance,
 			data=self.request.data,
-			partial=True,
 			context={'request': request}
 		)
 		serializer.is_valid(raise_exception=True)
@@ -52,47 +60,57 @@ class ProfileDetailViewSet(viewsets.ViewSet):
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
 	def get_permissions(self):
-
-		if self.request.method.lower() == "list":
-			permission_classes = [permissions.AllowAny]
-		elif self.request.method.lower() == "update_user_picture":
-			permission_classes = [IsCurrentUserOrSuperuser]
-		else:
-			permission_classes = [IsOwnerOrSuperuser]
+		permission_classes = [IsOwnerOrSuperuser]
 		return [permission() for permission in permission_classes]
 
 
-class ProfileDocumentsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
-	def get_queryset(self):
-		return Documents.objects.all()
+class AdminAccessUsersViewSet(viewsets.ViewSet):
 
-	def list(self, request, *args, **kwargs):
-		queryset = Documents.objects.all().filter(account=self.request.user)
-		page = self.paginate_queryset(queryset)
-		if page is not None:
-			serializer = DocumentsSerializer(page, many=True)
-			return self.get_paginated_response(serializer.data)
+	@action(detail=True, methods=['patch'])
+	def change_username(self, request, pk):
+		try:
+			user = User.objects.get(pk=pk)
+			username = self.request.data["username"]
+			user.username = username
+			user.save()
+			serializer = ProfileDetailSerializer(
+				instance=Profile.objects.get(user=user),
+				context={'request': request}
+			)
+			return Response(serializer.data, status=status.HTTP_200_OK)
+		except Exception as e:
+			return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
 
-		serializer = DocumentsSerializer(queryset, many=True)
+	def retrieve(self, request, pk=None):
+		profile = get_object_or_404(Profile, user=get_object_or_404(User, pk=pk))
+		serializer = ProfileDetailSerializer(profile, context={'request': request})
 		return Response(serializer.data)
 
-	def create(self, request):
-		serializer = DocumentsSerializer(
-			data=self.request.data,
-			context={'request': request}
-		)
-		serializer.is_valid(raise_exception=True)
-		serializer.save()
-		return Response(serializer.data, status=status.HTTP_201_CREATED)
+	@action(detail=False, methods=['post'], url_path='suspend-user', url_name='suspend_user')
+	def suspend_user(self, request):
+		try:
+			return Response(status=status.HTTP_200_OK)
+		except Exception as e:
+			return Response(status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=False, methods=['post'], url_path='unsuspend-user', url_name='unsuspend_user')
+	def unsuspend_user(self, request):
+		try:
+			return Response(status=status.HTTP_200_OK)
+		except Exception as e:
+			return Response(status=status.HTTP_400_BAD_REQUEST)
+
+	def get_queryset(self):
+		return Profile.objects.all()
 
 	def get_serializer_class(self):
-		return DocumentsSerializer
+		return ProfileDetailSerializer
 
 	def get_object(self):
-		return get_object_or_404(Documents, account=self.request.user)
+		return get_object_or_404(Profile, user=self.request.user)
 
 	def get_permissions(self):
-		permission_classes = [PersonalInfoAccessList, ]
+		permission_classes = [permissions.IsAdminUser, ]
 		return [permission() for permission in permission_classes]
 
 
