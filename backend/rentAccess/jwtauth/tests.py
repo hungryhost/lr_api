@@ -2,12 +2,16 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
-
+import logging
 User = get_user_model()
+
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 
 class TestsOfJWTUtils(APITestCase):
-
+	r"""
+	This is a utility class for the TestsOfJWT class.
+	"""
 	def test_auth_only_page(self, access_token):
 		self.auth_only_url = reverse('userAccount:user-details')
 		self.false_token = "adamantly"
@@ -34,12 +38,12 @@ class TestsOfJWT(APITestCase):
 
 	def setUp(self) -> None:
 		self.false_token = "adamantly"
-		self.token_verify_url = reverse('token_verify')
-		self.token_obtain_ulr = reverse('token_obtain_pair')
-		self.registration_url = reverse('register')
-		self.login_url = reverse('token_obtain_pair')
-		self.logout_url = reverse('logout')
-		self.logout_all_url = reverse('logout_all')
+		self.token_verify_url = reverse('jwtauth:token_verify')
+		self.token_obtain_ulr = reverse('jwtauth:token_obtain_pair')
+		self.registration_url = reverse('jwtauth:register')
+		self.login_url = reverse('jwtauth:token_obtain_pair')
+		self.logout_url = reverse('jwtauth:logout')
+		self.logout_all_url = reverse('jwtauth:logout_all')
 
 		# this section of JSON bodies for the requests
 		self.login_body_correct = \
