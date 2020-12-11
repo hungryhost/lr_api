@@ -1,4 +1,6 @@
 import datetime
+import random
+import string
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -9,6 +11,18 @@ from common.models import PermissionLevels
 from .models import PropertyTypes, Ownership, Property, PremisesAddresses
 
 User = get_user_model()
+
+
+def generate_random_string(length=10):
+	letters = string.ascii_lowercase
+	return ''.join(random.choice(letters) for i in range(length))
+
+
+def generate_random_list_of_strings(size=5, length=10):
+	list_of_strings = []
+	for i in range(size):
+		list_of_strings.append(generate_random_string(length))
+	return list_of_strings
 
 
 class TestsOfProperties(APITestCase):
@@ -35,12 +49,8 @@ class TestsOfProperties(APITestCase):
 		self.logout_url = reverse('jwtauth:logout')
 		self.logout_all_url = reverse('jwtauth:logout_all')
 
-		self.properties_list_url = reverse('properties:property-list')
-		self.properties_details_url = reverse('properties:properties-details')
-		self.owners_list_url = reverse('properties:owners-list')
-		self.owners_details_url = reverse('properties:owners-details')
-		self.bookings_list_url = reverse('properties:bookings-list')
-		
+
+
 		self.create_property_JSON = \
 			{
 				"title": "test_property_1",
@@ -108,19 +118,24 @@ class TestsOfProperties(APITestCase):
 				"password": "test_pass_test_pass",
 				"password2": "test_pass_test_pass"
 			}
+		self.properties_list_url = reverse('properties:properties-list')
+		self.properties_details_url = reverse('properties:properties-details', args=(1, ))
+		self.owners_list_url = reverse('properties:owners-list', args=[self.correct_JSON_response_for_creation["id"]])
+		#self.owners_details_url = reverse('properties:owners-details')
+		#self.bookings_list_url = reverse('properties:bookings-list')
 
 		self.response_post = self.client.post(
 			path=self.registration_url,
 			data=self.registration_json_correct,
 			format='json')
+		self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.response_post.data["access"]}')
 
 	def test_create_property(self):
 
-		client = APIClient()
-		client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.response_post.data["access"]}')
-		resp = client.post(self.properties_list_url, self.create_property_JSON,
+		resp = self.client.post(self.properties_list_url, self.create_property_JSON,
 						format='json')
-
+		resp.data.pop('created_at')
+		resp.data.pop('updated_at')
 		ownership_obj = Ownership.objects.get(owner=self.correct_JSON_response_for_creation["creator_id"],
 											premises=self.correct_JSON_response_for_creation["id"])
 		self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
@@ -157,7 +172,28 @@ class TestsOfProperties(APITestCase):
 		self.assertEqual(created_address.pzip_code, p_address["pzip_code"])
 
 	def test_update_property(self):
-		pass
+		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,
+						format='json')
+		list_of_titles = generate_random_list_of_strings(10, 30)
+		list_of_descriptions = generate_random_list_of_strings(10, 100)
+		# TODO: optimise the loops below so it doesn't look that horrible
+		for i in range(len(list_of_titles)):
+			data = {"title": list_of_titles[i]}
+			resp_auth = self.client.patch(self.properties_details_url,
+											data=data, format='json')
+			resp_auth.data.pop('created_at')
+			resp_auth.data.pop('updated_at')
+			self.assertEqual(resp_auth.data["title"], list_of_titles[i])
+			self.assertEqual(resp_auth.status_code, status.HTTP_200_OK)
+
+		for i in range(len(list_of_descriptions)):
+			data = {"body": list_of_descriptions[i]}
+			resp_auth = self.client.patch(self.properties_details_url,
+											data=data, format='json')
+			resp_auth.data.pop('created_at')
+			resp_auth.data.pop('updated_at')
+			self.assertEqual(resp_auth.data["body"], list_of_descriptions[i])
+			self.assertEqual(resp_auth.status_code, status.HTTP_200_OK)
 
 	def test_delete_property(self):
 		pass
