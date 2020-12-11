@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from rest_framework import permissions
 
+from .models import Ownership
+
 
 class IsOwnerOrSuperuser(permissions.BasePermission):
 	"""
@@ -22,3 +24,15 @@ class IsOwnerOrSuperuser(permissions.BasePermission):
 class IsClientUser(permissions.BasePermission):
 	# TODO: complete this permission class in order to use for clients
 	pass
+
+
+class IsInitialOwner(permissions.BasePermission):
+	message = {'Forbidden': ['You do not have necessary permissions']}
+
+	def has_permission(self, request, view):
+		return request.user and request.user.is_authenticated
+
+	def has_object_permission(self, request, view, obj):
+		ownership_status = Ownership.objects.filter(owner=request.user,
+													premises=obj.premises).exists()
+		return ownership_status
