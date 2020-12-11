@@ -53,7 +53,7 @@ def registration(request):
 	}
 	# TODO: owed refactoring, what's below belongs in another file
 	current_site = get_current_site(request).domain
-	relative_link = reverse('email_verification')
+	relative_link = reverse('jwtauth:email_verification')
 	absolute_url = 'http://'+current_site+relative_link+'?token='+str(refresh.access_token)
 	email_body = (
 			"Hi, " + user.first_name +
