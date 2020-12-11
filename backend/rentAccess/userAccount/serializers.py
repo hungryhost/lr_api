@@ -1,31 +1,26 @@
 import datetime
 from time import timezone
 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.urls import reverse
+from django.utils.timezone import now
 from rest_framework import serializers
 from .models import (
 	Profile,
 	UserImages,
-	BillingAddresses,
-	Documents, Phones, DocumentTypes
+	BillingAddresses, Documents
 )
 
 
-# TODO: add validation for each field with documents
-# TODO: add urls for properties
-
-
-class PhonesSerializer(serializers.ModelSerializer):
-	phone_number = serializers.CharField(max_length=13, required=False)
-	phone_type = serializers.CharField(max_length=20, required=False)
-
+class UserSerializer(serializers.ModelSerializer):
 	class Meta:
-		model = Phones
-		fields = [
-			'phone_number',
-			'phone_type',
-		]
+		model = User
+		fields = (
+			'first_name',
+			'last_name'
+		)
 
 
 class UserImagesSerializer(serializers.ModelSerializer):
@@ -37,70 +32,6 @@ class UserImagesSerializer(serializers.ModelSerializer):
 		fields = [
 			'filepath',
 			'uploaded_at',
-		]
-
-
-class DocumentsSerializer(serializers.ModelSerializer):
-	doc_type = serializers.CharField(max_length=100, required=True)
-	doc_serial = serializers.IntegerField(required=True)
-	doc_number = serializers.IntegerField(required=True)
-	doc_issued_at = serializers.DateField(required=True)
-	doc_issued_by = serializers.CharField(max_length=100, required=True)
-	doc_is_confirmed = serializers.BooleanField(read_only=True)
-
-	class Meta:
-		model = Documents
-		fields = [
-			'id',
-			'account',
-			'doc_type',
-			'doc_serial',
-			'doc_number',
-			'doc_issued_at',
-			'doc_issued_by',
-			'doc_is_confirmed'
-		]
-		read_only_fields = ['id', 'account']
-
-	def create(self, validated_data):
-		# TODO: separate update mechanisms
-		doc_type = DocumentTypes.objects.get(doc_type="passport_rus")
-		obj = Documents.objects.create(
-			account=self.context['request'].user,
-			doc_type=doc_type,
-			doc_serial=validated_data["doc_serial"],
-			doc_number=validated_data["doc_number"],
-			doc_issued_at=validated_data["doc_issued_at"],
-			doc_issued_by=validated_data["doc_issued_by"]
-		)
-		return obj
-
-
-class BillingAddressSerializer(serializers.ModelSerializer):
-	addr_type = serializers.CharField(max_length=100, required=False)
-	addr_country = serializers.CharField(max_length=100, required=False)
-	addr_city = serializers.CharField(max_length=100, required=False)
-	addr_street_1 = serializers.CharField(max_length=100, required=False)
-	addr_street_2 = serializers.CharField(max_length=100, required=False)
-	addr_building = serializers.CharField(max_length=20, required=False)
-	addr_floor = serializers.CharField(max_length=20, required=False)
-	addr_number = serializers.CharField(max_length=30, required=False)
-	zip_code = serializers.CharField(max_length=10, required=False)
-	addr_is_active = serializers.BooleanField(required=False)
-
-	class Meta:
-		model = BillingAddresses
-		fields = [
-			'addr_type',
-			'addr_country',
-			'addr_city',
-			'addr_street_1',
-			'addr_street_2',
-			'addr_building',
-			'addr_floor',
-			'addr_number',
-			'zip_code',
-			'addr_is_active'
 		]
 
 
@@ -139,8 +70,9 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 	email = serializers.CharField(read_only=True, source='user.email')
 	is_confirmed = serializers.BooleanField(read_only=True, required=False)
 	last_updated = serializers.DateTimeField(read_only=True)
-	first_name = serializers.CharField(read_only=False, required=False)
-	last_name = serializers.CharField(read_only=False, required=False)
+	first_name = serializers.CharField(source='user.first_name')
+	last_name = serializers.CharField(source='user.last_name')
+	userpic = serializers.SerializerMethodField('get_userpic', default="")
 	account_type = serializers.CharField(max_length=100,
 										 read_only=False, required=False)
 	dob = serializers.DateField(read_only=False, required=False)
@@ -151,44 +83,85 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 	date_created = serializers.DateTimeField(source='user.date_joined', read_only=True)
 	bio = serializers.CharField(read_only=False, max_length=1024, required=False)
 
-	# documents = DocumentsSerializer(read_only=False, many=True)
-	# billing_addresses = BillingAddressSerializer(read_only=False, many=False, required=False)
-	# account_phones = PhonesSerializer(read_only=False, many=False, required=False)
-	# account_images = UserImagesSerializer(read_only=True, many=True, required=False)
+	documents_url = serializers.SerializerMethodField('get_documents_url')
+	billing_addresses_url = serializers.SerializerMethodField('get_billing_addresses_url')
+	phones_url = serializers.SerializerMethodField('get_phones_url')
+	# emails_url = serializers.SerializerMethodField('get_emails_url')
+	properties_url = serializers.SerializerMethodField('get_properties_url')
+
+	def get_userpic(self, obj):
+		try:
+			image_object = UserImages.objects.get(account=self.context['request'].user, is_deleted=False)
+			return self.context['request'].build_absolute_uri(image_object.image.url)
+		except Exception as e:
+			return ""
+
+	def get_documents_url(self, obj):
+		try:
+			return self.context.get('request').build_absolute_uri(reverse('userAccount:user-details')) + '{id}/documents/'.format(id=obj.user.id)
+		except Exception as e:
+			return str(e)
+
+	def get_billing_addresses_url(self, obj):
+		try:
+			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/billing_addresses/'.format(id=obj.user.id)
+		except Exception as e:
+			return str(e)
+
+	def get_phones_url(self, obj):
+		try:
+			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/phones/'.format(id=obj.user.id)
+		except Exception as e:
+			return str(e)
+
+	def get_emails_url(self, obj):
+		try:
+			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/emails/'.format(id=obj.user.id)
+		except Exception as e:
+			return str(e)
+
+	def get_properties_url(self, obj):
+		try:
+			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/properties/'.format(id=obj.user.id)
+		except Exception as e:
+			return str(e)
 
 	def to_representation(self, data):
+		# consider overriding it further in order to enforce permissions
 		representation = super(ProfileUpdateSerializer, self).to_representation(data)
 		return representation
 
 	def update(self, instance, validated_data):
+		user_data = validated_data.pop('user', None)
 
-		user_object = User.objects.get(id=self.context['request'].user.id)
-		first_name = validated_data.get('first_name', None)
-		last_name = validated_data.get('last_name', None)
+		user_inst_fields = {}
+		if user_data:
+			first_name = user_data.pop('first_name', None)
+			last_name = user_data.pop('last_name', None)
+			if first_name:
+				user_inst_fields['first_name'] = first_name
+				instance.user.first_name = first_name
+			if last_name:
+				user_inst_fields['last_name'] = last_name
+				instance.user.last_name = last_name
 		account_type = validated_data.get('account_type', None)
 		dob = validated_data.get('dob', None)
 		patronymic = validated_data.get('patronymic', None)
 		gender = validated_data.get('gender', None)
 		bio = validated_data.get('bio', None)
-
-		if first_name is not None:
-			user_object.first_name = first_name
-			instance.first_name = first_name
-		if last_name is not None:
-			user_object.last_name = last_name
-			instance.last_name = last_name
+		if user_inst_fields:
+			User.objects.update_or_create(id=instance.user.id, defaults=user_inst_fields)
 		if account_type is not None:
 			instance.account_type = account_type
 		if dob is not None:
 			instance.dob = dob
 		if patronymic is not None:
 			instance.patronymic = patronymic
-		if gender is not None:
+		if gender is not None and gender in ['M', 'F']:
 			instance.gender = gender
 		if bio is not None:
 			instance.bio = bio
-
-		user_object.save()
+		instance.last_updated = now()
 		instance.save()
 		return instance
 
@@ -197,6 +170,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 			'id',
 			'username',
 			'email',
+			'userpic',
 			'first_name',
 			'last_name',
 			'patronymic',
@@ -205,6 +179,11 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 			'is_confirmed',
 			'dob',
 			'gender',
+			'properties_url',
+			'documents_url',
+			'billing_addresses_url',
+			'phones_url',
+			# 'emails_url',
 			'date_created',
 			'last_updated'
 		]
@@ -221,16 +200,16 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 	last_updated = serializers.DateTimeField(read_only=True)
 	account_type = serializers.CharField(read_only=True, max_length=100)
 	is_confirmed = serializers.BooleanField(read_only=True)
-	dob = serializers.DateField(read_only=True)
+	dob = serializers.DateField(read_only=True, initial="", default="")
 	patronymic = serializers.CharField(read_only=True, max_length=50)
 	gender = serializers.CharField(read_only=True, max_length=1)
 	bio = serializers.CharField(read_only=True, max_length=1024)
 	userpic = serializers.SerializerMethodField('get_userpic', default="")
-
-	# documents = DocumentsSerializer(read_only=True, many=True)
-	# billing_addresses = BillingAddressSerializer(read_only=True, many=True)
-	# account_phones = PhonesSerializer(read_only=True, many=True)
-	# account_images = UserImagesSerializer(read_only=True, many=True)
+	documents_url = serializers.SerializerMethodField('get_documents_url')
+	billing_addresses_url = serializers.SerializerMethodField('get_billing_addresses_url')
+	phones_url = serializers.SerializerMethodField('get_phones_url')
+	# emails_url = serializers.SerializerMethodField('get_emails_url')
+	properties_url = serializers.SerializerMethodField('get_properties_url')
 
 	def get_userpic(self, obj):
 		try:
@@ -238,6 +217,36 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 			return self.context['request'].build_absolute_uri(image_object.image.url)
 		except Exception as e:
 			return ""
+
+	def get_documents_url(self, obj):
+		try:
+			return self.context.get('request').build_absolute_uri(reverse('userAccount:user-details')) + '{id}/documents/'.format(id=obj.user.id)
+		except Exception as e:
+			return str(e)
+
+	def get_billing_addresses_url(self, obj):
+		try:
+			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/billing_addresses/'.format(id=obj.user.id)
+		except Exception as e:
+			return str(e)
+
+	def get_phones_url(self, obj):
+		try:
+			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/phones/'.format(id=obj.user.id)
+		except Exception as e:
+			return str(e)
+
+	def get_emails_url(self, obj):
+		try:
+			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/emails/'.format(id=obj.user.id)
+		except Exception as e:
+			return str(e)
+
+	def get_properties_url(self, obj):
+		try:
+			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/properties/'.format(id=obj.user.id)
+		except Exception as e:
+			return str(e)
 
 	def to_representation(self, data):
 		representation = super(ProfileDetailSerializer, self).to_representation(data)
@@ -269,6 +278,11 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 			'is_confirmed',
 			'dob',
 			'gender',
+			'properties_url',
+			'documents_url',
+			'billing_addresses_url',
+			'phones_url',
+			# 'emails_url',
 			'date_created',
 			'last_updated'
 		]
