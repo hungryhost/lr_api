@@ -1,12 +1,13 @@
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import PropertiesViewSet, PropertyListCreate
+from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet
 
 app_name = 'properties'
 
 properties_details = PropertiesViewSet.as_view({
 		'patch': 'partial_update',
-		'get': 'retrieve'
+		'get': 'retrieve',
+		'delete': 'delete_property'
 	})
 
 urlpatterns = [
@@ -24,4 +25,24 @@ urlpatterns = [
 		'post': 'create_booking',
 		'get': 'list_bookings'
 	}), name='bookings-list'),
+	path('<int:pk>/images/', PropertyImagesViewSet.as_view(
+		{
+			'put': 'update_property_pictures',
+			'delete': 'delete_all_images',
+		}
+
+
+	), name='properties-images-list'),
+	path('<int:pk>/images/set_main_image/', PropertiesViewSet.as_view(
+		{
+			'put': 'change_main_image',
+		}
+
+	), name='properties-main-image-setter'),
+	path('<int:pk>/images/<int:image_id>/', PropertyImagesViewSet.as_view(
+		{
+			'delete': 'delete_image'
+		}
+	), name='properties-images-details'),
+
 ]
