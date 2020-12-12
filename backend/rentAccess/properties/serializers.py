@@ -8,13 +8,6 @@ from userAccount.models import Profile
 from .validators import validate_price
 #
 #
-# TODO: add main image and additional images available
-
-# TODO: serializer for adding images
-# TODO: serializer for adding owners
-# TODO: serializers for creating and updating properties
-# TODO: serializer for updating addresses
-# TODO:
 
 
 class FilteringNotMainImagesListSerializer(serializers.ListSerializer):
@@ -27,7 +20,22 @@ class FilteringNotMainImagesListSerializer(serializers.ListSerializer):
 class PropertyOwnershipListSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Ownership
-		fields = '__all__'
+		fields = (
+			'owner',
+			'is_initial_owner',
+			'permission_level',
+			'granted_at'
+		)
+
+
+class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
+	# TODO: fill in
+	pass
+
+
+class PropertyOwnershipUpdateSerializer(serializers.ModelSerializer):
+	# TODO: fill in
+	pass
 
 
 class PropertyImagesSerializer(serializers.ModelSerializer):
@@ -37,7 +45,12 @@ class PropertyImagesSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = PremisesImages
 		list_serializer_class = FilteringNotMainImagesListSerializer
-		fields = '__all__'
+		fields = (
+			'id',
+			'image',
+			'is_main',
+			'uploaded_at'
+		)
 	
 
 class PropertyAddressesSerializer(serializers.ModelSerializer):
@@ -317,6 +330,32 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 		return instance
 
 
+class BookingCreateSerializer(serializers.ModelSerializer):
+	# TODO: fill in
+	pass
 
 
+class BookingUpdateSerializer(serializers.ModelSerializer):
+	# TODO: fill in
+	pass
 
+
+class BulkFileUploadSerializer(serializers.ModelSerializer):
+	images = serializers.ListField(child=serializers.ImageField(allow_empty_file=True), max_length=6, required=True)
+
+	class Meta:
+		model = PremisesImages
+		fields = ('premises',
+				'images',
+				'uploaded_at',
+				'is_main')
+		read_only_fields = ['premises']
+
+	def create(self, validated_data):
+		images = validated_data.get('images', None)
+		if images:
+			premises_image_instance = [PremisesImages(premises_id=self.context['premises_id'], image=image, is_main=False)
+									for image in images]
+			premises_image_instance[0].is_main = True
+			PremisesImages.objects.bulk_create(premises_image_instance)
+		return PremisesImages.objects.filter(premises_id=self.context['premises_id'])
