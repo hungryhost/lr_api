@@ -25,6 +25,13 @@ def generate_random_list_of_strings(size=5, length=10):
 	return list_of_strings
 
 
+def generate_random_list_of_numbers(size=5, a=100, b=99999):
+	list_of_numbers = []
+	for i in range(size):
+		list_of_numbers.append(random.randint(a, b))
+	return list_of_numbers
+
+
 class TestsOfProperties(APITestCase):
 	r"""
 	This class of tests is used for testing of the Properties endpoints.
@@ -48,9 +55,16 @@ class TestsOfProperties(APITestCase):
 		self.login_url = reverse('jwtauth:token_obtain_pair')
 		self.logout_url = reverse('jwtauth:logout')
 		self.logout_all_url = reverse('jwtauth:logout_all')
-
-
-
+		self.address_attr = [
+			"paddr_country",
+			"paddr_city",
+			"paddr_street_1",
+			"paddr_street_2",
+			"paddr_building",
+			"paddr_floor",
+			"paddr_number",
+			"pzip_code"
+		]
 		self.create_property_JSON = \
 			{
 				"title": "test_property_1",
@@ -119,21 +133,31 @@ class TestsOfProperties(APITestCase):
 				"password2": "test_pass_test_pass"
 			}
 		self.properties_list_url = reverse('properties:properties-list')
-		self.properties_details_url = reverse('properties:properties-details', args=(1, ))
 		self.owners_list_url = reverse('properties:owners-list', args=[self.correct_JSON_response_for_creation["id"]])
-		#self.owners_details_url = reverse('properties:owners-details')
-		#self.bookings_list_url = reverse('properties:bookings-list')
+		# self.owners_details_url = reverse('properties:owners-details')
+		# self.bookings_list_url = reverse('properties:bookings-list')
 
 		self.response_post = self.client.post(
 			path=self.registration_url,
 			data=self.registration_json_correct,
 			format='json')
 		self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.response_post.data["access"]}')
+		self.client_no_auth = APIClient()
+		self.client_bad_auth = APIClient()
+		self.client_bad_auth.credentials(HTTP_AUTHORIZATION=f'Bearer {self.false_token}')
 
 	def test_create_property(self):
 
 		resp = self.client.post(self.properties_list_url, self.create_property_JSON,
 						format='json')
+		no_auth_resp = self.client_no_auth.post(self.properties_list_url, self.create_property_JSON,
+						format='json')
+		bad_auth_resp = self.client_bad_auth.post(self.properties_list_url, self.create_property_JSON,
+						format='json')
+
+		self.assertEqual(no_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
+		self.assertEqual(bad_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
 		resp.data.pop('created_at')
 		resp.data.pop('updated_at')
 		ownership_obj = Ownership.objects.get(owner=self.correct_JSON_response_for_creation["creator_id"],
@@ -176,10 +200,27 @@ class TestsOfProperties(APITestCase):
 						format='json')
 		list_of_titles = generate_random_list_of_strings(10, 30)
 		list_of_descriptions = generate_random_list_of_strings(10, 100)
+		list_of_prices = generate_random_list_of_numbers()
 		# TODO: optimise the loops below so it doesn't look that horrible
+		new_property_details_url = reverse('properties:properties-details',
+										args=(resp_post.data["id"],))
+		data_for_bad_auth = \
+			{
+				"title": list_of_titles[random.randint(0, len(list_of_titles)-1)],
+				"body": list_of_descriptions[random.randint(0, len(list_of_descriptions)-1)],
+				"price": 200,
+			}
+		no_auth_resp = self.client_no_auth.patch(new_property_details_url,
+									data=data_for_bad_auth, format='json')
+		bad_auth_resp = self.client_bad_auth.patch(new_property_details_url,
+									data=data_for_bad_auth, format='json')
+
+		self.assertEqual(no_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
+		self.assertEqual(bad_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
 		for i in range(len(list_of_titles)):
 			data = {"title": list_of_titles[i]}
-			resp_auth = self.client.patch(self.properties_details_url,
+			resp_auth = self.client.patch(new_property_details_url,
 											data=data, format='json')
 			resp_auth.data.pop('created_at')
 			resp_auth.data.pop('updated_at')
@@ -188,12 +229,98 @@ class TestsOfProperties(APITestCase):
 
 		for i in range(len(list_of_descriptions)):
 			data = {"body": list_of_descriptions[i]}
-			resp_auth = self.client.patch(self.properties_details_url,
+			resp_auth = self.client.patch(new_property_details_url,
 											data=data, format='json')
 			resp_auth.data.pop('created_at')
 			resp_auth.data.pop('updated_at')
 			self.assertEqual(resp_auth.data["body"], list_of_descriptions[i])
 			self.assertEqual(resp_auth.status_code, status.HTTP_200_OK)
+
+		for i in range(len(list_of_prices)):
+			data = {"price": list_of_prices[i]}
+			resp_auth = self.client.patch(new_property_details_url,
+											data=data, format='json')
+			resp_auth.data.pop('created_at')
+			resp_auth.data.pop('updated_at')
+			self.assertEqual(resp_auth.data["price"], list_of_prices[i])
+			self.assertEqual(resp_auth.status_code, status.HTTP_200_OK)
+
+		# generating sample data for address and updating only one field at a time
+		for item in self.address_attr:
+			if item not in ['pzip_code', 'paddr_building', 'paddr_floor', 'paddr_number']:
+				data = {
+					item: generate_random_string()
+				}
+			else:
+				if item == 'pzip_code':
+					data = {
+						item: str(random.randint(100000, 999999))
+					}
+				if item == 'paddr_building':
+					data = {
+						item: str(random.randint(1, 99))
+					}
+				if item == 'paddr_floor':
+					data = {
+						item: str(random.randint(1, 99))
+					}
+				if item == 'paddr_number':
+					data = {
+						item: str(random.randint(1, 9999))
+					}
+			request_data = {
+				"property_address": [data]
+			}
+			resp_auth = self.client.patch(new_property_details_url,
+										data=request_data, format='json')
+			resp_auth.data.pop('created_at')
+			resp_auth.data.pop('updated_at')
+
+			p_address = resp_auth.data['property_address'][0]
+			self.assertEqual(data[item], p_address[item])
+			self.assertEqual(resp_auth.status_code, status.HTTP_200_OK)
+		data_for_update_of_address = \
+			{
+				"property_address": [
+					{
+						"paddr_country": generate_random_string(),
+						"paddr_city": generate_random_string(),
+						"paddr_street_1": generate_random_string(),
+						"paddr_street_2": generate_random_string(),
+						"paddr_building": str(random.randint(1, 99)),
+						"paddr_floor": str(random.randint(1, 99)),
+						"paddr_number": str(random.randint(1, 9999)),
+						"pzip_code": str(random.randint(100000, 999999))
+					}
+				]
+			}
+		data_for_update_of_address["property_address"][0].pop(self.address_attr[random.randint(1, 2)])
+		data_for_update_of_address["property_address"][0].pop(self.address_attr[random.randint(3, 6)])
+		resp_auth = self.client.patch(new_property_details_url,
+									data=data_for_update_of_address, format='json')
+		resp_auth.data.pop('created_at')
+		resp_auth.data.pop('updated_at')
+		self.assertEqual(resp_auth.status_code, status.HTTP_200_OK)
+
+		created_address = PremisesAddresses.objects.get(premises=resp_auth.data["id"])
+		p_address = resp_auth.data['property_address'][0]
+		self.assertEqual(created_address.paddr_country, p_address["paddr_country"])
+		self.assertEqual(created_address.paddr_city, p_address["paddr_city"])
+		self.assertEqual(created_address.paddr_building, p_address["paddr_building"])
+		self.assertEqual(created_address.paddr_street_1, p_address["paddr_street_1"])
+		self.assertEqual(created_address.paddr_street_2, p_address["paddr_street_2"])
+		self.assertEqual(created_address.paddr_floor, p_address["paddr_floor"])
+		self.assertEqual(created_address.paddr_number, p_address["paddr_number"])
+		self.assertEqual(created_address.pzip_code, p_address["pzip_code"])
+
+		created_property = Property.objects.get(pk=resp_auth.data["id"])
+		self.assertEqual(created_property.pk, resp_auth.data["id"])
+		self.assertEqual(created_property.title, resp_auth.data["title"])
+		self.assertEqual(created_property.body, resp_auth.data["body"])
+		self.assertEqual(created_property.price, resp_auth.data["price"])
+		self.assertEqual(created_property.visibility, 100)
+		self.assertEqual(created_property.active, resp_auth.data["active"])
+		self.assertEqual(created_property.author.id, resp_auth.data["creator_id"])
 
 	def test_delete_property(self):
 		pass
@@ -231,3 +358,5 @@ class TestsOfProperties(APITestCase):
 	def test_delete_booking(self):
 		pass
 
+	def test_visibility(self):
+		pass
