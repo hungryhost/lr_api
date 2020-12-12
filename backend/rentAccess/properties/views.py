@@ -4,11 +4,12 @@ from django.http import Http404
 from rest_framework import generics, permissions, status, response, serializers, viewsets, mixins
 from rest_framework.decorators import action, permission_classes
 from rest_framework.generics import get_object_or_404
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from .models import Property, Profile, Ownership
+from .models import Property, Profile, Ownership, PremisesImages
 from .serializers import PropertySerializer, PropertyUpdateSerializer, \
-	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer
+	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer, BulkFileUploadSerializer
 from .permissions import IsOwnerOrSuperuser, IsInitialOwner
 from .models import PropertyLog
 
@@ -16,8 +17,6 @@ from .models import PropertyLog
 class PropertyListCreate(generics.ListCreateAPIView):
 	"""
 	Generic API View class. Lists all objects.
-	For owners - lists all of the owner's objects.
-	For superusers - lists all objects.
 	Author: Y. Borodin (gitlab: yuiborodin)
 	Version: 1.0
 	Last Update: 16.11.2020
@@ -98,6 +97,12 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		serializer.save()
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
+	@action(detail=True, methods=['delete'])
+	def delete_property(self, request, pk=None):
+		instance = self.get_object(pk=pk)
+		instance.delete()
+		return Response(status=status.HTTP_204_NO_CONTENT)
+
 	@action(detail=True, methods=['get'])
 	def list_owners(self, request, pk=None):
 		objects = self.get_object().filter(premises=pk).order_by('-is_initial_owner')
@@ -132,6 +137,20 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		if obj.permission_level not in [100, 200, 300, 400]:
 			return Response(status=status.HTTP_403_FORBIDDEN)
 
+	@action(detail=True, methods=['put'])
+	def change_main_image(self, request, pk=None):
+		image_id = self.request.data.get("image_id", None)
+		if image_id:
+			obj_to_update = get_object_or_404(PremisesImages, pk=image_id)
+			obj = PremisesImages.objects.get(premises_id=pk, is_main=True)
+			obj.is_main = False
+			obj.save()
+			obj_to_update.set_main()
+			obj_to_update.save()
+			return Response(status=status.HTTP_200_OK)
+		else:
+			return Response(status=status.HTTP_400_BAD_REQUEST)
+
 	def get_queryset(self):
 		if self.action in ['retrieve_owner', 'list_owners']:
 			return Ownership.objects.all()
@@ -156,7 +175,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		except Ownership.DoesNotExist:
 			raise Http404
 		try:
-			if self.action in ['partial_update', 'retrieve']:
+			if self.action in ['partial_update', 'retrieve', 'delete_property']:
 				obj = Property.objects.get(pk=pk)
 				self.check_object_permissions(self.request, obj)
 				return obj
@@ -168,3 +187,30 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 			return PropertyOwnershipListSerializer
 		return PropertySerializer
 
+
+class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.ListModelMixin):
+	parser_classes = [FormParser, MultiPartParser]
+
+	@action(detail=True, methods=['put'])
+	def update_property_pictures(self, request, pk=None):
+		serializer = BulkFileUploadSerializer(
+			data=self.request.data,
+			context={'request': request, 'premises_id': pk}
+		)
+		serializer.is_valid(raise_exception=True)
+		serializer.save()
+
+		return Response(status=status.HTTP_200_OK)
+
+
+	@action(detail=True, methods=['delete'])
+	def delete_all_images(self, request):
+		pass
+
+	@action(detail=True, methods=['delete'])
+	def delete_image(self, request):
+		pass
+
+	def get_permissions(self):
+		permission_classes = [IsOwnerOrSuperuser, ]
+		return [permission() for permission in permission_classes]
