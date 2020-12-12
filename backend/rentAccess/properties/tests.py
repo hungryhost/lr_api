@@ -1,14 +1,16 @@
 import datetime
 import random
 import string
+import tempfile
 
+from PIL import Image
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from common.models import PermissionLevels
-from .models import PropertyTypes, Ownership, Property, PremisesAddresses
+from .models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages
 
 User = get_user_model()
 
@@ -32,6 +34,45 @@ def generate_random_list_of_numbers(size=5, a=100, b=99999):
 	return list_of_numbers
 
 
+def generate_list_of_images():
+	image1 = Image.new('RGB', (100, 100))
+	image2 = Image.new('RGB', (100, 100))
+	image3 = Image.new('RGB', (100, 100))
+	image4 = Image.new('RGB', (100, 100))
+	image5 = Image.new('RGB', (100, 100))
+	image6 = Image.new('RGB', (100, 100))
+
+	tmp_file1 = tempfile.NamedTemporaryFile(suffix='.jpg')
+	tmp_file2 = tempfile.NamedTemporaryFile(suffix='.png')
+	tmp_file3 = tempfile.NamedTemporaryFile(suffix='.jpg')
+	tmp_file4 = tempfile.NamedTemporaryFile(suffix='.png')
+	tmp_file5 = tempfile.NamedTemporaryFile(suffix='.jpg')
+	tmp_file6 = tempfile.NamedTemporaryFile(suffix='.png')
+	image1.save(tmp_file1)
+	image2.save(tmp_file2)
+	image3.save(tmp_file3)
+	image4.save(tmp_file4)
+	image5.save(tmp_file5)
+	image6.save(tmp_file6)
+
+	tmp_file1.seek(0)
+	tmp_file2.seek(0)
+	tmp_file3.seek(0)
+	tmp_file4.seek(0)
+	tmp_file5.seek(0)
+	tmp_file6.seek(0)
+
+	images = [
+		tmp_file1,
+		tmp_file2,
+		tmp_file3,
+		tmp_file4,
+		tmp_file5,
+		tmp_file6
+	]
+	return images
+
+
 class TestsOfProperties(APITestCase):
 	r"""
 	This class of tests is used for testing of the Properties endpoints.
@@ -44,6 +85,7 @@ class TestsOfProperties(APITestCase):
 	"""
 
 	def setUp(self) -> None:
+		# TODO: add booking-related bodies of resp/req
 		PropertyTypes.objects.create(property_type=100, description="Null")
 		PermissionLevels.objects.create(p_level=400, description="Null")
 
@@ -215,6 +257,7 @@ class TestsOfProperties(APITestCase):
 		bad_auth_resp = self.client_bad_auth.patch(new_property_details_url,
 									data=data_for_bad_auth, format='json')
 
+		# print(bad_auth_resp._headers)
 		self.assertEqual(no_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
 		self.assertEqual(bad_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -325,6 +368,69 @@ class TestsOfProperties(APITestCase):
 	def test_delete_property(self):
 		pass
 
+	def test_add_images(self):
+		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,
+									format='json')
+		images = generate_list_of_images()
+		resp_auth_1 = self.client.put(reverse('properties:properties-images-list', args=(resp_post.data["id"], )),
+										data={
+											'images': [
+												images[0],
+												images[1],
+												images[2],
+												images[3],
+												images[4],
+												images[5],
+											],
+
+										}, format='multipart')
+		resp_get = self.client.get(reverse('properties:properties-details', args=(resp_post.data["id"],)),
+								format='json')
+		self.assertEqual(resp_auth_1.status_code, status.HTTP_200_OK)
+		self.assertIsNot(resp_get.data["property_images"], [])
+		iterator = 2
+		for item in resp_get.data["property_images"]:
+			self.assertEqual(len(resp_get.data["property_images"]), PremisesImages.objects.filter(premises_id=resp_post.data["id"]).count()-1)
+			self.assertEqual(item["id"], iterator)
+			self.assertIsNot(item["image"], "")
+			iterator += 1
+		obj = PremisesImages.objects.get(premises_id=resp_post.data["id"], is_main=True)
+		self.assertEqual(obj.pk, 1)
+
+	def test_change_main_image(self):
+		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,
+									format='json')
+		resp_auth_1 = self.client.put(reverse('properties:properties-main-image-setter', args=(resp_post.data["id"],))
+									, data={"image_id":1}, format='json')
+		self.assertEqual(resp_auth_1.status_code, status.HTTP_404_NOT_FOUND)
+		images = generate_list_of_images()
+		resp_auth_1 = self.client.put(reverse('properties:properties-images-list', args=(resp_post.data["id"],)),
+									data={
+										'images': [
+											images[0],
+											images[1],
+											images[2],
+											images[3],
+											images[4],
+											images[5],
+										],
+
+									},format='multipart')
+
+		resp_auth_1 = self.client.put(reverse('properties:properties-main-image-setter', args=(resp_post.data["id"],)),
+									data={"image_id": 3}, format='json')
+		self.assertEqual(resp_auth_1.status_code, status.HTTP_200_OK)
+		resp_get = self.client.get(reverse('properties:properties-details', args=(resp_post.data["id"],)),
+								format='json')
+
+		for item in resp_get.data["property_images"]:
+			self.assertEqual(len(resp_get.data["property_images"]),
+							PremisesImages.objects.filter(premises_id=resp_post.data["id"]).count() - 1)
+			self.assertIsNot(item["id"], 3)
+
+	def test_delete_images(self):
+		pass
+
 	def test_add_owners(self):
 		pass
 
@@ -332,15 +438,6 @@ class TestsOfProperties(APITestCase):
 		pass
 
 	def test_update_owners(self):
-		pass
-
-	def test_add_one_image(self):
-		pass
-
-	def test_add_multiple_images(self):
-		pass
-
-	def test_delete_of_images(self):
 		pass
 
 	def test_add_lock(self):
