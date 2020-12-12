@@ -88,14 +88,16 @@ class PremisesImages(models.Model):
 
 class PremisesAddresses(models.Model):
     premises = models.ForeignKey(Property, related_name='property_address', on_delete=models.CASCADE)
-    paddr_country = models.CharField(max_length=100, blank=True, null=True)
-    paddr_city = models.CharField(max_length=100, blank=True, null=True)
-    paddr_street_1 = models.CharField(max_length=100, blank=True, null=True)
+    paddr_country = models.CharField(max_length=100, blank=True, null=False)
+    paddr_city = models.CharField(max_length=100, blank=True, null=False)
+    paddr_street_1 = models.CharField(max_length=100, blank=True, null=False)
     paddr_street_2 = models.CharField(max_length=100, blank=True, null=True)
-    paddr_building = models.CharField(max_length=20, blank=True, null=True)
-    paddr_floor = models.CharField(max_length=20, blank=True, null=True)
-    paddr_number = models.CharField(max_length=30, blank=True, null=True)
-    pzip_code = models.CharField(max_length=10, blank=True)
+    paddr_building = models.CharField(max_length=20, blank=True, null=False)
+    paddr_floor = models.CharField(max_length=20, blank=True, null=False)
+    paddr_number = models.CharField(max_length=30, blank=True, null=False)
+    pzip_code = models.CharField(max_length=10, blank=True, null=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
 
 
 class Clients(models.Model):
@@ -107,6 +109,7 @@ class Clients(models.Model):
     client_description = models.CharField(max_length=255, null=False, blank=False)
     client_existing_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
 
 
 class Bookings(models.Model):
@@ -115,3 +118,6 @@ class Bookings(models.Model):
     booked_until = models.DateTimeField(null=False, blank=False)
     booked_property = models.ForeignKey(Property, on_delete=models.CASCADE, null=False, blank=False)
     booked_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    is_cancelled = models.BooleanField(default=False)
+    booked_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
