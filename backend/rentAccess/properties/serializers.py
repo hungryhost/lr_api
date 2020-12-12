@@ -288,16 +288,14 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 				)
 			else:
 				address_to_update = PremisesAddresses.objects.get(premises_id=instance.id)
-				paddr_country = address_data[0].pop('paddr_country', None)
-				paddr_city = address_data[0].pop('paddr_city', None)
-				paddr_street_1 = address_data[0].pop('paddr_street_1', None)
-				paddr_street_2 = address_data[0].pop('paddr_street_2', None)
-				paddr_building = address_data[0].pop('paddr_building', None)
-				paddr_floor = address_data[0].pop('paddr_floor', None)
-				paddr_number = address_data[0].pop('paddr_number', None)
-				pzip_code = address_data[0].pop('pzip_code', None)
-				if paddr_country:
-					address_to_update.pzip_code = pzip_code
+				paddr_country = address_data[0].get('paddr_country', None)
+				paddr_city = address_data[0].get('paddr_city', None)
+				paddr_street_1 = address_data[0].get('paddr_street_1', None)
+				paddr_street_2 = address_data[0].get('paddr_street_2', None)
+				paddr_building = address_data[0].get('paddr_building', None)
+				paddr_floor = address_data[0].get('paddr_floor', None)
+				paddr_number = address_data[0].get('paddr_number', None)
+				pzip_code = address_data[0].get('pzip_code', None)
 				if paddr_country:
 					address_to_update.paddr_country = paddr_country
 				if paddr_city:
