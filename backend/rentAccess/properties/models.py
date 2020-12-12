@@ -80,10 +80,13 @@ def path_and_rename(instance, filename):
 
 
 class PremisesImages(models.Model):
-    premises = models.ForeignKey(Property, related_name='property_images', on_delete=models.CASCADE)
+    premises = models.ForeignKey(Property, to_field='id', related_name='property_images', on_delete=models.CASCADE)
     image = models.ImageField(upload_to=path_and_rename, blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     is_main = models.BooleanField(default=False)
+
+    def set_main(self):
+        self.is_main = True
 
 
 class PremisesAddresses(models.Model):
