@@ -16,17 +16,12 @@ from django.dispatch import receiver
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE,
                                 primary_key=True, related_name='profile')
-    CHOICES_1 = [
-        ('CLIENT', 'Client User'),
-        ('OTHER', 'Other User'),
-    ]
     GENDER_CHOICES = [
         ('M', 'Male'),
         ('F', 'Female'),
         ('', 'Not Set'),
     ]
     bio = models.CharField(null=False, blank=True, max_length=1024, default="")
-    account_type = models.CharField(max_length=100, choices=CHOICES_1, default="OWNER")
     is_confirmed = models.BooleanField(default=False)
     dob = models.DateField(null=False, blank=True, default="1970-01-01")
     patronymic = models.CharField(max_length=50, null=False, blank=True, default="")
