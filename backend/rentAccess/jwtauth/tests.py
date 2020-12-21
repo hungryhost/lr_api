@@ -73,12 +73,22 @@ class TestsOfJWT(APITestCase):
 		# be advised: first account always creates with id of 1
 		self.personal_info_correct = \
 			{
-				"account_id": 1,
+				"id": 1,
 				"username": "test_case_email_1",
 				"email": "test_case_email@test.com",
+				"userpic": "",
 				"first_name": "test_case_fn",
 				"last_name": "test_case_ln",
-				"account_type": "OWNER"
+				"patronymic": "",
+				"bio": "",
+				"is_confirmed": False,
+				"dob": "1970-01-01",
+				"gender": "",
+				"is_staff": False,
+				"properties_url": "http://testserver/api/v1/user/1/properties/",
+				"documents_url": "http://testserver/api/v1/user/1/documents/",
+				"billing_addresses_url": "http://testserver/api/v1/user/1/billing_addresses/",
+				"phones_url": "http://testserver/api/v1/user/1/phones/"
 			}
 
 	def test_registration(self):
@@ -98,7 +108,12 @@ class TestsOfJWT(APITestCase):
 		self.assertEqual(response_post_fail.status_code, status.HTTP_400_BAD_REQUEST)
 		self.assertEqual(response_post.status_code, status.HTTP_201_CREATED)
 		# now we assert the data from the response
-		self.assertEqual(response_post.data["personal_info"], self.personal_info_correct)
+		personal_info = dict(response_post.data["personal_info"])
+
+		personal_info.pop("last_updated")
+		personal_info.pop("date_created")
+		self.assertEqual(personal_info, self.personal_info_correct)
+
 		# now we need to verify the token
 		token = response_post.data["access"]
 		response_verify = self.client.post(
@@ -119,7 +134,11 @@ class TestsOfJWT(APITestCase):
 			format='json')
 		token = response_post_correct.data["access"]
 		self.assertEqual(response_post_correct.status_code, status.HTTP_200_OK)
-		self.assertEqual(response_post_correct.data["personal_info"], self.personal_info_correct)
+		personal_info = dict(response_post_correct.data["personal_info"])
+
+		personal_info.pop("last_updated")
+		personal_info.pop("date_created")
+		self.assertEqual(personal_info, self.personal_info_correct)
 
 		response_post_fail_on_email = self.client.post(
 			path=self.login_url,
