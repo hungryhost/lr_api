@@ -7,9 +7,10 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from .models import Property, Profile, Ownership, PremisesImages
+from .models import Property, Profile, Ownership, PremisesImages, Bookings
 from .serializers import PropertySerializer, PropertyUpdateSerializer, \
-	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer, BulkFileUploadSerializer
+	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer, BulkFileUploadSerializer, \
+	BookingsListSerializer, BookingsSerializer
 from .permissions import IsOwnerOrSuperuser, IsInitialOwner
 from .models import PropertyLog
 
@@ -33,7 +34,7 @@ class PropertyListCreate(generics.ListCreateAPIView):
 		)
 		Ownership.objects.create(
 			premises=obj,
-			owner=self.request.user,
+			user=self.request.user,
 			is_initial_owner=True,
 			permission_level_id=400
 		)
@@ -45,8 +46,31 @@ class PropertyListCreate(generics.ListCreateAPIView):
 	def get_serializer_class(self):
 		if self.request.method == "GET":
 			return PropertyListSerializer
-		else:
-			return PropertyCreateSerializer
+		return PropertyCreateSerializer
+
+	def get_permissions(self):
+		permission_classes = [IsAuthenticated]
+		return [permission() for permission in permission_classes]
+
+
+class BookingsListCreateView(generics.ListCreateAPIView):
+
+	serializer_class = BookingsSerializer
+
+	def perform_create(self, serializer):
+		obj = serializer.save()
+		return Response(status=status.HTTP_201_CREATED)
+
+	def get_queryset(self, *args, **kwargs):
+		return Bookings.objects.all().filter(booked_property=self.kwargs["pk"])
+
+	def get_serializer_context(self):
+		return {
+			'request': self.request,
+			'format': self.format_kwarg,
+			'view': self,
+			'property_id': self.kwargs["pk"]
+		}
 
 	def get_permissions(self):
 		permission_classes = [IsAuthenticated]
@@ -115,7 +139,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	@action(detail=True, methods=['get'])
 	def retrieve_owner(self, request, pk=None, owner_id=None):
-		obj = self.get_object(pk=pk, owner_id=owner_id)
+		obj = self.get_object(pk=pk, user_id=owner_id)
 		serializer = PropertyOwnershipListSerializer(obj)
 		return Response(serializer.data)
 
@@ -125,7 +149,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	@action(detail=True, methods=['delete'])
 	def destroy_owner(self, request, pk=None, owner_id=None):
-		obj = get_object_or_404(Ownership, premises=pk, owner=owner_id)
+		obj = get_object_or_404(Ownership, premises=pk, user_id=owner_id)
 		if obj.is_initial_owner:
 			return Response(status=status.HTTP_400_BAD_REQUEST)
 		obj.delete()
@@ -133,7 +157,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	@action(detail=True, methods=['post'], permission_classes=[IsInitialOwner])
 	def create_booking(self, request, pk=None):
-		obj = get_object_or_404(Ownership, premises=pk, owner=self.request.user)
+		obj = get_object_or_404(Ownership, premises=pk, user=self.request.user)
 		if obj.permission_level not in [100, 200, 300, 400]:
 			return Response(status=status.HTTP_403_FORBIDDEN)
 
@@ -169,7 +193,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 			if self.action in ['list_owners']:
 				return Ownership.objects.all()
 			if self.action in ['retrieve_owner']:
-				obj = Ownership.objects.get(premises=pk, owner=owner_id)
+				obj = Ownership.objects.get(premises=pk, user_id=owner_id)
 				self.check_object_permissions(self.request, obj)
 				return obj
 		except Ownership.DoesNotExist:
@@ -189,7 +213,6 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 
 class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.ListModelMixin):
-	parser_classes = [FormParser, MultiPartParser]
 
 	@action(detail=True, methods=['put'])
 	def update_property_pictures(self, request, pk=None):
@@ -202,15 +225,37 @@ class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.Li
 
 		return Response(status=status.HTTP_200_OK)
 
+	@action(detail=False, methods=['delete'])
+	def delete_images(self, request, pk=None):
+		image_ids_list = list(request.data.get('images'))
+		if not all(isinstance(item, int) for item in image_ids_list) or len(image_ids_list) == 0:
+			return Response(status=status.HTTP_400_BAD_REQUEST)
+		for item in image_ids_list:
+			try:
+				PremisesImages.objects.get(premises_id=pk, pk=item)
+			except PremisesImages.DoesNotExist:
+				return Response(status=status.HTTP_400_BAD_REQUEST)
+		for item in image_ids_list:
+			image_obj = get_object_or_404(PremisesImages, pk=item, premises=pk)
+			image_obj.delete()
+		if not PremisesImages.objects.filter(premises_id=pk, is_main=True).exists() \
+			and PremisesImages.objects.filter(premises_id=pk, is_main=False).exists():
+			obj = PremisesImages.objects.latest('uploaded_at')
+			obj.is_main = True
+			obj.save()
+		return Response(status=status.HTTP_204_NO_CONTENT)
 
-	@action(detail=True, methods=['delete'])
-	def delete_all_images(self, request):
-		pass
-
-	@action(detail=True, methods=['delete'])
-	def delete_image(self, request):
-		pass
+	def get_serializer_class(self):
+		if self.action in ['update_property_pictures']:
+			return BulkFileUploadSerializer
 
 	def get_permissions(self):
 		permission_classes = [IsOwnerOrSuperuser, ]
 		return [permission() for permission in permission_classes]
+
+	def get_parsers(self):
+		if self.request.method == "DELETE":
+			parser_classes = [JSONParser, ]
+		else:
+			parser_classes = [FormParser, MultiPartParser]
+		return [parser() for parser in parser_classes]
