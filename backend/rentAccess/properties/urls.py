@@ -1,6 +1,6 @@
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet
+from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet, BookingsListCreateView
 
 app_name = 'properties'
 
@@ -21,14 +21,11 @@ urlpatterns = [
 		'post': 'add_owner'
 	}), name='owners-list'),
 	path('<int:pk>/', properties_details, name='properties-details'),
-	path('<int:pk>/bookings/', PropertiesViewSet.as_view({
-		'post': 'create_booking',
-		'get': 'list_bookings'
-	}), name='bookings-list'),
+	path('<int:pk>/bookings/', BookingsListCreateView.as_view(), name='properties-bookings-list'),
 	path('<int:pk>/images/', PropertyImagesViewSet.as_view(
 		{
 			'put': 'update_property_pictures',
-			'delete': 'delete_all_images',
+			'delete': 'delete_images',
 		}
 
 
@@ -39,10 +36,10 @@ urlpatterns = [
 		}
 
 	), name='properties-main-image-setter'),
-	path('<int:pk>/images/<int:image_id>/', PropertyImagesViewSet.as_view(
-		{
-			'delete': 'delete_image'
-		}
-	), name='properties-images-details'),
+	#path('<int:pk>/images/<int:image_id>/', PropertyImagesViewSet.as_view(
+	#	{
+	#		'delete': 'delete_image'
+	#	}
+	#), name='properties-images-details'),
 
 ]
