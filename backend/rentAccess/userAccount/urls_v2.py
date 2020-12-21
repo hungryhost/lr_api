@@ -6,7 +6,8 @@ from rest_framework.routers import DefaultRouter
 
 from .addresses_views import ProfileAddressesViewSet
 from .documents_views import ProfileDocumentsViewSet
-from .views_v2 import ProfileDetailViewSet, ProfileImageViewSet
+from .views_v2 import ProfileDetailViewSet, ProfileImageViewSet, UserBookingsList, UserPropertiesList
+
 app_name = 'userAccount'
 change_password = ProfileDetailViewSet.as_view({'put': 'change_password'})
 images_post = ProfileImageViewSet.as_view({
@@ -28,5 +29,7 @@ urlpatterns = [
     path('userpic/', images_post, name='userpic'),
     path('suspend/', account_suspend),
     path('unsuspend/', account_unsuspend),
+    path('bookings/', UserBookingsList.as_view(), name='user-bookings-list'),
+    path('properties/', UserPropertiesList.as_view(), name='user-properties-list'),
     path('change_username/', ProfileDetailViewSet.as_view({'patch': 'change_username'}))
 ]
