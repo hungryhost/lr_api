@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework import serializers
 
 from userAccount.serializers import ProfileListSerializer, ProfileSerializer
-from .models import Property, PremisesAddresses, PremisesImages, Ownership
+from .models import Property, PremisesAddresses, PremisesImages, Ownership, Bookings
 from userAccount.models import Profile
 from .validators import validate_price
 #
@@ -21,10 +21,11 @@ class PropertyOwnershipListSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Ownership
 		fields = (
-			'owner',
+			'user',
 			'is_initial_owner',
 			'permission_level',
-			'granted_at'
+			'created_at',
+			'updated_at'
 		)
 
 
@@ -54,35 +55,51 @@ class PropertyImagesSerializer(serializers.ModelSerializer):
 	
 
 class PropertyAddressesSerializer(serializers.ModelSerializer):
-	paddr_country = serializers.CharField(max_length=100, required=True)
-	paddr_city = serializers.CharField(max_length=100, required=True)
-	paddr_street_1 = serializers.CharField(max_length=100, required=True)
-	paddr_street_2 = serializers.CharField(max_length=100, required=True)
-	paddr_building = serializers.CharField(max_length=20, required=True)
-	paddr_floor = serializers.CharField(max_length=20, required=True)
-	paddr_number = serializers.CharField(max_length=30, required=True)
-	pzip_code = serializers.CharField(max_length=10, required=True)
+	country = serializers.CharField(max_length=100, required=True)
+	city = serializers.CharField(max_length=100, required=True)
+	street_1 = serializers.CharField(max_length=100, required=True)
+	street_2 = serializers.CharField(max_length=100, required=True)
+	building = serializers.CharField(max_length=20, required=True)
+	floor = serializers.CharField(max_length=20, required=True)
+	number = serializers.CharField(max_length=30, required=True)
+	zip_code = serializers.CharField(max_length=10, required=True)
 
 	class Meta:
 		model = PremisesAddresses
 		fields = (
-			'paddr_country',
-			'paddr_city',
-			'paddr_street_1',
-			'paddr_street_2',
-			'paddr_building',
-			'paddr_floor',
-			'paddr_number',
-			'pzip_code',
+			'country',
+			'city',
+			'street_1',
+			'street_2',
+			'building',
+			'floor',
+			'number',
+			'zip_code',
+			'directions_description',
+		)
+
+
+class PropertyAddressesListSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = PremisesAddresses
+		fields = (
+			'country',
+			'city',
+			'street_1',
+			'street_2',
+			'building',
+			'floor',
+			'number',
+			'zip_code',
+			'directions_description',
 		)
 
 
 class PropertyListSerializer(serializers.ModelSerializer):
-	property_address = PropertyAddressesSerializer(many=True, read_only=True)
+	property_address = PropertyAddressesSerializer(many=False, read_only=True)
 	creator_id = serializers.IntegerField(read_only=True, source='author.id')
 	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
 	id = serializers.IntegerField(read_only=True)
-	property_type_id = serializers.IntegerField(read_only=True)
 
 	class Meta:
 		model = Property
@@ -94,7 +111,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
 			'body',
 			'price',
 			'active',
-			'property_type_id',
+			'property_type',
 			'main_image',
 			'property_address',
 			'created_at',
@@ -126,13 +143,13 @@ class PropertySerializer(serializers.ModelSerializer):
 	Version: 1.0
 	Last Update: 16.11.2020
 	"""
-	property_address = PropertyAddressesSerializer(many=True, read_only=True)
+	property_address = PropertyAddressesSerializer(many=False, read_only=True)
 	property_images = PropertyImagesSerializer(many=True, read_only=True)
 	creator_id = serializers.IntegerField(read_only=True, source='author.id')
 	owners = PropertyOwnershipListSerializer(many=True, read_only=True)
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField()
-	property_type_id = serializers.IntegerField(read_only=True)
+
 
 	class Meta:
 		model = Property
@@ -144,7 +161,7 @@ class PropertySerializer(serializers.ModelSerializer):
 			'price',
 			'creator_id',
 			'active',
-			'property_type_id',
+			'property_type',
 			'main_image',
 			'owners',
 			'property_address',
@@ -174,9 +191,10 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 	body = serializers.CharField(required=True)
 	price = serializers.IntegerField(required=True, validators=[validate_price])
 	active = serializers.BooleanField(required=False)
-	property_address = PropertyAddressesSerializer(many=True, required=True)
+	property_address = PropertyAddressesSerializer(many=False, required=True)
 	creator_id = serializers.IntegerField(read_only=True, source='author.id')
-	property_type_id = serializers.IntegerField(required=True)
+
+	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
 
 	class Meta:
 		model = Property
@@ -184,16 +202,24 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 		fields = [
 			'id',
 			'creator_id',
-			"title",
-			"body",
-			"property_type_id",
-			"price",
-			"active",
-			"property_address",
+			'title',
+			'body',
+			'price',
+			'active',
+			'property_type',
+			'main_image',
+			'property_address',
 			'created_at',
 			'updated_at',
 		]
 		read_only_fields = ['creator', 'id']
+
+	def get_main_image(self, obj):
+		try:
+			image_object = PremisesImages.objects.get(premises=obj, is_main=True)
+			return self.context['request'].build_absolute_uri(image_object.image.url)
+		except Exception as e:
+			return ""
 
 	def create(self, validated_data):
 		property_addresses = validated_data.pop('property_address')
@@ -203,30 +229,29 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 		price = validated_data["price"]
 		visibility = validated_data.get("visibility", None)
 
-		property_type = validated_data["property_type_id"]
+		property_type = validated_data["property_type"]
 		active = validated_data.get("active", None)
-		if len(property_addresses) > 1:
-			raise serializers.ValidationError({"property_address": "Check your input again."})
+
 		if active is None:
 			active = True
 		if visibility is None:
 			visibility = 100
 		property_to_create = Property.objects.create(
 			author=self.context['request'].user,
-			title=title, body=body, price=price, active=active, property_type_id=property_type, visibility=visibility)
-		for i in property_addresses:
-			PremisesAddresses.objects.create(**i, premises=property_to_create)
+			title=title, body=body, price=price, active=active, property_type=property_type, visibility=visibility)
+
+		PremisesAddresses.objects.create(premises=property_to_create, **property_addresses)
+
 		return property_to_create
 
 
 class PropertyUpdateSerializer(serializers.ModelSerializer):
-	property_address = PropertyAddressesSerializer(many=True, required=False)
+	property_address = PropertyAddressesSerializer(many=False, required=False)
 	property_images = PropertyImagesSerializer(many=True, required=False)
 	creator_id = serializers.IntegerField(read_only=True, source='author.id')
 	owners = PropertyOwnershipListSerializer(many=True, required=False)
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField(read_only=True)
-	property_type_id = serializers.IntegerField(required=False)
 	visibility = serializers.IntegerField(required=False)
 
 	class Meta:
@@ -239,7 +264,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'price',
 			'creator_id',
 			'active',
-			'property_type_id',
+			'property_type',
 			'main_image',
 			'owners',
 			'property_address',
@@ -293,51 +318,116 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			instance.property_type_id = property_type_id
 
 		if address_data:
-			if len(address_data) > 1:
-				raise serializers.ValidationError(
-					{
-						"property_address": "Check your input again."
-					}
-				)
-			else:
-				address_to_update = PremisesAddresses.objects.get(premises_id=instance.id)
-				paddr_country = address_data[0].get('paddr_country', None)
-				paddr_city = address_data[0].get('paddr_city', None)
-				paddr_street_1 = address_data[0].get('paddr_street_1', None)
-				paddr_street_2 = address_data[0].get('paddr_street_2', None)
-				paddr_building = address_data[0].get('paddr_building', None)
-				paddr_floor = address_data[0].get('paddr_floor', None)
-				paddr_number = address_data[0].get('paddr_number', None)
-				pzip_code = address_data[0].get('pzip_code', None)
-				if paddr_country:
-					address_to_update.paddr_country = paddr_country
-				if paddr_city:
-					address_to_update.paddr_city = paddr_city
-				if paddr_street_1:
-					address_to_update.paddr_street_1 = paddr_street_1
-				if paddr_street_2:
-					address_to_update.paddr_street_2 = paddr_street_2
-				if paddr_building:
-					address_to_update.paddr_building = paddr_building
-				if paddr_floor:
-					address_to_update.paddr_floor = paddr_floor
-				if paddr_number:
-					address_to_update.paddr_number = paddr_number
-				if pzip_code:
-					address_to_update.pzip_code = pzip_code
-				address_to_update.save()
+			address_to_update = PremisesAddresses.objects.get(premises_id=instance.id)
+			country = address_data.get('country', None)
+			paddr_city = address_data.get('city', None)
+			paddr_street_1 = address_data.get('street_1', None)
+			paddr_street_2 = address_data.get('street_2', None)
+			paddr_building = address_data.get('building', None)
+			paddr_floor = address_data.get('floor', None)
+			paddr_number = address_data.get('number', None)
+			pzip_code = address_data.get('zip_code', None)
+			if country:
+				address_to_update.country = country
+			if paddr_city:
+				address_to_update.city = paddr_city
+			if paddr_street_1:
+				address_to_update.street_1 = paddr_street_1
+			if paddr_street_2:
+				address_to_update.street_2 = paddr_street_2
+			if paddr_building:
+				address_to_update.building = paddr_building
+			if paddr_floor:
+				address_to_update.floor = paddr_floor
+			if paddr_number:
+				address_to_update.number = paddr_number
+			if pzip_code:
+				address_to_update.zip_code = pzip_code
+			address_to_update.save()
 		instance.save()
 		return instance
 
 
-class BookingCreateSerializer(serializers.ModelSerializer):
-	# TODO: fill in
-	pass
+class BookingsSerializer(serializers.ModelSerializer):
+	booked_property = PropertyListSerializer(many=False, read_only=True)
+	number_of_clients = serializers.IntegerField(required=True, max_value=100)
+	booked_from = serializers.DateTimeField(required=True)
+	booked_until = serializers.DateTimeField(required=True)
+	client_email = serializers.EmailField(required=True)
+
+	class Meta:
+		model = Bookings
+		fields = (
+			'id',
+			'booked_property',
+			'number_of_clients',
+			'client_email',
+			'status',
+			'booked_from',
+			'booked_until',
+			'booked_by',
+			'created_at',
+			'updated_at'
+		)
+		read_only_fields = [
+			'booked_by',
+			'created_at',
+			'updated_at',
+			'id',
+			'status'
+		]
+
+	def validate(self, attrs):
+		if (attrs["booked_from"] >= attrs["booked_until"]) \
+				or (attrs["booked_until"] <= attrs["booked_from"]):
+			raise serializers.ValidationError({
+				"dates": "Dates are not valid",
+			})
+		return super(BookingsSerializer, self).validate(attrs)
+
+	def create(self, validated_data):
+		number_of_clients = validated_data.get("number_of_clients")
+		booked_from = validated_data.get("booked_from")
+		booked_until = validated_data.get("booked_until")
+		client_email = validated_data.get("client_email")
+		created_booking = Bookings(
+			number_of_clients=number_of_clients,
+			booked_from=booked_from,
+			booked_until=booked_until,
+			client_email=client_email,
+			booked_property_id=self.context["property_id"],
+			booked_by=self.context["request"].user
+		)
+		if Ownership.objects.filter(premises_id=self.context["property_id"], user=self.context["request"].user).exists():
+			created_booking.status = "ACCEPTED"
+		created_booking.save()
+		return created_booking
+
+
+class BookingsListSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Bookings
+		fields = (
+			'id',
+			'booked_property',
+			'number_of_clients',
+			'client_email',
+			'status',
+			'booked_from',
+			'booked_until',
+			'booked_by',
+			'created_at',
+			'updated_at'
+		)
 
 
 class BookingUpdateSerializer(serializers.ModelSerializer):
-	# TODO: fill in
-	pass
+
+	class Meta:
+		model = Bookings
+		fields = (
+			'status'
+		)
 
 
 class BulkFileUploadSerializer(serializers.ModelSerializer):
