@@ -12,7 +12,7 @@ class PropertyTypes(models.Model):
         - 100: Ordinary non-inhabitable property, like an office
         - 200: Inhabitable property, a flat or a house
     """
-    property_type = models.IntegerField(unique=True, null=False, blank=False)
+    property_type = models.IntegerField(primary_key=True, null=False, blank=False)
     description = models.CharField(max_length=150, null=False, blank=False)
 
     def __int__(self):
@@ -29,23 +29,35 @@ class Property(models.Model):
     title = models.CharField(max_length=50)
     body = models.TextField()
     price = models.PositiveIntegerField()
-    visibility = models.IntegerField(choices=VISIBILITY_CHOICES, default='PUB')
+    visibility = models.IntegerField(choices=VISIBILITY_CHOICES, default=100)
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
-    property_type = models.ForeignKey(PropertyTypes, to_field='property_type', related_name='property_types',
-                                      on_delete=models.CASCADE)
+    property_type = models.ForeignKey(PropertyTypes,
+                to_field='property_type', related_name='property_types', on_delete=models.CASCADE)
+    maximum_number_of_clients = models.IntegerField(default=1, null=False, blank=True)
 
     def __str__(self):
         return self.title
 
 
 class Ownership(models.Model):
-    premises = models.ForeignKey(Property, related_name='owners', on_delete=models.CASCADE)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    is_initial_owner = models.BooleanField(default=False)
-    granted_at = models.DateTimeField(auto_now_add=True)
-    permission_level = models.ForeignKey(PermissionLevels, related_name='permission_levels',
+    VISIBILITY_CHOICES = [
+        (100, 'Publicly Visible'),
+        (150, 'Visible for those who booked the property'),
+        (200, 'Only within the organisation scope'),
+        (250, 'Only within the property owners scope'),
+        (300, 'Only property initial owner and admins can see'),
+    ]
+
+    visibility = models.IntegerField(choices=VISIBILITY_CHOICES, default=100, null=False, blank=True)
+    premises = models.ForeignKey(Property, related_name='owners', on_delete=models.CASCADE, null=False, blank=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
+    is_initial_owner = models.BooleanField(default=False, null=False, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
+    updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
+    permission_level = models.ForeignKey(PermissionLevels, to_field='p_level',
+                                         related_name='permission_levels',
                                          on_delete=models.CASCADE)
 #    initial_owner_object = InitialOwnershipManager()
 
@@ -80,7 +92,8 @@ def path_and_rename(instance, filename):
 
 
 class PremisesImages(models.Model):
-    premises = models.ForeignKey(Property, to_field='id', related_name='property_images', on_delete=models.CASCADE)
+    premises = models.ForeignKey(Property, to_field='id',
+                                 related_name='property_images', on_delete=models.CASCADE)
     image = models.ImageField(upload_to=path_and_rename, blank=True, null=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     is_main = models.BooleanField(default=False)
@@ -90,37 +103,37 @@ class PremisesImages(models.Model):
 
 
 class PremisesAddresses(models.Model):
-    premises = models.ForeignKey(Property, related_name='property_address', on_delete=models.CASCADE)
-    paddr_country = models.CharField(max_length=100, blank=True, null=False)
-    paddr_city = models.CharField(max_length=100, blank=True, null=False)
-    paddr_street_1 = models.CharField(max_length=100, blank=True, null=False)
-    paddr_street_2 = models.CharField(max_length=100, blank=True, null=True)
-    paddr_building = models.CharField(max_length=20, blank=True, null=False)
-    paddr_floor = models.CharField(max_length=20, blank=True, null=False)
-    paddr_number = models.CharField(max_length=30, blank=True, null=False)
-    pzip_code = models.CharField(max_length=10, blank=True, null=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
-
-
-class Clients(models.Model):
-    client_first_name = models.CharField(max_length=100, null=False, blank=False)
-    client_last_name = models.CharField(max_length=100, null=False, blank=False)
-    client_patronymic = models.CharField(max_length=100, null=False, blank=False)
-    client_email = models.CharField(max_length=200, null=False, blank=False)
-    client_dob = models.DateField(null=False, blank=False)
-    client_description = models.CharField(max_length=255, null=False, blank=False)
-    client_existing_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    premises = models.OneToOneField(Property, related_name='property_address', on_delete=models.CASCADE,
+                                 null=False, blank=False)
+    country = models.CharField(max_length=100, blank=False, null=False)
+    city = models.CharField(max_length=100, blank=False, null=False)
+    street_1 = models.CharField(max_length=100, blank=False, null=False)
+    street_2 = models.CharField(max_length=100, blank=True, null=False)
+    building = models.CharField(max_length=20, blank=True, null=False)
+    floor = models.CharField(max_length=20, blank=True, null=False)
+    number = models.CharField(max_length=30, blank=True, null=False)
+    zip_code = models.CharField(max_length=10, blank=True, null=False)
+    directions_description = models.CharField(max_length=500, blank=True, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
 
 class Bookings(models.Model):
-    client = models.ForeignKey(Clients, on_delete=models.CASCADE, null=False, blank=False)
     booked_from = models.DateTimeField(null=False, blank=False)
     booked_until = models.DateTimeField(null=False, blank=False)
-    booked_property = models.ForeignKey(Property, on_delete=models.CASCADE, null=False, blank=False)
-    booked_at = models.DateTimeField(auto_now_add=True)
+    booked_property = models.ForeignKey(Property, related_name="booked_property",
+                                        on_delete=models.CASCADE, null=False, blank=False)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
-    is_cancelled = models.BooleanField(default=False)
-    booked_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
+    client_email = models.EmailField(null=False, blank=True)
+    number_of_clients = models.IntegerField(null=False, blank=True, default=1)
+    STATUS_CHOICES = [
+        ('ACCEPTED', 'Approved'),
+        ('AWAITING', 'Awaiting action from the owner'),
+        ('DECLINED', 'The owner declined the request')
+    ]
+    status = models.CharField(max_length=100, choices=STATUS_CHOICES,
+                              null=False, blank=False, default='AWAITING')
+    booked_by = models.ForeignKey(User, related_name="client_created_by",
+                                    on_delete=models.CASCADE, null=True, blank=True)
+
