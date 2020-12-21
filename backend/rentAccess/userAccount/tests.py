@@ -47,7 +47,7 @@ class OwnerUserAccountTest(APITestCase):
 		self.login_url = reverse('jwtauth:token_obtain_pair')
 		self.logout_url = reverse('jwtauth:logout')
 		self.logout_all_url = reverse('jwtauth:logout_all')
-		self.properties_create_list_url = reverse('properties:property-list')
+		self.properties_create_list_url = reverse('properties:properties-list')
 		self.user_main_page_url = reverse('userAccount:user-details')
 		self.userpic_url = reverse('userAccount:userpic')
 		# this section of JSON bodies for the requests
@@ -71,10 +71,10 @@ class OwnerUserAccountTest(APITestCase):
 				"last_name": "test_case_ln",
 				"patronymic": "",
 				"bio": "",
-				"account_type": "OWNER",
 				"is_confirmed": False,
 				"dob": "1970-01-01",
 				"gender": "",
+				"is_staff": False,
 				"properties_url": "http://testserver/api/v1/user/1/properties/",
 				"documents_url": "http://testserver/api/v1/user/1/documents/",
 				"billing_addresses_url": "http://testserver/api/v1/user/1/billing_addresses/",
