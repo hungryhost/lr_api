@@ -6,11 +6,38 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from properties.models import Bookings, Property
+from properties.serializers import BookingsSerializer, PropertyListSerializer, BookingsListSerializer
 from .permissions import IsOwnerOrSuperuser, IsCurrentUserOrSuperuser, PersonalInfoAccessList
 from .models import Profile, Documents, UserImages, BillingAddresses
 from .serializers import (ProfileSerializer, ChangePasswordSerializer,
 						  FileUploadSerializer, ProfileListSerializer,
 						  ProfileUpdateSerializer, ProfileDetailSerializer)
+
+
+class UserBookingsList(generics.ListAPIView):
+	serializer_class = BookingsSerializer
+
+	def get_queryset(self, *args, **kwargs):
+		author = get_object_or_404(User, id=self.request.user.id)
+		return Bookings.objects.all().filter(client_email=author.email)
+
+	def get_permissions(self):
+		permission_classes = [IsAuthenticated]
+		return [permission() for permission in permission_classes]
+
+
+class UserPropertiesList(generics.ListAPIView):
+	serializer_class = PropertyListSerializer
+	lookup_field = "user_id"
+
+	def get_queryset(self, *args, **kwargs):
+		author = get_object_or_404(User, id=self.request.user.id)
+		return Property.objects.all().filter(author=author)
+
+	def get_permissions(self):
+		permission_classes = [IsAuthenticated]
+		return [permission() for permission in permission_classes]
 
 
 class ProfileDetailViewSet(viewsets.ViewSet):
