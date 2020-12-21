@@ -1,3 +1,5 @@
+import json
+
 import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -8,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
+from userAccount.serializers import ProfileDetailSerializer
 from .utils import username_generate_from_email
 from .tasks import email_confirmation_task
 from .serializers import UserCreateSerializer, UserLoginSerializer
@@ -39,17 +42,12 @@ def registration(request):
 	curr_user.save()
 	profile = Profile.objects.get(user=curr_user)
 	refresh = RefreshToken.for_user(user)
+	profile_serializer = ProfileDetailSerializer(profile, context={'request': request})
+
 	res = {
 		"refresh": str(refresh),
 		"access": str(refresh.access_token),
-		"personal_info": {
-			"account_id": profile.user.id,
-			"username": str(curr_user.username),
-			"email": str(curr_user.email),
-			"first_name": str(curr_user.first_name),
-			"last_name": str(curr_user.last_name),
-			"account_type": str(profile.account_type),
-		},
+		"personal_info": profile_serializer.data
 	}
 	# TODO: owed refactoring, what's below belongs in another file
 	current_site = get_current_site(request).domain
@@ -88,18 +86,11 @@ def login(request):
 	curr_user = User.objects.get(username=user.username)
 	profile = Profile.objects.get(user=curr_user)
 	refresh = RefreshToken.for_user(user)
-
+	profile_serializer = ProfileDetailSerializer(profile, context={'request': request})
 	res = {
 		"refresh": str(refresh),
 		"access": str(refresh.access_token),
-		"personal_info": {
-			"account_id": profile.user.id,
-			"username": str(user.username),
-			"email": str(user.email),
-			"first_name": str(user.first_name),
-			"last_name": str(user.last_name),
-			"account_type": str(profile.account_type),
-		},
+		"personal_info": profile_serializer.data
 	}
 	return response.Response(res, status.HTTP_200_OK)
 
