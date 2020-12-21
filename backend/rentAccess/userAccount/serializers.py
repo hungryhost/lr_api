@@ -37,7 +37,6 @@ class UserImagesSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
 	# using nested serializers for convenience
-	account_type = serializers.CharField()
 	is_confirmed = serializers.BooleanField()
 	dob = serializers.DateField()
 	patronymic = serializers.CharField(read_only=False)
@@ -46,7 +45,6 @@ class ProfileSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Profile
 		fields = (
-			'account_type',
 			'is_confirmed',
 			'dob',
 			'patronymic',
@@ -73,8 +71,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 	first_name = serializers.CharField(source='user.first_name')
 	last_name = serializers.CharField(source='user.last_name')
 	userpic = serializers.SerializerMethodField('get_userpic', default="")
-	account_type = serializers.CharField(max_length=100,
-										 read_only=False, required=False)
+
 	dob = serializers.DateField(read_only=False, required=False)
 	patronymic = serializers.CharField(max_length=50,
 									   read_only=False, required=False)
@@ -88,6 +85,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 	phones_url = serializers.SerializerMethodField('get_phones_url')
 	# emails_url = serializers.SerializerMethodField('get_emails_url')
 	properties_url = serializers.SerializerMethodField('get_properties_url')
+	is_staff = serializers.BooleanField(source='user.is_staff', read_only=True)
 
 	def get_userpic(self, obj):
 		try:
@@ -144,15 +142,13 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 			if last_name:
 				user_inst_fields['last_name'] = last_name
 				instance.user.last_name = last_name
-		account_type = validated_data.get('account_type', None)
+
 		dob = validated_data.get('dob', None)
 		patronymic = validated_data.get('patronymic', None)
 		gender = validated_data.get('gender', None)
 		bio = validated_data.get('bio', None)
 		if user_inst_fields:
 			User.objects.update_or_create(id=instance.user.id, defaults=user_inst_fields)
-		if account_type is not None:
-			instance.account_type = account_type
 		if dob is not None:
 			instance.dob = dob
 		if patronymic is not None:
@@ -175,10 +171,10 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 			'last_name',
 			'patronymic',
 			'bio',
-			'account_type',
 			'is_confirmed',
 			'dob',
 			'gender',
+			'is_staff',
 			'properties_url',
 			'documents_url',
 			'billing_addresses_url',
@@ -198,13 +194,13 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 	id = serializers.IntegerField(source='user.id', read_only=True)
 	date_created = serializers.DateTimeField(source='user.date_joined', read_only=True)
 	last_updated = serializers.DateTimeField(read_only=True)
-	account_type = serializers.CharField(read_only=True, max_length=100)
 	is_confirmed = serializers.BooleanField(read_only=True)
 	dob = serializers.DateField(read_only=True, initial="", default="")
 	patronymic = serializers.CharField(read_only=True, max_length=50)
 	gender = serializers.CharField(read_only=True, max_length=1)
 	bio = serializers.CharField(read_only=True, max_length=1024)
 	userpic = serializers.SerializerMethodField('get_userpic', default="")
+	is_staff = serializers.BooleanField(source='user.is_staff', read_only=True)
 	documents_url = serializers.SerializerMethodField('get_documents_url')
 	billing_addresses_url = serializers.SerializerMethodField('get_billing_addresses_url')
 	phones_url = serializers.SerializerMethodField('get_phones_url')
@@ -274,10 +270,10 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 			'last_name',
 			'patronymic',
 			'bio',
-			'account_type',
 			'is_confirmed',
 			'dob',
 			'gender',
+			'is_staff',
 			'properties_url',
 			'documents_url',
 			'billing_addresses_url',
