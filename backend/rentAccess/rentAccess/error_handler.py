@@ -28,6 +28,7 @@ def custom_exception_handler(exc, context):
 		response.data['errors'] = errors
 		response.data['status_code'] = 401
 		return response
+	"""
 	if response is not None:
 		# check if exception has dict items
 		if hasattr(exc.detail, 'items'):
@@ -43,5 +44,5 @@ def custom_exception_handler(exc, context):
 
 		# serve status code in the response
 		response.data['status_code'] = response.status_code
-
+	"""
 	return response
