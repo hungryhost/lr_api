@@ -126,10 +126,9 @@ class PropertyListSerializer(serializers.ModelSerializer):
 			'property_type',
 			'main_image',
 			'property_address',
+			'client_greeting_message',
 			'created_at',
-			'updated_at',
-			'client_greeting_message'
-
+			'updated_at'
 		)
 
 		read_only_fields = ['id']
@@ -178,9 +177,11 @@ class PropertySerializer(serializers.ModelSerializer):
 			'owners',
 			'property_address',
 			'property_images',
+			'visibility',
+			'requires_additional_confirmation',
 			'client_greeting_message',
 			'created_at',
-			'updated_at',
+			'updated_at'
 
 		)
 		read_only_fields = ['id']
@@ -208,6 +209,8 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 	creator_id = serializers.IntegerField(read_only=True, source='author.id')
 	client_greeting_message = serializers.CharField(required=False)
 	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
+	visibility = serializers.IntegerField(required=True)
+	requires_additional_confirmation = serializers.BooleanField(required=False)
 
 	class Meta:
 		model = Property
@@ -221,7 +224,9 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 			'active',
 			'property_type',
 			'main_image',
+			'visibility',
 			'property_address',
+			'requires_additional_confirmation',
 			'client_greeting_message',
 			'created_at',
 			'updated_at',
@@ -245,15 +250,17 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 
 		property_type = validated_data["property_type"]
 		active = validated_data.get("active", None)
-
+		requires_additional_confirmation = validated_data.get("requires_additional_confirmation", None)
 		if active is None:
 			active = True
 		if visibility is None:
 			visibility = 100
+		if not requires_additional_confirmation:
+			requires_additional_confirmation = False
 		property_to_create = Property.objects.create(
 			author=self.context['request'].user,
-			title=title, body=body, price=price, active=active, property_type=property_type, visibility=visibility)
-
+			title=title, body=body, price=price, active=active, property_type=property_type,
+			visibility=visibility, requires_additional_confirmation=requires_additional_confirmation)
 		PremisesAddresses.objects.create(premises=property_to_create, **property_addresses)
 
 		return property_to_create
@@ -268,7 +275,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 	id = serializers.IntegerField(read_only=True)
 	visibility = serializers.IntegerField(required=False)
 	client_greeting_message = serializers.CharField(required=False)
-
+	requires_additional_confirmation = serializers.BooleanField(required=False)
 	class Meta:
 		model = Property
 		author_id = serializers.Field(source='author')
@@ -285,6 +292,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'property_address',
 			'property_images',
 			'visibility',
+			'requires_additional_confirmation',
 			'client_greeting_message',
 			'created_at',
 			'updated_at',
@@ -320,7 +328,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 		active = validated_data.get("active", None)
 		visibility = validated_data.get("visibility", None)
 		property_type_id = validated_data.get("property_type_id", None)
-
+		requires_additional_confirmation = validated_data.get("requires_additional_confirmation", None)
 		if title:
 			instance.title = title
 		if body:
@@ -333,7 +341,8 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			instance.visibility = visibility
 		if property_type_id:
 			instance.property_type_id = property_type_id
-
+		if requires_additional_confirmation:
+			instance.requires_additional_confirmation = requires_additional_confirmation
 		if address_data:
 			address_to_update = PremisesAddresses.objects.get(premises_id=instance.id)
 			country = address_data.get('country', None)

@@ -37,6 +37,7 @@ class Property(models.Model):
                 to_field='property_type', related_name='property_types', on_delete=models.CASCADE)
     maximum_number_of_clients = models.IntegerField(default=1, null=False, blank=False)
     client_greeting_message = models.CharField(max_length=500, null=False, blank=True)
+    requires_additional_confirmation = models.BooleanField(default=False, null=False, blank=False)
 
     def __str__(self):
         return self.title
