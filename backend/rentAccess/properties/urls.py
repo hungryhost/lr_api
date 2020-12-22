@@ -1,6 +1,6 @@
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet, BookingsListCreateView
+from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet, BookingsListCreateView, BookingsAllList
 
 app_name = 'properties'
 
@@ -28,8 +28,9 @@ urlpatterns = [
 			'delete': 'delete_images',
 		}
 
-
 	), name='properties-images-list'),
+	path('bookings/', BookingsAllList.as_view(), name='properties-bookings-list-all'),
+
 	path('<int:pk>/images/set_main_image/', PropertiesViewSet.as_view(
 		{
 			'put': 'change_main_image',
