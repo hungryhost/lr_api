@@ -6,6 +6,8 @@ from userAccount.serializers import ProfileListSerializer, ProfileSerializer
 from .models import Property, PremisesAddresses, PremisesImages, Ownership, Bookings
 from userAccount.models import Profile
 from .validators import validate_price
+
+
 #
 #
 
@@ -23,7 +25,7 @@ class PropertyOwnershipListSerializer(serializers.ModelSerializer):
 	last_name = serializers.CharField(source='user.last_name', read_only=True)
 
 	patronymic = serializers.CharField(max_length=50, source='user.profile.patronymic',
-									read_only=True)
+									   read_only=True)
 
 	class Meta:
 		model = Ownership
@@ -63,7 +65,7 @@ class PropertyImagesSerializer(serializers.ModelSerializer):
 			'is_main',
 			'uploaded_at'
 		)
-	
+
 
 class PropertyAddressesSerializer(serializers.ModelSerializer):
 	country = serializers.CharField(max_length=100, required=True)
@@ -125,10 +127,12 @@ class PropertyListSerializer(serializers.ModelSerializer):
 			'active',
 			'property_type',
 			'main_image',
+			'visibility',
 			'property_address',
+			'requires_additional_confirmation',
 			'client_greeting_message',
 			'created_at',
-			'updated_at'
+			'updated_at',
 		)
 
 		read_only_fields = ['id']
@@ -195,7 +199,8 @@ class PropertySerializer(serializers.ModelSerializer):
 
 	def get_owners_url(self, obj):
 		try:
-			return self.context.get('request').build_absolute_uri(reverse('properties:property-list')) + '{id}/owners/'.format(id=obj.pk)
+			return self.context.get('request').build_absolute_uri(
+				reverse('properties:property-list')) + '{id}/owners/'.format(id=obj.pk)
 		except Exception as e:
 			return str(e)
 
@@ -276,6 +281,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 	visibility = serializers.IntegerField(required=False)
 	client_greeting_message = serializers.CharField(required=False)
 	requires_additional_confirmation = serializers.BooleanField(required=False)
+
 	class Meta:
 		model = Property
 		author_id = serializers.Field(source='author')
@@ -296,7 +302,6 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'client_greeting_message',
 			'created_at',
 			'updated_at',
-
 
 		)
 		read_only_fields = ['creator_id', 'id']
@@ -424,7 +429,64 @@ class BookingsSerializer(serializers.ModelSerializer):
 			booked_property_id=self.context["property_id"],
 			booked_by=self.context["request"].user
 		)
-		if Ownership.objects.filter(premises_id=self.context["property_id"], user=self.context["request"].user).exists():
+		if Ownership.objects.filter(premises_id=self.context["property_id"],
+									user=self.context["request"].user).exists() or ( not
+				Property.objects.get(id=self.context["property_id"]).requires_additional_confirmation
+		):
+			created_booking.status = "ACCEPTED"
+		created_booking.save()
+		return created_booking
+
+
+class BookingCreateFromClientSerializer(serializers.ModelSerializer):
+	booked_property = PropertyListSerializer(many=False, read_only=True)
+	number_of_clients = serializers.IntegerField(required=True, max_value=100)
+	booked_from = serializers.DateTimeField(required=True)
+	booked_until = serializers.DateTimeField(required=True)
+
+	class Meta:
+		model = Bookings
+		fields = (
+			'id',
+			'booked_property',
+			'number_of_clients',
+			'client_email',
+			'status',
+			'booked_from',
+			'booked_until',
+			'booked_by',
+			'created_at',
+			'updated_at'
+		)
+		read_only_fields = [
+			'booked_by',
+			'created_at',
+			'updated_at',
+			'id',
+			'status'
+		]
+
+	def validate(self, attrs):
+		if (attrs["booked_from"] >= attrs["booked_until"]) \
+				or (attrs["booked_until"] <= attrs["booked_from"]):
+			raise serializers.ValidationError({
+				"dates": "Dates are not valid",
+			})
+		return super(BookingCreateFromClientSerializer, self).validate(attrs)
+
+	def create(self, validated_data):
+		number_of_clients = validated_data.get("number_of_clients")
+		booked_from = validated_data.get("booked_from")
+		booked_until = validated_data.get("booked_until")
+		created_booking = Bookings(
+			number_of_clients=number_of_clients,
+			booked_from=booked_from,
+			booked_until=booked_until,
+			client_email=self.context["request"].user.email,
+			booked_property_id=self.context["property_id"],
+			booked_by=self.context["request"].user
+		)
+		if not Property.objects.get(id=self.context["property_id"]).requires_additional_confirmation:
 			created_booking.status = "ACCEPTED"
 		created_booking.save()
 		return created_booking
@@ -581,16 +643,17 @@ class BulkFileUploadSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = PremisesImages
 		fields = ('premises',
-				'images',
-				'uploaded_at',
-				'is_main')
+				  'images',
+				  'uploaded_at',
+				  'is_main')
 		read_only_fields = ['premises']
 
 	def create(self, validated_data):
 		images = validated_data.get('images', None)
 		if images:
-			premises_image_instance = [PremisesImages(premises_id=self.context['premises_id'], image=image, is_main=False)
-									for image in images]
+			premises_image_instance = [
+				PremisesImages(premises_id=self.context['premises_id'], image=image, is_main=False)
+				for image in images]
 			premises_image_instance[0].is_main = True
 			PremisesImages.objects.bulk_create(premises_image_instance)
 		return PremisesImages.objects.filter(premises_id=self.context['premises_id'])
