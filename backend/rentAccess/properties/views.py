@@ -1,5 +1,6 @@
 from datetime import datetime
 from django.core.handlers import exception
+from django.db.models import Q
 from django.http import Http404
 from rest_framework import generics, permissions, status, response, serializers, viewsets, mixins
 from rest_framework.decorators import action, permission_classes
@@ -45,7 +46,7 @@ class PropertyListCreate(generics.ListCreateAPIView):
 
 	def get_serializer_class(self):
 		if self.request.method == "GET":
-			return PropertyListSerializer
+			return PropertySerializer
 		return PropertyCreateSerializer
 
 	def get_permissions(self):
@@ -71,6 +72,21 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 			'view': self,
 			'property_id': self.kwargs["pk"]
 		}
+
+	def get_permissions(self):
+		permission_classes = [IsAuthenticated]
+		return [permission() for permission in permission_classes]
+
+
+class BookingsAllList(generics.ListAPIView):
+	serializer_class = BookingsSerializer
+
+	def get_queryset(self, *args, **kwargs):
+		query = Q(booked_property__author=self.request.user)
+		query.add(Q(booked_property__owners__user=self.request.user), Q.OR)
+		return Bookings.objects.filter(
+			query
+			)
 
 	def get_permissions(self):
 		permission_classes = [IsAuthenticated]
@@ -129,7 +145,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	@action(detail=True, methods=['get'])
 	def list_owners(self, request, pk=None):
-		objects = self.get_object().filter(premises=pk).order_by('-is_initial_owner')
+		objects = self.get_object().filter(premises=pk).order_by('-is_creator')
 		page = self.paginate_queryset(objects)
 		if page is not None:
 			serializer = PropertyOwnershipListSerializer(page, many=True)
@@ -150,7 +166,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 	@action(detail=True, methods=['delete'])
 	def destroy_owner(self, request, pk=None, owner_id=None):
 		obj = get_object_or_404(Ownership, premises=pk, user_id=owner_id)
-		if obj.is_initial_owner:
+		if obj.is_creator:
 			return Response(status=status.HTTP_400_BAD_REQUEST)
 		obj.delete()
 		return Response(status=status.HTTP_204_NO_CONTENT)
