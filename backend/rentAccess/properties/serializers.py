@@ -222,8 +222,8 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 			'property_type',
 			'main_image',
 			'property_address',
-			'created_at',
 			'client_greeting_message',
+			'created_at',
 			'updated_at',
 		]
 		read_only_fields = ['creator', 'id']
@@ -268,6 +268,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 	id = serializers.IntegerField(read_only=True)
 	visibility = serializers.IntegerField(required=False)
 	client_greeting_message = serializers.CharField(required=False)
+
 	class Meta:
 		model = Property
 		author_id = serializers.Field(source='author')
@@ -284,8 +285,10 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'property_address',
 			'property_images',
 			'visibility',
+			'client_greeting_message',
 			'created_at',
 			'updated_at',
+
 
 		)
 		read_only_fields = ['creator_id', 'id']
