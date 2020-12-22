@@ -18,11 +18,22 @@ class FilteringNotMainImagesListSerializer(serializers.ListSerializer):
 
 
 class PropertyOwnershipListSerializer(serializers.ModelSerializer):
+	email = serializers.CharField(read_only=True, source='user.email')
+	first_name = serializers.CharField(source='user.first_name', read_only=True)
+	last_name = serializers.CharField(source='user.last_name', read_only=True)
+
+	patronymic = serializers.CharField(max_length=50, source='user.profile.patronymic',
+									read_only=True)
+
 	class Meta:
 		model = Ownership
 		fields = (
 			'user',
-			'is_initial_owner',
+			'email',
+			'first_name',
+			'last_name',
+			'patronymic',
+			'is_creator',
 			'permission_level',
 			'created_at',
 			'updated_at'
@@ -100,6 +111,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
 	creator_id = serializers.IntegerField(read_only=True, source='author.id')
 	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
 	id = serializers.IntegerField(read_only=True)
+	client_greeting_message = serializers.CharField(required=False)
 
 	class Meta:
 		model = Property
@@ -116,6 +128,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
 			'property_address',
 			'created_at',
 			'updated_at',
+			'client_greeting_message'
 
 		)
 
@@ -150,7 +163,6 @@ class PropertySerializer(serializers.ModelSerializer):
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField()
 
-
 	class Meta:
 		model = Property
 
@@ -166,6 +178,7 @@ class PropertySerializer(serializers.ModelSerializer):
 			'owners',
 			'property_address',
 			'property_images',
+			'client_greeting_message',
 			'created_at',
 			'updated_at',
 
@@ -193,7 +206,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 	active = serializers.BooleanField(required=False)
 	property_address = PropertyAddressesSerializer(many=False, required=True)
 	creator_id = serializers.IntegerField(read_only=True, source='author.id')
-
+	client_greeting_message = serializers.CharField(required=False)
 	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
 
 	class Meta:
@@ -210,6 +223,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 			'main_image',
 			'property_address',
 			'created_at',
+			'client_greeting_message',
 			'updated_at',
 		]
 		read_only_fields = ['creator', 'id']
@@ -253,7 +267,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField(read_only=True)
 	visibility = serializers.IntegerField(required=False)
-
+	client_greeting_message = serializers.CharField(required=False)
 	class Meta:
 		model = Property
 		author_id = serializers.Field(source='author')
