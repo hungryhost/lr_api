@@ -435,13 +435,132 @@ class BookingsListSerializer(serializers.ModelSerializer):
 		)
 
 
-class BookingUpdateSerializer(serializers.ModelSerializer):
+class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
+	status = serializers.CharField(required=False)
+	number_of_clients = serializers.IntegerField(required=False, max_value=100)
+	booked_from = serializers.DateTimeField(required=False)
+	booked_until = serializers.DateTimeField(required=False)
 
 	class Meta:
-		model = Bookings
+		model = PremisesImages
 		fields = (
-			'status'
+			'id',
+			'booked_property',
+			'number_of_clients',
+			'client_email',
+			'status',
+			'booked_from',
+			'booked_until',
+			'booked_by',
+			'created_at',
+			'updated_at'
 		)
+		read_only_fields = [
+			'id',
+			'booked_property',
+			'client_email',
+			'booked_by',
+			'created_at',
+			'updated_at']
+
+	def update(self, instance, validated_data):
+		status = validated_data.get("status", None)
+		number_of_clients = validated_data.get("number_of_clients", None)
+		booked_from = validated_data.get("booked_from", None)
+		booked_until = validated_data.get("booked_until", None)
+		if status:
+			instance.status = status
+		if number_of_clients:
+			instance.number_of_clients = number_of_clients
+		if booked_from:
+			instance.booked_from = booked_from
+		if booked_until:
+			instance.booked_from = booked_until
+
+		instance.save()
+		return instance
+
+
+class BookingUpdateAdminNotCreatorSerializer(serializers.ModelSerializer):
+	status = serializers.CharField(required=False)
+
+	class Meta:
+		model = PremisesImages
+		fields = (
+			'id',
+			'booked_property',
+			'number_of_clients',
+			'client_email',
+			'status',
+			'booked_from',
+			'booked_until',
+			'booked_by',
+			'created_at',
+			'updated_at'
+		)
+		read_only_fields = [
+			'id',
+			'booked_property',
+			'number_of_clients',
+			'client_email',
+			'booked_from',
+			'booked_until',
+			'booked_by',
+			'created_at',
+			'updated_at']
+
+	def update(self, instance, validated_data):
+		status = validated_data.get("status", None)
+		if status:
+			instance.status = status
+		instance.save()
+		return instance
+
+
+class BookingUpdateClientSerializer(serializers.ModelSerializer):
+	number_of_clients = serializers.IntegerField(required=False, max_value=100)
+	booked_from = serializers.DateTimeField(required=False)
+	booked_until = serializers.DateTimeField(required=False)
+
+	class Meta:
+		model = PremisesImages
+		fields = (
+			'id',
+			'booked_property',
+			'number_of_clients',
+			'client_email',
+			'status',
+			'booked_from',
+			'booked_until',
+			'booked_by',
+			'created_at',
+			'updated_at'
+		)
+		read_only_fields = [
+			'id',
+			'booked_property',
+			'number_of_clients',
+			'client_email',
+			'booked_from',
+			'status',
+			'booked_until',
+			'booked_by',
+			'created_at',
+			'updated_at']
+
+	def update(self, instance, validated_data):
+		number_of_clients = validated_data.get("number_of_clients", None)
+		booked_from = validated_data.get("booked_from", None)
+		booked_until = validated_data.get("booked_until", None)
+		if number_of_clients:
+			instance.number_of_clients = number_of_clients
+		if booked_from:
+			instance.booked_from = booked_from
+		if booked_until:
+			instance.booked_from = booked_until
+
+		instance.save()
+		return instance
 
 
 class BulkFileUploadSerializer(serializers.ModelSerializer):

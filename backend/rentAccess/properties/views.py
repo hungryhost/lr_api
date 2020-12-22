@@ -36,7 +36,7 @@ class PropertyListCreate(generics.ListCreateAPIView):
 		Ownership.objects.create(
 			premises=obj,
 			user=self.request.user,
-			is_initial_owner=True,
+			is_creator=True,
 			permission_level_id=400
 		)
 		return Response(status=status.HTTP_201_CREATED)
@@ -92,6 +92,54 @@ class BookingsAllList(generics.ListAPIView):
 		permission_classes = [IsAuthenticated]
 		return [permission() for permission in permission_classes]
 
+
+class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
+
+	def retrieve(self, request, pk=None):
+		obj = self.get_object(pk=pk)
+		serializer = BookingsSerializer(
+			obj,
+			context={'request': request}
+		)
+		return Response(serializer.data)
+
+	@action(detail=True, methods=['patch'])
+	def partial_update(self, request, pk=None):
+		instance = get_object_or_404(Property, author=self.request.user, pk=pk)
+		serializer = self.get_serializer(
+			instance,
+			data=self.request.data,
+			partial=True,
+			context={'request': request}
+		)
+		serializer.is_valid(raise_exception=True)
+		serializer.save()
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	def get_queryset(self):
+		if self.action in ['retrieve_owner', 'list_owners']:
+			return Ownership.objects.all()
+		else:
+			return Property.objects.all()
+
+	def get_permissions(self):
+		if self.action in ['retrieve_owner']:
+			permission_classes = [IsInitialOwner]
+		else:
+			permission_classes = [IsOwnerOrSuperuser]
+		return [permission() for permission in permission_classes]
+
+	def get_object(self, pk=None, booking_id=None):
+		try:
+			if self.action in ['partial_update', 'retrieve', 'delete_property']:
+				obj = Bookings.objects.get(booked_property=pk, id=booking_id)
+				self.check_object_permissions(self.request, obj)
+				return obj
+		except Bookings.DoesNotExist:
+			raise Http404
+
+	def get_serializer_class(self):
+		return BookingsSerializer
 
 class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
 	r""""
@@ -170,12 +218,6 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 			return Response(status=status.HTTP_400_BAD_REQUEST)
 		obj.delete()
 		return Response(status=status.HTTP_204_NO_CONTENT)
-
-	@action(detail=True, methods=['post'], permission_classes=[IsInitialOwner])
-	def create_booking(self, request, pk=None):
-		obj = get_object_or_404(Ownership, premises=pk, user=self.request.user)
-		if obj.permission_level not in [100, 200, 300, 400]:
-			return Response(status=status.HTTP_403_FORBIDDEN)
 
 	@action(detail=True, methods=['put'])
 	def change_main_image(self, request, pk=None):
