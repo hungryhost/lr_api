@@ -11,7 +11,8 @@ from rest_framework.response import Response
 from .models import Property, Profile, Ownership, PremisesImages, Bookings
 from .serializers import PropertySerializer, PropertyUpdateSerializer, \
 	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer, BulkFileUploadSerializer, \
-	BookingsListSerializer, BookingsSerializer
+	BookingsListSerializer, BookingsSerializer, BookingUpdateAdminAndCreatorSerializer, \
+	BookingUpdateAdminNotCreatorSerializer, BookingUpdateClientSerializer
 from .permissions import IsOwnerOrSuperuser, IsInitialOwner
 from .models import PropertyLog
 
@@ -94,52 +95,50 @@ class BookingsAllList(generics.ListAPIView):
 
 
 class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
-
-	def retrieve(self, request, pk=None):
-		obj = self.get_object(pk=pk)
+	# TODO: instead of deleting a booking -- archive it so that we don't loose any information
+	def retrieve(self, request, pk=None, booking_id=None):
+		obj = self.get_object(booked_property=pk, booking_id=booking_id)
 		serializer = BookingsSerializer(
 			obj,
-			context={'request': request}
+			context={'request': request, 'property_id': pk}
 		)
 		return Response(serializer.data)
 
 	@action(detail=True, methods=['patch'])
-	def partial_update(self, request, pk=None):
-		instance = get_object_or_404(Property, author=self.request.user, pk=pk)
-		serializer = self.get_serializer(
+	def partial_update(self, request, pk=None, booking_id=None):
+		instance = self.get_object(booked_property=pk, booking_id=booking_id)
+		booked_property = Property.objects.get(id=pk)
+
+		if self.request.user.id == instance.booked_by:
+			serializer_class = BookingUpdateAdminAndCreatorSerializer
+		if booked_property.owners.filter(user=self.request.user).exists():
+			serializer_class = BookingUpdateAdminNotCreatorSerializer
+
+		serializer = serializer_class(
 			instance,
 			data=self.request.data,
 			partial=True,
-			context={'request': request}
+			context={'request': request, 'property_id': pk}
 		)
 		serializer.is_valid(raise_exception=True)
 		serializer.save()
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
 	def get_queryset(self):
-		if self.action in ['retrieve_owner', 'list_owners']:
-			return Ownership.objects.all()
-		else:
-			return Property.objects.all()
+		return Bookings.objects.all()
 
 	def get_permissions(self):
-		if self.action in ['retrieve_owner']:
-			permission_classes = [IsInitialOwner]
-		else:
-			permission_classes = [IsOwnerOrSuperuser]
+		permission_classes = [IsAuthenticated]
 		return [permission() for permission in permission_classes]
 
-	def get_object(self, pk=None, booking_id=None):
+	def get_object(self, booked_property=None, booking_id=None):
 		try:
-			if self.action in ['partial_update', 'retrieve', 'delete_property']:
-				obj = Bookings.objects.get(booked_property=pk, id=booking_id)
-				self.check_object_permissions(self.request, obj)
-				return obj
+			obj = Bookings.objects.get(booked_property=booked_property, id=booking_id)
+			self.check_object_permissions(self.request, obj)
+			return obj
 		except Bookings.DoesNotExist:
 			raise Http404
 
-	def get_serializer_class(self):
-		return BookingsSerializer
 
 class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
 	r""""
@@ -203,7 +202,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	@action(detail=True, methods=['get'])
 	def retrieve_owner(self, request, pk=None, owner_id=None):
-		obj = self.get_object(pk=pk, user_id=owner_id)
+		obj = self.get_object(pk=pk, owner_id=owner_id)
 		serializer = PropertyOwnershipListSerializer(obj)
 		return Response(serializer.data)
 
