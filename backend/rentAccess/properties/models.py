@@ -35,7 +35,8 @@ class Property(models.Model):
     updated_at = models.DateTimeField(auto_now_add=True)
     property_type = models.ForeignKey(PropertyTypes,
                 to_field='property_type', related_name='property_types', on_delete=models.CASCADE)
-    maximum_number_of_clients = models.IntegerField(default=1, null=False, blank=True)
+    maximum_number_of_clients = models.IntegerField(default=1, null=False, blank=False)
+    client_greeting_message = models.CharField(max_length=500, null=False, blank=True)
 
     def __str__(self):
         return self.title
@@ -53,7 +54,7 @@ class Ownership(models.Model):
     visibility = models.IntegerField(choices=VISIBILITY_CHOICES, default=100, null=False, blank=True)
     premises = models.ForeignKey(Property, related_name='owners', on_delete=models.CASCADE, null=False, blank=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
-    is_initial_owner = models.BooleanField(default=False, null=False, blank=True)
+    is_creator = models.BooleanField(default=False, null=False, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
     updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
     permission_level = models.ForeignKey(PermissionLevels, to_field='p_level',
