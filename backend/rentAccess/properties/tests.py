@@ -11,7 +11,8 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from common.models import PermissionLevels
-from .models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages
+from .serializers import BookingsSerializer
+from .models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages, Bookings
 
 User = get_user_model()
 
@@ -113,6 +114,7 @@ class TestsOfProperties(APITestCase):
 				"title": "test_property_1",
 				"body": "test_description_1",
 				"price": 100,
+				"visibility": 100,
 				"property_type": 100,
 				"property_address":
 					{
@@ -148,8 +150,10 @@ class TestsOfProperties(APITestCase):
 						"number": "1",
 						"zip_code": "100000",
 						"directions_description": ""
-					}
-
+					},
+				"client_greeting_message": "",
+				"requires_additional_confirmation": False,
+				"visibility": 100
 			}
 		self.create_booking_JSON = \
 			{
@@ -164,6 +168,16 @@ class TestsOfProperties(APITestCase):
 				"client_email": "test1@test.com",
 				"booked_from": "2020-12-21T14:34:37.318Z",
 				"booked_until": "2020-12-20T14:34:37.318Z"
+			}
+		self.correct_response_for_creation_booking_JSON = \
+			{
+				"id": 1,
+				"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
+				"client_email": self.create_booking_JSON["client_email"],
+				"status": "ACCEPTED",
+				"booked_from": "2020-12-20T17:34:37.318000+03:00",
+				"booked_until": "2020-12-21T17:34:37.318000+03:00",
+				"booked_by": 1
 			}
 		self.booking_create_response_client_JSON = \
 			{
@@ -614,20 +628,34 @@ class TestsOfProperties(APITestCase):
 		self.assertEqual(PremisesImages.objects.filter(premises_id=resp_post.data["id"], is_main=True).count(), 1)
 		self.assertEqual(PremisesImages.objects.filter(premises_id=resp_post.data["id"], is_main=False).count(), 2)
 
-	def test_add_booking(self):
-		pass
+	def test_add_booking_from_owner(self):
 		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,
 									format='json')
-		print(resp_post.data, resp_post.status_code)
-		print((reverse('properties:properties-bookings-list', args=(resp_post.data["id"],))))
 
 		resp_create_booking = self.client.post(reverse('properties:properties-bookings-list', args=(resp_post.data["id"],)),
 								data=self.create_booking_JSON, format='json')
-		print(resp_create_booking.data, resp_create_booking.status_code)
-		resp_create_booking = self.client.post(
+
+		resp_create_booking_wrong_dates = self.client.post(
 			reverse('properties:properties-bookings-list', args=(resp_post.data["id"],)),
 			data=self.create_booking_wrong_dates_1_JSON, format='json')
-		print(resp_create_booking.data, resp_create_booking.status_code)
+
+		self.assertEqual(Bookings.objects.all().filter(booked_property=resp_post.data["id"]).count(), 1)
+		booking_object = Bookings.objects.get(booked_property=resp_post.data["id"])
+		resp_retrieve_booking = self.client.get(
+			reverse('properties:properties-bookings-details',
+					args=(resp_post.data["id"], resp_create_booking.data["id"],)),
+			format='json')
+		booked_property_from_request = resp_retrieve_booking.data['booked_property']
+		booked_property_from_request.pop('created_at')
+		booked_property_from_request.pop('updated_at')
+		resp_post.data.pop('created_at')
+		resp_post.data.pop('updated_at')
+		self.assertEqual(dict(booked_property_from_request), self.correct_JSON_response_for_creation)
+		# since we've checked the correctness of property data, pop it from the response
+		resp_retrieve_booking.data.pop('booked_property')
+		resp_retrieve_booking.data.pop('created_at')
+		resp_retrieve_booking.data.pop('updated_at')
+		self.assertEqual(resp_retrieve_booking.data, self.correct_response_for_creation_booking_JSON)
 
 	def test_update_booking(self):
 		pass
