@@ -516,7 +516,7 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 	booked_until = serializers.DateTimeField(required=False)
 
 	class Meta:
-		model = PremisesImages
+		model = Bookings
 		fields = (
 			'id',
 			'booked_property',
@@ -549,17 +549,17 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 		if booked_from:
 			instance.booked_from = booked_from
 		if booked_until:
-			instance.booked_from = booked_until
+			instance.booked_until = booked_until
 
 		instance.save()
 		return instance
 
 
 class BookingUpdateAdminNotCreatorSerializer(serializers.ModelSerializer):
-	status = serializers.CharField(required=False)
+	status = serializers.CharField(required=True)
 
 	class Meta:
-		model = PremisesImages
+		model = Bookings
 		fields = (
 			'id',
 			'booked_property',
@@ -597,7 +597,7 @@ class BookingUpdateClientSerializer(serializers.ModelSerializer):
 	booked_until = serializers.DateTimeField(required=False)
 
 	class Meta:
-		model = PremisesImages
+		model = Bookings
 		fields = (
 			'id',
 			'booked_property',
