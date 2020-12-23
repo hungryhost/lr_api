@@ -13,7 +13,7 @@ from .serializers import PropertySerializer, PropertyUpdateSerializer, \
 	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer, BulkFileUploadSerializer, \
 	BookingsListSerializer, BookingsSerializer, BookingUpdateAdminAndCreatorSerializer, \
 	BookingUpdateAdminNotCreatorSerializer, BookingUpdateClientSerializer
-from .permissions import IsOwnerOrSuperuser, IsInitialOwner
+from .permissions import IsOwnerOrSuperuser, IsInitialOwner, BookingIsAdminOfPropertyOrSuperuser
 from .models import PropertyLog
 
 
@@ -109,10 +109,11 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 		instance = self.get_object(booked_property=pk, booking_id=booking_id)
 		booked_property = Property.objects.get(id=pk)
 
-		if self.request.user.id == instance.booked_by:
+		if self.request.user == instance.booked_by:
 			serializer_class = BookingUpdateAdminAndCreatorSerializer
-		if booked_property.owners.filter(user=self.request.user).exists():
-			serializer_class = BookingUpdateAdminNotCreatorSerializer
+		else:
+			if instance.booked_property.owners.filter(user=self.request.user).exists():
+				serializer_class = BookingUpdateAdminNotCreatorSerializer
 
 		serializer = serializer_class(
 			instance,
@@ -124,11 +125,15 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 		serializer.save()
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
+	@action(detail=True, methods=['delete'])
+	def archive_booking(self, request,  pk=None, booking_id=None):
+		pass
+
 	def get_queryset(self):
 		return Bookings.objects.all()
 
 	def get_permissions(self):
-		permission_classes = [IsAuthenticated]
+		permission_classes = [BookingIsAdminOfPropertyOrSuperuser]
 		return [permission() for permission in permission_classes]
 
 	def get_object(self, booked_property=None, booking_id=None):
@@ -138,6 +143,9 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 			return obj
 		except Bookings.DoesNotExist:
 			raise Http404
+
+	def get_serializer_class(self):
+		return BookingsSerializer
 
 
 class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
