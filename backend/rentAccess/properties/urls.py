@@ -29,12 +29,12 @@ urlpatterns = [
 			'delete': 'delete_images',
 		}
 	), name='properties-images-list'),
-	path('<int:pk>/bookings/<int:booking_id>', BookingsViewSet.as_view(
+	path('<int:pk>/bookings/<int:booking_id>/', BookingsViewSet.as_view(
 		{
 			'get': 'retrieve',
 			'patch': 'partial_update'
 		}
-	), name='properties-bookings-details'),
+	), name='properties-bookings-detail'),
 
 	path('bookings/', BookingsAllList.as_view(), name='properties-bookings-list-all'),
 
