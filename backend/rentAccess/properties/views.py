@@ -56,7 +56,6 @@ class PropertyListCreate(generics.ListCreateAPIView):
 
 
 class BookingsListCreateView(generics.ListCreateAPIView):
-
 	serializer_class = BookingsSerializer
 
 	def perform_create(self, serializer):
@@ -87,7 +86,7 @@ class BookingsAllList(generics.ListAPIView):
 		query.add(Q(booked_property__owners__user=self.request.user), Q.OR)
 		return Bookings.objects.filter(
 			query
-			)
+		)
 
 	def get_permissions(self):
 		permission_classes = [IsAuthenticated]
@@ -126,8 +125,8 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['delete'])
-	def archive_booking(self, request,  pk=None, booking_id=None):
-		pass
+	def archive_booking(self, request, pk=None, booking_id=None):
+		return Response(status=status.HTTP_204_NO_CONTENT)
 
 	def get_queryset(self):
 		return Bookings.objects.all()
@@ -177,7 +176,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 			obj,
 			context={'request': request}
 		)
-		return Response(serializer.data)
+		return Response(serializer.data, status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['patch'])
 	def partial_update(self, request, pk=None):
@@ -206,17 +205,17 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 			serializer = PropertyOwnershipListSerializer(page, many=True)
 			return self.get_paginated_response(serializer.data)
 		serializer = PropertyOwnershipListSerializer(objects, many=True)
-		return Response(serializer.data)
+		return Response(serializer.data, status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['get'])
 	def retrieve_owner(self, request, pk=None, owner_id=None):
 		obj = self.get_object(pk=pk, owner_id=owner_id)
 		serializer = PropertyOwnershipListSerializer(obj)
-		return Response(serializer.data)
+		return Response(serializer.data, status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['post'], permission_classes=[IsInitialOwner])
 	def add_owner(self, request, pk=None):
-		pass
+		return Response(status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['delete'])
 	def destroy_owner(self, request, pk=None, owner_id=None):
@@ -225,6 +224,20 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 			return Response(status=status.HTTP_400_BAD_REQUEST)
 		obj.delete()
 		return Response(status=status.HTTP_204_NO_CONTENT)
+
+	@action(detail=True, methods=['get'])
+	def get_availability(self, request, pk=None):
+		"""
+		(ArrivalDate <= @ArrivalDate AND DepartureDate >= @ArrivalDate) -- cases 3,5,7
+		OR (ArrivalDate < @DepartureDate AND DepartureDate >= @DepartureDate ) --cases 6,6
+		OR (@ArrivalDate <= ArrivalDate AND @DepartureDate >= ArrivalDate) --case 4
+		"""
+		# TODO: consider moving the query into the model's methods or manager
+
+		obj = self.get_object(pk=pk)
+		query = Q(booked_property=obj)
+
+		return Response(status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['put'])
 	def change_main_image(self, request, pk=None):
@@ -264,7 +277,8 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		except Ownership.DoesNotExist:
 			raise Http404
 		try:
-			if self.action in ['partial_update', 'retrieve', 'delete_property']:
+			if self.action in ['partial_update', 'retrieve', 'delete_property',
+							   'get_availability']:
 				obj = Property.objects.get(pk=pk)
 				self.check_object_permissions(self.request, obj)
 				return obj
@@ -292,6 +306,7 @@ class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.Li
 
 	@action(detail=False, methods=['delete'])
 	def delete_images(self, request, pk=None):
+		# TODO: redo to use list of items from the query instead of json body
 		image_ids_list = list(request.data.get('images'))
 		if not all(isinstance(item, int) for item in image_ids_list) or len(image_ids_list) == 0:
 			return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -304,7 +319,7 @@ class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.Li
 			image_obj = get_object_or_404(PremisesImages, pk=item, premises=pk)
 			image_obj.delete()
 		if not PremisesImages.objects.filter(premises_id=pk, is_main=True).exists() \
-			and PremisesImages.objects.filter(premises_id=pk, is_main=False).exists():
+				and PremisesImages.objects.filter(premises_id=pk, is_main=False).exists():
 			obj = PremisesImages.objects.latest('uploaded_at')
 			obj.is_main = True
 			obj.save()
