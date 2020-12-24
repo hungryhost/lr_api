@@ -17,21 +17,25 @@ from django.conf.urls import url
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.db import router
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.views.generic import TemplateView
+from rest_framework import permissions
 from rest_framework_simplejwt import views as jwt_views
 from rest_framework_simplejwt.views import TokenVerifyView
-
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 from . import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     # ------------------- LOCK-API -------------------
-    #path('lock-api/v1/register/', include('register.urls')),
-    #path('lock-api/v1/key/', include('keys.urls')),
-    #path('lock-api/v1/lock/', include('locks.urls')),
-    #path('lock-api/v1/echo/', include('locks.urls')),
-    #path('lock-api/v1/access/', include('schedule.urls')),
+
+    path('lock-api/v1/register/', include('register.urls')),
+    path('lock-api/v1/key/', include('keys.urls')),
+    path('lock-api/v1/lock/', include('locks.urls')),
+    path('lock-api/v1/echo/', include('locks.urls')),
+    path('lock-api/v1/access/', include('schedule.urls')),
+    path('lock-api/v1/check-access/', include('checkAccess.urls')),
     # ------------------- SERVICE API -------------------
     path('api/v1/properties/', include('properties.urls'), name='properties'),
     # path('auth/', include('rest_framework.urls')),
