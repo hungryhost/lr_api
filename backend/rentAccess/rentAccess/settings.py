@@ -59,10 +59,11 @@ INSTALLED_APPS = [
     'userAccount',
     'corsheaders',
     'common',
-    #'register',
-    #'keys',
-    #'schedule',
-    #'locks',
+    'register',
+    'keys',
+    'schedule',
+    'locks',
+    'checkAccess',
 ]
 
 MIDDLEWARE = [
