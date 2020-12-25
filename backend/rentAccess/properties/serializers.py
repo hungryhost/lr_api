@@ -382,8 +382,8 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 class BookingsSerializer(serializers.ModelSerializer):
 	booked_property = PropertyListSerializer(many=False, read_only=True)
 	number_of_clients = serializers.IntegerField(required=True, max_value=100)
-	booked_from = serializers.DateTimeField(required=True)
-	booked_until = serializers.DateTimeField(required=True)
+	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=True)
+	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=True)
 	client_email = serializers.EmailField(required=True)
 
 	class Meta:
@@ -409,6 +409,7 @@ class BookingsSerializer(serializers.ModelSerializer):
 		]
 
 	def validate(self, attrs):
+
 		if (attrs["booked_from"] >= attrs["booked_until"]) \
 				or (attrs["booked_until"] <= attrs["booked_from"]):
 			raise serializers.ValidationError({
@@ -417,6 +418,7 @@ class BookingsSerializer(serializers.ModelSerializer):
 		return super(BookingsSerializer, self).validate(attrs)
 
 	def create(self, validated_data):
+
 		number_of_clients = validated_data.get("number_of_clients")
 		booked_from = validated_data.get("booked_from")
 		booked_until = validated_data.get("booked_until")
@@ -441,8 +443,8 @@ class BookingsSerializer(serializers.ModelSerializer):
 class BookingCreateFromClientSerializer(serializers.ModelSerializer):
 	booked_property = PropertyListSerializer(many=False, read_only=True)
 	number_of_clients = serializers.IntegerField(required=True, max_value=100)
-	booked_from = serializers.DateTimeField(required=True)
-	booked_until = serializers.DateTimeField(required=True)
+	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=True)
+	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=True)
 
 	class Meta:
 		model = Bookings
@@ -493,6 +495,9 @@ class BookingCreateFromClientSerializer(serializers.ModelSerializer):
 
 
 class BookingsListSerializer(serializers.ModelSerializer):
+	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
+	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
+
 	class Meta:
 		model = Bookings
 		fields = (
@@ -512,8 +517,8 @@ class BookingsListSerializer(serializers.ModelSerializer):
 class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 	status = serializers.CharField(required=False)
 	number_of_clients = serializers.IntegerField(required=False, max_value=100)
-	booked_from = serializers.DateTimeField(required=False)
-	booked_until = serializers.DateTimeField(required=False)
+	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
+	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
 
 	class Meta:
 		model = Bookings
@@ -557,6 +562,8 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 
 class BookingUpdateAdminNotCreatorSerializer(serializers.ModelSerializer):
 	status = serializers.CharField(required=True)
+	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", read_only=True)
+	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", read_only=True)
 
 	class Meta:
 		model = Bookings
@@ -593,8 +600,8 @@ class BookingUpdateAdminNotCreatorSerializer(serializers.ModelSerializer):
 
 class BookingUpdateClientSerializer(serializers.ModelSerializer):
 	number_of_clients = serializers.IntegerField(required=False, max_value=100)
-	booked_from = serializers.DateTimeField(required=False)
-	booked_until = serializers.DateTimeField(required=False)
+	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
+	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
 
 	class Meta:
 		model = Bookings
