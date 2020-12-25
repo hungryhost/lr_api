@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 from django.core.handlers import exception
 from django.db.models import Q
 from django.http import Http404
@@ -31,7 +31,7 @@ class PropertyListCreate(generics.ListCreateAPIView):
 			listed_prop=obj,
 			user=self.request.user,
 			action='POST',
-			act_time=datetime.now(),
+			act_time=datetime.datetime.now(),
 			result=True
 		)
 		Ownership.objects.create(
@@ -225,7 +225,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		obj.delete()
 		return Response(status=status.HTTP_204_NO_CONTENT)
 
-	@action(detail=True, methods=['get'])
+	@action(detail=True, methods=['post'])
 	def get_availability(self, request, pk=None):
 		"""
 		(ArrivalDate <= @ArrivalDate AND DepartureDate >= @ArrivalDate) -- cases 3,5,7
@@ -235,8 +235,21 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		# TODO: consider moving the query into the model's methods or manager
 
 		obj = self.get_object(pk=pk)
-		query = Q(booked_property=obj)
+		datetime_start = self.request.data.get("booked_from", None)
+		datetime_stop = self.request.data.get("booked_until", None)
 
+		query_1 = Q()
+		# query_1.add(Q(booked_property_id=1), Q.AND)
+		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
+		query_1.add(Q(booked_from__lte=datetime_start) & Q(booked_until__gte=datetime_start), query_1.connector)
+		query_1.add(Q(booked_from__lt=datetime_stop) & Q(booked_until__gte=datetime_stop), Q.OR)
+		query_1.add(Q(booked_from__gte=datetime_start) & Q(booked_from__lte=datetime_stop), Q.OR)
+		query_1.add(Q(booked_property_id=1), Q.AND)
+		query_2 = Q()
+		query_2.add(Q(booked_from=datetime_stop) | Q(booked_until=datetime_start), query_2.connector)
+		queryset = Bookings.objects.filter(query_1).exclude(query_2)
+		if queryset.exists():
+			return Response(status=status.HTTP_226_IM_USED)
 		return Response(status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['put'])
