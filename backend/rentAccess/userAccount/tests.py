@@ -75,10 +75,10 @@ class OwnerUserAccountTest(APITestCase):
 				"dob": "1970-01-01",
 				"gender": "",
 				"is_staff": False,
-				"properties_url": "http://testserver/api/v1/user/1/properties/",
-				"documents_url": "http://testserver/api/v1/user/1/documents/",
-				"billing_addresses_url": "http://testserver/api/v1/user/1/billing_addresses/",
-				"phones_url": "http://testserver/api/v1/user/1/phones/",
+				"properties_url": "http://testserver/api/v1/user/properties/",
+				"documents_url": "http://testserver/api/v1/user/documents/",
+				"billing_addresses_url": "http://testserver/api/v1/user/billing_addresses/",
+				"phones_url": "http://testserver/api/v1/user/phones/",
 			}
 
 		self.list_of_possible_genders = [
