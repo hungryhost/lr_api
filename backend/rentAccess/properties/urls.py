@@ -32,10 +32,13 @@ urlpatterns = [
 	path('<int:pk>/bookings/<int:booking_id>/', BookingsViewSet.as_view(
 		{
 			'get': 'retrieve',
-			'patch': 'partial_update'
+			'patch': 'partial_update',
+			'delete': 'archive_booking'
 		}
 	), name='properties-bookings-detail'),
-
+	path('<int:pk>/available/', PropertiesViewSet.as_view({
+		'post': 'get_availability'
+	}), name='properties-availability-check'),
 	path('bookings/', BookingsAllList.as_view(), name='properties-bookings-list-all'),
 
 	path('<int:pk>/images/set_main_image/', PropertiesViewSet.as_view(
