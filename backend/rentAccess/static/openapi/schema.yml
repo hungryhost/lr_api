@@ -29,6 +29,16 @@ info:
     <br>Tested methods marked as <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
     <br>
     <br>
+    ---
+    ## IMPORTANT CHANGES
+    ###   - Changed datetime format [25.12.2020].
+      - For fields `booked_from` and `booked_until` the format is `%Y-%m-%dT%H:%M%z`.
+        - Represented as `2020-12-22T00:52+0300` with only date, hour and minutes with
+      a timezone stamp, for example, as `+0300` for MSK.
+
+      - For __all__ other datetime fields the format is `%Y-%m-%dT%H:%M:%S%z`,
+      which is represented as `2020-12-22T00:52:30+0300` (__added seconds__).
+    ---
     __*!!!  METHODS THAT DO NOT HAVE "TEST" LABEL ARE NOT SUITABLE FOR PRODUCTION USE.<br> METHODS THAT ARE NOT MARKED AS COMPLETED ARE NOT AVAILABLE YET*.__
 
     ---
@@ -1750,11 +1760,11 @@ components:
         created_at:
           type: string
           readOnly: true
-          example: "2020-12-19T04:53:34.922814+03:00"
+          example: "2020-12-20T23:19:03+0300"
         updated_at:
           type: string
           readOnly: true
-          example: "2020-12-19T04:53:34.922814+03:00"
+          example: "2020-12-20T23:19:03+0300"
       required:
       - title
       - body
@@ -1792,11 +1802,11 @@ components:
         created_at:
           type: string
           readOnly: true
-          example: "2020-12-19T04:53:34.922814+03:00"
+          example: "2020-12-20T23:19:03+0300"
         updated_at:
           type: string
           readOnly: true
-          example: "2020-12-19T04:53:34.922814+03:00"
+          example: "2020-12-20T23:19:03+0300"
     PropertyAddress:
       type: object
       properties:
@@ -1844,7 +1854,7 @@ components:
         uploaded_at:
           type: string
           readOnly: true
-          example: "2020-12-12T20:36:11.567997+03:00"
+          example: "2020-12-20T23:19:03+0300"
     Booking:
       type: object
       properties:
@@ -1869,21 +1879,21 @@ components:
           enum: ["ACCEPTED", "AWAITING", "DECLINED", "EXPIRED"]
         booked_from:
           type: string
-          example: "2020-12-17T00:43:30+03:00"
+          example: "2020-12-20T23:19+0300"
         booked_until:
           type: string
-          example: "2020-12-17T00:43:31+03:00"
+          example: "2020-12-25T23:19+0300"
         booked_by:
           type: integer
           example: 57
         created_at:
           readOnly: true
           type: string
-          example: "2020-12-17T00:43:42.148287+03:00"
+          example: "2020-12-17T00:43:42+0300"
         updated_at:
           readOnly: true
           type: string
-          example: "2020-12-17T00:43:42.149282+03:00"
+          example: "2020-12-17T00:43:42+0300"
       required:
       - number_of_clients
       - client_email
@@ -1951,10 +1961,10 @@ components:
           example: "http://testserver/api/v1/user/emails/"
         date_created:
           type: string
-          example: "2020-11-25T23:36:11.562947+03:00"
+          example: "2020-12-20T23:19:03+0300"
         last_updated:
           type: string
-          example: "2020-11-25T23:36:11.562947+03:00"
+          example: "2020-12-20T23:19:03+0300"
     TokenObtainPair:
       type: object
       properties:
@@ -2171,12 +2181,12 @@ components:
                   emails_url:
                     type: string
                     example: "http://testserver/api/v1/user/emails/"
-                  date_created:
+                  created_at:
                     type: string
-                    example: "2020-11-25T23:36:11.562947+03:00"
-                  last_updated:
+                    example: "2020-12-20T23:19:03+0300"
+                  updated_at:
                     type: string
-                    example: "2020-11-25T23:36:11.562947+03:00"
+                    example: "2020-12-20T23:19:03+0300"
     200_OK_Properties_Paginated:
       description: Responce was processed
       content:
@@ -2270,10 +2280,10 @@ components:
                     example: "http://testserver/api/v1/user/emails/"
                   date_created:
                     type: string
-                    example: "2020-11-25T23:36:11.562947+03:00"
+                    example: "2020-12-20T23:19:03+0300"
                   last_updated:
                     type: string
-                    example: "2020-11-25T23:36:11.562947+03:00"
+                    example: "2020-12-20T23:19:03+0300"
     404_Not_Found:
       description: "404 not found: resource doesn't exist."
       content:
