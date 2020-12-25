@@ -3,9 +3,12 @@ import datetime
 import random
 import string
 import tempfile
+from django.utils.timezone import localtime
+import pytz
 from unittest import TestCase
 from PIL import Image
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
@@ -160,15 +163,15 @@ class TestsOfProperties(APITestCase):
 			{
 				"number_of_clients": 1,
 				"client_email": "test1@test.com",
-				"booked_from": "2020-12-20T17:34:37.318000+03:00",
-				"booked_until": "2020-12-21T17:34:37.318000+03:00"
+				"booked_from": "2020-12-29T17:34+0300",
+				"booked_until": "2020-12-29T19:34+0300"
 			}
 		self.create_booking_wrong_dates_1_JSON = \
 			{
 				"number_of_clients": 1,
 				"client_email": "test1@test.com",
-				"booked_from": "2020-12-20T17:34:37.318000+03:00",
-				"booked_until": "2020-12-20T17:34:37.318000+03:00"
+				"booked_from": "2020-12-29T17:34+0300",
+				"booked_until": "2020-12-29T16:34+0300"
 			}
 		self.correct_response_for_creation_booking_JSON = \
 			{
@@ -176,8 +179,8 @@ class TestsOfProperties(APITestCase):
 				"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
 				"client_email": self.create_booking_JSON["client_email"],
 				"status": "ACCEPTED",
-				"booked_from": "2020-12-20T17:34:37.318000+03:00",
-				"booked_until": "2020-12-21T17:34:37.318000+03:00",
+				"booked_from": "2020-12-29T17:34+0300",
+				"booked_until": "2020-12-29T19:34+0300",
 				"booked_by": 1
 			}
 		self.booking_create_response_client_JSON = \
@@ -243,8 +246,8 @@ class TestsOfProperties(APITestCase):
 				"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
 				"client_email": self.create_booking_JSON["client_email"],
 				"status": "ACCEPTED",
-				"booked_from": "2020-12-20T17:34:37.318000+03:00",
-				"booked_until": "2020-12-21T17:34:37.318000+03:00",
+				"booked_from": "2020-12-29T17:34+0300",
+				"booked_until": "2020-12-29T19:34+0300",
 				"booked_by": 1,
 			}
 		self.retrieve_booking_response_admin_JSON = \
@@ -277,8 +280,8 @@ class TestsOfProperties(APITestCase):
 					"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
 					"client_email": self.create_booking_JSON["client_email"],
 					"status": "ACCEPTED",
-					"booked_from": "2020-12-20T17:34:37.318000+03:00",
-					"booked_until": "2020-12-21T17:34:37.318000+03:00",
+					"booked_from": "2020-12-29T17:34+0300",
+					"booked_until": "2020-12-29T19:34+0300",
 					"booked_by": 1,
 				}
 		self.retrieve_booking_response_admin_with_locks_JSON = \
@@ -560,38 +563,51 @@ class TestsOfProperties(APITestCase):
 		self.assertEqual(created_property.author.id, resp_auth.data["creator_id"])
 
 	def test_delete_property(self):
-		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,
-									 format='json')
+		resp_post = self.client.post(
+			self.properties_list_url,
+			self.create_property_JSON,
+			format='json')
 		self.assertEqual(resp_post.status_code, status.HTTP_201_CREATED)
 		self.assertEqual(Property.objects.all().count(), 1)
 		self.assertEqual(Property.objects.filter(pk=resp_post.data["id"]).count(), 1)
-		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,
-									 format='json')
+		resp_post = self.client.post(
+			self.properties_list_url,
+			self.create_property_JSON,
+			format='json')
 		self.assertEqual(Property.objects.all().count(), 2)
-		resp_delete = self.client.delete(reverse('properties:properties-details', args=(resp_post.data["id"],)),
-										 format='json')
+		resp_delete = self.client.delete(
+			reverse('properties:properties-details',
+			args=(resp_post.data["id"],)),
+			format='json')
 		self.assertEqual(resp_delete.status_code, status.HTTP_204_NO_CONTENT)
 		self.assertEqual(Property.objects.all().count(), 1)
 		self.assertEqual(Property.objects.filter(pk=resp_post.data["id"]).count(), 0)
 
 	def test_add_images(self):
-		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,
-									 format='json')
+		resp_post = self.client.post(
+			self.properties_list_url,
+			self.create_property_JSON,
+			format='json')
 		images = generate_list_of_images()
-		resp_auth_1 = self.client.put(reverse('properties:properties-images-list', args=(resp_post.data["id"],)),
-									  data={
-										  'images': [
-											  images[0],
-											  images[1],
-											  images[2],
-											  images[3],
-											  images[4],
-											  images[5],
-										  ],
+		resp_auth_1 = self.client.put(
+			reverse('properties:properties-images-list',
+					args=(resp_post.data["id"],)),
+			data={
+				'images': [
+					images[0],
+					images[1],
+					images[2],
+					images[3],
+					images[4],
+					images[5],
+				],
 
-									  }, format='multipart')
-		resp_get = self.client.get(reverse('properties:properties-details', args=(resp_post.data["id"],)),
-								   format='json')
+			},
+			format='multipart')
+		resp_get = self.client.get(
+			reverse('properties:properties-details',
+					args=(resp_post.data["id"],)),
+			format='json')
 		self.assertEqual(resp_auth_1.status_code, status.HTTP_200_OK)
 		self.assertIsNot(resp_get.data["property_images"], [])
 		iterator = 2
@@ -605,30 +621,45 @@ class TestsOfProperties(APITestCase):
 		self.assertEqual(obj.pk, 1)
 
 	def test_change_main_image(self):
-		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,
-									 format='json')
-		resp_auth_1 = self.client.put(reverse('properties:properties-main-image-setter', args=(resp_post.data["id"],)),
-									  data={"image_id": 1}, format='json')
+		resp_post = self.client.post(
+			self.properties_list_url,
+			self.create_property_JSON,
+			format='json')
+		resp_auth_1 = self.client.put(
+			reverse('properties:properties-main-image-setter',
+					args=(resp_post.data["id"],)),
+			data={
+				"image_id": 1
+			},
+			format='json')
 		self.assertEqual(resp_auth_1.status_code, status.HTTP_404_NOT_FOUND)
 		images = generate_list_of_images()
-		resp_auth_1 = self.client.put(reverse('properties:properties-images-list', args=(resp_post.data["id"],)),
-									  data={
-										  'images': [
-											  images[0],
-											  images[1],
-											  images[2],
-											  images[3],
-											  images[4],
-											  images[5],
-										  ],
+		resp_auth_1 = self.client.put(
+			reverse('properties:properties-images-list',
+					args=(resp_post.data["id"],)),
+			data={
+				'images': [
+					images[0],
+					images[1],
+					images[2],
+					images[3],
+					images[4],
+					images[5],
+				],
+			}, format='multipart')
 
-									  }, format='multipart')
-
-		resp_auth_1 = self.client.put(reverse('properties:properties-main-image-setter', args=(resp_post.data["id"],)),
-									  data={"image_id": 3}, format='json')
+		resp_auth_1 = self.client.put(
+			reverse('properties:properties-main-image-setter',
+					args=(resp_post.data["id"],)),
+			data={
+				"image_id": 3
+			},
+			format='json')
 		self.assertEqual(resp_auth_1.status_code, status.HTTP_200_OK)
-		resp_get = self.client.get(reverse('properties:properties-details', args=(resp_post.data["id"],)),
-								   format='json')
+		resp_get = self.client.get(
+			reverse('properties:properties-details',
+					args=(resp_post.data["id"],)),
+			format='json')
 
 		for item in resp_get.data["property_images"]:
 			self.assertEqual(len(resp_get.data["property_images"]),
@@ -636,21 +667,26 @@ class TestsOfProperties(APITestCase):
 			self.assertIsNot(item["id"], 3)
 
 	def test_delete_images(self):
-		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,
-									 format='json')
+		resp_post = self.client.post(
+			self.properties_list_url,
+			self.create_property_JSON,
+			format='json')
 		images = generate_list_of_images()
-		resp_auth_1 = self.client.put(reverse('properties:properties-images-list', args=(resp_post.data["id"],)),
-									  data={
-										  'images': [
-											  images[0],
-											  images[1],
-											  images[2],
-											  images[3],
-											  images[4],
-											  images[5],
-										  ],
+		resp_auth_1 = self.client.put(
+			reverse('properties:properties-images-list',
+					args=(resp_post.data["id"],)),
+			data={
+				'images': [
+					images[0],
+					images[1],
+					images[2],
+					images[3],
+					images[4],
+					images[5],
+				],
 
-									  }, format='multipart')
+			},
+			format='multipart')
 		resp_auth_1 = self.client.delete(reverse('properties:properties-images-list', args=(resp_post.data["id"],)),
 										 data={"images": [1, 2, 3]}, format='json')
 		self.assertEqual(resp_auth_1.status_code, status.HTTP_204_NO_CONTENT)
@@ -824,6 +860,7 @@ class TestsOfProperties(APITestCase):
 			format='json')
 		booking_object_before_update = Bookings.objects.get(
 			booked_property=resp_post.data["id"], id=resp_create_booking.data["id"])
+		serialized_booking_object = BookingsSerializer(booking_object_before_update)
 		client_2 = APIClient()
 		client_3 = APIClient()
 
@@ -844,15 +881,123 @@ class TestsOfProperties(APITestCase):
 						kwargs={"pk": resp_post.data["id"], 'booking_id': resp_create_booking.data["id"]}),
 			data={"status": "DECLINED"},
 			format='json')
-		print(booking_object_resp_user_2.status_code)
-		print(booking_object_resp_user_2.data)
+
+		self.assertEqual(booking_object_resp_user_2.status_code, status.HTTP_200_OK)
+		self.assertEqual(booking_object_resp_user_2.data["status"], "DECLINED")
+
 		booking_object_resp_user_2 = client_2.patch(
 			path=reverse("properties:properties-bookings-detail",
 						kwargs={"pk": resp_post.data["id"], 'booking_id': resp_create_booking.data["id"]}),
-			data={"booked_until": "2020-12-23T17:34:37.318000+03:00"},
+			data={
+				"status": "ACCEPTED",
+				"booked_until": "2020-12-23T17:34:37.318000+03:00"
+			},
 			format='json')
-		print(booking_object_resp_user_2.status_code)
-		print(booking_object_resp_user_2.data)
+
+		self.assertEqual(booking_object_resp_user_2.status_code, status.HTTP_200_OK)
+		self.assertEqual(booking_object_resp_user_2.data["status"], "ACCEPTED")
+		self.assertEqual(booking_object_resp_user_2.data["booked_until"],
+						serialized_booking_object.data["booked_until"])
+		self.assertEqual(booking_object_resp_user_2.data["booked_from"],
+						serialized_booking_object.data["booked_from"])
+
+	def test_availability_of_property(self):
+		resp_post = self.client.post(
+			path=self.properties_list_url,
+			data=self.create_property_JSON,
+			format='json')
+		create_booking_json_1 = \
+			{
+				"number_of_clients": 2,
+				"client_email": "test2@test.com",
+				"booked_from": "2021-01-01T14:00+0300",
+				"booked_until": "2021-01-01T16:00+0300"
+			}
+		create_booking_json_2 = \
+			{
+				"number_of_clients": 3,
+				"client_email": "test3@test.com",
+				"booked_from": "2021-01-01T17:00+0300",
+				"booked_until": "2021-01-02T08:00+0300"
+			}
+		resp_create_booking_1_ok = self.client.post(
+			path=reverse('properties:properties-bookings-list', args=(resp_post.data["id"],)),
+			data=create_booking_json_1,
+			format='json')
+		resp_create_booking_2_ok = self.client.post(
+			path=reverse('properties:properties-bookings-list', args=(resp_post.data["id"],)),
+			data=create_booking_json_2,
+			format='json')
+		# query = Bookings.objects.all().filter(booked_property_id=1)
+		# print(resp_create_booking_1_ok.status_code, resp_create_booking_2_ok.data)
+
+		# datetime_start = "2021-01-01T19:00+0300"
+		# datetime_stop = "2021-01-01T20:00+0300"
+		# query_1 = Q()
+		# query_1.add(Q(booked_property_id=1), Q.AND)
+		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
+		# query_1.add(Q(booked_from__lte=datetime_start) & Q(booked_until__gte=datetime_start), query_1.connector)
+
+		# print(query_1)
+		# query_1.add(Q(booked_from__lt=datetime_stop) & Q(booked_until__gte=datetime_stop), Q.OR)
+		# query_1.add(Q(booked_from__gte=datetime_start) & Q(booked_from__lte=datetime_stop), Q.OR)
+		# query_1.add(Q(booked_property_id=1), Q.AND)
+		# print(query_1)
+		# if Bookings.objects.filter(
+			# query_1
+		# ).exists():
+			# print("OK")
+		# obj = Bookings.objects.get(id=1)
+		# print(obj.booked_until.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None))
+		availability_list_of_test_cases_ok = [
+			{
+				"booked_from": "2021-01-01T11:00+0300",  # OK CASE
+				"booked_until": "2021-01-01T12:00+0300"
+			},
+			{
+				"booked_from": "2021-01-01T13:00+0300",
+				"booked_until": "2021-01-01T14:00+0300"  # OK CASE
+			},
+			{
+				"booked_from": "2021-01-01T16:00+0300",
+				"booked_until": "2021-01-01T17:00+0300"  # OK CASE
+			},
+		]
+		availability_list_of_test_cases_not_ok = [
+			{
+				"booked_from": "2021-01-01T13:00+0300",
+				"booked_until": "2021-01-01T15:00+0300"
+			},
+			{
+				"booked_from": "2021-01-01T13:00+0300",
+				"booked_until": "2021-01-01T16:00+0300"
+			},
+			{
+				"booked_from": "2021-01-01T14:00+0300",
+				"booked_until": "2021-01-01T16:00+0300"
+			},
+			{
+				"booked_from": "2021-01-01T15:00+0300",
+				"booked_until": "2021-01-01T16:30+0300"
+			},
+			{
+				"booked_from": "2021-01-01T14:30+0300",
+				"booked_until": "2021-01-01T16:30+0300"
+			},
+		]
+		for item in availability_list_of_test_cases_not_ok:
+			resp_check_available_not_ok = self.client.post(
+				path=reverse('properties:properties-availability-check', args=(resp_post.data["id"],)),
+				data=item,
+				format='json')
+			self.assertEqual(resp_check_available_not_ok.status_code, status.HTTP_226_IM_USED)
+		for item in availability_list_of_test_cases_ok:
+			resp_check_available_ok = self.client.post(
+				path=reverse('properties:properties-availability-check', args=(resp_post.data["id"],)),
+				data=item,
+				format='json')
+			#print(item, resp_check_available_ok.status_code)
+			self.assertEqual(resp_check_available_ok.status_code, status.HTTP_200_OK)
 
 	def test_delete_booking(self):
 		pass
