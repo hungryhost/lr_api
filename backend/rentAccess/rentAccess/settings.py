@@ -31,11 +31,11 @@ env = environ.Env(
     DEBUG=(bool, False)
 )
 environ.Env.read_env()
-DEBUG = env('DEBUG')
+DEBUG = False
 SECRET_KEY = env('SECRET_KEY')
 
 ALLOWED_HOSTS = ['*']
-CORS_ORIGIN_ALLOW_ALL = False
+CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:8000',
@@ -150,7 +150,7 @@ DEFAULT_RENDERER_CLASSES = (
 )
 # Media root and url definitions
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
+MEDIA_URL = '/var/www/media/'
 
 # Static root and file definitions
 STATICFILES_DIRS = [
@@ -160,7 +160,7 @@ STATIC_URL = '/static/'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_ROOT = '/static/'
+STATIC_ROOT = '/var/www/static/'
 
 # when DEBUG == True DRF will render errors as html pages
 if DEBUG:
