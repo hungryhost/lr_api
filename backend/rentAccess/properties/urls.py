@@ -1,6 +1,7 @@
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet, BookingsListCreateView, BookingsAllList
+from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet, BookingsListCreateView, \
+	BookingsAllList, BookingsViewSet
 
 app_name = 'properties'
 
@@ -27,8 +28,17 @@ urlpatterns = [
 			'put': 'update_property_pictures',
 			'delete': 'delete_images',
 		}
-
 	), name='properties-images-list'),
+	path('<int:pk>/bookings/<int:booking_id>/', BookingsViewSet.as_view(
+		{
+			'get': 'retrieve',
+			'patch': 'partial_update',
+			'delete': 'archive_booking'
+		}
+	), name='properties-bookings-detail'),
+	path('<int:pk>/available/', PropertiesViewSet.as_view({
+		'post': 'get_availability'
+	}), name='properties-availability-check'),
 	path('bookings/', BookingsAllList.as_view(), name='properties-bookings-list-all'),
 
 	path('<int:pk>/images/set_main_image/', PropertiesViewSet.as_view(

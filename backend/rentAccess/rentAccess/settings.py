@@ -59,10 +59,11 @@ INSTALLED_APPS = [
     'userAccount',
     'corsheaders',
     'common',
-    #'register',
-    #'keys',
-    #'schedule',
-    #'locks',
+    'register',
+    'keys',
+    'schedule',
+    'locks',
+    'checkAccess',
 ]
 
 MIDDLEWARE = [
@@ -183,6 +184,7 @@ REST_FRAMEWORK = {
         'anon': '100/day',
         'user': '1000/day'
     },
+    'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%S%z",
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',

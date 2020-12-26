@@ -96,31 +96,36 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
 	def get_documents_url(self, obj):
 		try:
-			return self.context.get('request').build_absolute_uri(reverse('userAccount:user-details')) + '{id}/documents/'.format(id=obj.user.id)
+			return self.context.get('request').build_absolute_uri(
+				reverse('userAccount:user-details')) + 'documents/'
 		except Exception as e:
 			return str(e)
 
 	def get_billing_addresses_url(self, obj):
 		try:
-			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/billing_addresses/'.format(id=obj.user.id)
+			return self.context['request'].build_absolute_uri(
+				reverse('userAccount:user-details')) + 'billing_addresses/'
 		except Exception as e:
 			return str(e)
 
 	def get_phones_url(self, obj):
 		try:
-			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/phones/'.format(id=obj.user.id)
+			return self.context['request'].build_absolute_uri(
+				reverse('userAccount:user-details')) + 'phones/'
 		except Exception as e:
 			return str(e)
 
 	def get_emails_url(self, obj):
 		try:
-			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/emails/'.format(id=obj.user.id)
+			return self.context['request'].build_absolute_uri(
+				reverse('userAccount:user-details')) + 'emails/'
 		except Exception as e:
 			return str(e)
 
 	def get_properties_url(self, obj):
 		try:
-			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/properties/'.format(id=obj.user.id)
+			return self.context['request'].build_absolute_uri(
+				reverse('userAccount:user-details')) + 'properties/'
 		except Exception as e:
 			return str(e)
 
@@ -216,31 +221,36 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 
 	def get_documents_url(self, obj):
 		try:
-			return self.context.get('request').build_absolute_uri(reverse('userAccount:user-details')) + '{id}/documents/'.format(id=obj.user.id)
+			return self.context.get('request').build_absolute_uri(
+				reverse('userAccount:user-details')) + 'documents/'
 		except Exception as e:
 			return str(e)
 
 	def get_billing_addresses_url(self, obj):
 		try:
-			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/billing_addresses/'.format(id=obj.user.id)
+			return self.context['request'].build_absolute_uri(
+				reverse('userAccount:user-details')) + 'billing_addresses/'
 		except Exception as e:
 			return str(e)
 
 	def get_phones_url(self, obj):
 		try:
-			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/phones/'.format(id=obj.user.id)
+			return self.context['request'].build_absolute_uri(
+				reverse('userAccount:user-details')) + 'phones/'
 		except Exception as e:
 			return str(e)
 
 	def get_emails_url(self, obj):
 		try:
-			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/emails/'.format(id=obj.user.id)
+			return self.context['request'].build_absolute_uri(
+				reverse('userAccount:user-details')) + 'emails/'
 		except Exception as e:
 			return str(e)
 
 	def get_properties_url(self, obj):
 		try:
-			return self.context['request'].build_absolute_uri(reverse('userAccount:user-details')) + '{id}/properties/'.format(id=obj.user.id)
+			return self.context['request'].build_absolute_uri(
+				reverse('userAccount:user-details')) + 'properties/'
 		except Exception as e:
 			return str(e)
 
