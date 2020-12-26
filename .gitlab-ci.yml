@@ -30,7 +30,10 @@ build:
     - docker-compose -f docker-compose.ci.yml build
     - docker push $IMAGE:web
     - docker push $IMAGE:nginx
-
+  when: manual
+  only:
+    - master
+deploy:
   stage: deploy
   script:
     - mkdir -p ~/.ssh
@@ -43,5 +46,6 @@ build:
     - chmod +x ./deploy.sh
     - scp  -o StrictHostKeyChecking=no -r ./.env ./docker-compose.prod.yml root@$DIGITAL_OCEAN_IP_ADDRESS:/app
     - bash ./deploy.sh
+  when: manual
   only:
     - master
