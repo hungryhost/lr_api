@@ -1,5 +1,6 @@
 import datetime
 from django.core.handlers import exception
+from register.models import Key, Lock
 from django.db.models import Q
 from django.http import Http404
 from rest_framework import generics, permissions, status, response, serializers, viewsets, mixins
@@ -15,6 +16,9 @@ from .serializers import PropertySerializer, PropertyUpdateSerializer, \
 	BookingUpdateAdminNotCreatorSerializer, BookingUpdateClientSerializer
 from .permissions import IsOwnerOrSuperuser, IsInitialOwner, BookingIsAdminOfPropertyOrSuperuser
 from .models import PropertyLog
+
+# TODO: owed refactoring: move bookings into their own app
+# TODO: fix permissions and requests for owners
 
 
 class PropertyListCreate(generics.ListCreateAPIView):
@@ -60,9 +64,12 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 
 	def perform_create(self, serializer):
 		obj = serializer.save()
+		# in here we initialize the key
 		return Response(status=status.HTTP_201_CREATED)
 
 	def get_queryset(self, *args, **kwargs):
+		if not Property.objects.filter(id=self.kwargs["pk"]).exists():
+			raise Http404
 		return Bookings.objects.all().filter(booked_property=self.kwargs["pk"])
 
 	def get_serializer_context(self):
@@ -106,7 +113,7 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 	@action(detail=True, methods=['patch'])
 	def partial_update(self, request, pk=None, booking_id=None):
 		instance = self.get_object(booked_property=pk, booking_id=booking_id)
-		booked_property = Property.objects.get(id=pk)
+		# booked_property = Property.objects.get(id=pk)
 
 		if self.request.user == instance.booked_by:
 			serializer_class = BookingUpdateAdminAndCreatorSerializer
@@ -228,9 +235,9 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 	@action(detail=True, methods=['post'])
 	def get_availability(self, request, pk=None):
 		"""
-		(ArrivalDate <= @ArrivalDate AND DepartureDate >= @ArrivalDate) -- cases 3,5,7
-		OR (ArrivalDate < @DepartureDate AND DepartureDate >= @DepartureDate ) --cases 6,6
-		OR (@ArrivalDate <= ArrivalDate AND @DepartureDate >= ArrivalDate) --case 4
+		(booked_from <= @booked_from AND booked_until >= @booked_from) -- cases 3,5,7
+		OR (booked_from < @booked_until AND booked_until >= @DepartureDate ) --cases 6,6
+		OR (@booked_from <= booked_from AND @booked_until >= booked_from) --case 4
 		"""
 		# TODO: consider moving the query into the model's methods or manager
 
@@ -249,7 +256,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		query_2.add(Q(booked_from=datetime_stop) | Q(booked_until=datetime_start), query_2.connector)
 		queryset = Bookings.objects.filter(query_1).exclude(query_2)
 		if queryset.exists():
-			return Response(status=status.HTTP_226_IM_USED)
+			return Response(status=status.HTTP_409_CONFLICT)
 		return Response(status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['put'])
