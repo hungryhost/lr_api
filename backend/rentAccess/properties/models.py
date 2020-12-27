@@ -37,7 +37,18 @@ class Property(models.Model):
                 to_field='property_type', related_name='property_types', on_delete=models.CASCADE)
     maximum_number_of_clients = models.IntegerField(default=1, null=False, blank=False)
     client_greeting_message = models.CharField(max_length=500, null=False, blank=True)
-    requires_additional_confirmation = models.BooleanField(default=False, null=False, blank=False)
+    requires_additional_confirmation = models.BooleanField(default=False, null=False, blank=True)
+
+    # interval between bookings in minutes
+    booking_interval = models.IntegerField(default=0, null=False, blank=True)
+
+    # maximum number of bookings a day (from 0:00 until 23:59
+    # if -1, then no limit
+    maximum_number_of_bookings_daily = models.IntegerField(default=-1, null=False, blank=True)
+
+    # maximum length of bookings for the property in minutes
+    # if -1, then no limit
+    maximum_booking_length = models.IntegerField(default=-1, null=False, blank=True)
 
     def __str__(self):
         return self.title
@@ -139,3 +150,4 @@ class Bookings(models.Model):
     booked_by = models.ForeignKey(User, related_name="client_created_by",
                                     on_delete=models.CASCADE, null=True, blank=True)
 
+    is_deleted = models.BooleanField(default=False, null=False, blank=False)
