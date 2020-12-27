@@ -694,9 +694,9 @@ paths:
       operationId: listPropertyOwners
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
-        This method is used for retrieving information about a
-        particular property
+        
+        ---
+        Use this to access a list of owners for the property.
       parameters:
       - name: properties:id
         in: path
@@ -735,7 +735,12 @@ paths:
       - PropertiesAPI.PropertyAttributes.Owners
     post:
       operationId: createPropertyOwner
-      description: ''
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+
+        ---
+        Use this method to add a property admin for the property. Can be used only with
+        permission level of 300 and higher.
       parameters:
       - name: properties:id
         in: path
@@ -766,9 +771,10 @@ paths:
       operationId: retrievePropertyOwner
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+
+        ---
         This method is used for retrieving information about a
-        particular property
+        particular owner.
       parameters:
       - name: properties:id
         in: path
@@ -813,7 +819,11 @@ paths:
       - PropertiesAPI.PropertyAttributes.Owners
     patch:
       operationId: updatePropertyOwner
-      description: ''
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+
+        ---
+        Use this endpoint to update permission level for the owner.
       parameters:
       - name: properties:id
         in: path
@@ -863,7 +873,13 @@ paths:
       - PropertiesAPI.PropertyAttributes.Owners
     delete:
       operationId: destroyPropertyOwner
-      description: ''
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+
+        ---
+        Use this endpoint in order to delete the owner. Owners with permissions of 350 can delete
+        other owners with permissions *lower* than 350. Owners with permissions of 400 (equal to creator)
+        can delete any owner.
       parameters:
       - name: properties:id
         in: path
@@ -1010,6 +1026,44 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - PropertiesAPI.PropertyAttributes.Images
+  /api/v1/properties/<property:id>/available/:
+      post:
+        operationId: checkAvailability
+        description: |
+          <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+          <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+          ---
+          This endpoint is used for determining whether the property
+          can be booked with given parameters. Returns mainly `200` code if can be booked and
+          `409` if not.
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Availability'
+        responses:
+          '200':
+            description: 'The property can be booked.'
+          '400':
+            $ref: '#/components/responses/400_Bad_Request_Property'
+          '401':
+            content:
+              application/json:
+                schema:
+                  oneOf:
+                    - $ref: '#/components/schemas/401BadToken'
+                    - $ref: '#/components/schemas/401Unauthorized'
+                example:
+                  errors: [ "Invalid Token : Given token is not valid"
+                  ]
+                  status_code: 401
+            description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+          '403':
+            $ref: '#/components/responses/403_Forbidden'
+          '409':
+            description: "The property cannot be booked."
+        tags:
+        - PropertiesAPI.PropertyAttributes.Availability
 # PROPERTIES LOCKS PATHS
 
 # PROPERTIES AVAILABILITY PATHS
@@ -1930,6 +1984,17 @@ components:
           type: boolean
           readOnly: true
           example: true
+    Availability:
+      type: object
+      properties:
+        booked_from:
+          type: string
+          writeOnly: true
+          example: "2020-12-20T23:00+0300"
+        booked_until:
+          type: string
+          writeOnly: true
+          example: "2020-12-21T12:00+0300"
     User:
       type: object
       properties:
@@ -2424,8 +2489,8 @@ tags:
     description: "Endpoint for managing images for a property. Available only for property owners."
   #- name: PropertiesAPI.PropertyAttributes.Locks
   #  description: "Endpoint for managing locks for a property. Available only for property owners with permission levels of 300 or 400."
-  #- name: PropertiesAPI.PropertyAttributes.Availability
-  #  description: "Endpoint for accessing a property availablility. Available only for all authenticated users."
+  - name: PropertiesAPI.PropertyAttributes.Availability
+    description: "Endpoint for accessing a property availability. Available only for all authenticated users."
   - name: UsersAPI
     description: "Admin-only scope of endpoints."
   - name: AuthAPI
