@@ -2,7 +2,7 @@ from django.urls import path
 from django.views.generic import TemplateView
 from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet, BookingsListCreateView, \
 	BookingsAllList, BookingsViewSet
-
+from register.views import LockList, CardList, KeyList
 app_name = 'properties'
 
 properties_details = PropertiesViewSet.as_view({
@@ -47,6 +47,9 @@ urlpatterns = [
 		}
 
 	), name='properties-main-image-setter'),
+	path('<int:pk>/locks/', LockList.as_view(), name='properties-locks-list'),
+	path('<int:pk>/cards/', CardList.as_view(), name='properties-cards-list'),
+	path('<int:pk>/keys/', KeyList.as_view(), name='properties-keys-list'),
 	#path('<int:pk>/images/<int:image_id>/', PropertyImagesViewSet.as_view(
 	#	{
 	#		'delete': 'delete_image'

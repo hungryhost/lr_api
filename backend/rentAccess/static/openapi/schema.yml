@@ -5,22 +5,24 @@ info:
   description: |
     # General Information
     ## About the API
-    This API references methods that are __implemented or _to be implemented_ to the current date__. API will reference not only methods that are used for front-end development but also for the embedded developers. For more information about the changes in methods please refer to __CHANGELOG__ in the Gitlab internal [repository](https://git.miem.hse.ru/294/web-294).
-    
-    ---
-    ## API Overview
-      - ### User Related Info
-        - Insert user related info.
-      
-      - ### Properties Related Info
-        - Insert user related info.
-      
+    This API documentation page references methods that are __implemented or _to
+    be implemented_ to the current date__ and not only
+    methods that are used for the front-end development but also for the
+    embedded developers. For more information about the changes
+    please refer to the __CHANGELOG__ in the Gitlab internal [repository](https://git.miem.hse.ru/294/web-294).
+
     ---
     ## Useful Links
-      - [Current Database Schema](https://git.miem.hse.ru/yuiborodin)
-      - [Current Backend API Functionality Schema](https://git.miem.hse.ru/yuiborodin)
-      - [Current Workflow Schema](https://git.miem.hse.ru/yuiborodin)
-      - [Backend Changelog](https://git.miem.hse.ru/yuiborodin)
+      - __Current Database Schema__
+        - [in .png]()
+        - [in .drawio](https://drive.google.com/file/d/1CZ8V4UajRzSIxLgdKohlQvpL2J3z4oU_/view?usp=sharing)
+      - __Property API Overview Schema__
+        - [in .png](https://drive.google.com/file/d/1JQZ85QEowpoEcnGmM5FjuW9tjAB8lwFn/view?usp=sharing)
+        - [in .drawio](https://drive.google.com/file/d/1Vi_iIHOfyeDa_CF8TzIoI00R2TuQgWXK/view?usp=sharing)
+      - __Current Workflow Schema__
+        - [in .png]()
+        - [in .drawio](https://drive.google.com/file/d/1iTT-WJVlFTVn0ezeVe3gBfV3K2_AdUYz/view?usp=sharing)
+      - [Backend Changelog](https://git.miem.hse.ru/294/web-294/-/blob/test-build/backend/CHANGELOG.md)
 
     ---
     ## Conventions
@@ -707,7 +709,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Property'
+                $ref: '#/components/schemas/Owner'
           description: ''
         '404':
           $ref: '#/components/responses/404_Not_Found'
@@ -745,13 +747,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Property'
+              $ref: '#/components/schemas/Owner'
       responses:
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Property'
+                $ref: '#/components/schemas/Owner'
           description: ''
         '422':
           $ref: '#/components/responses/422_Invalid_Data_Property'
@@ -785,7 +787,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Property'
+                $ref: '#/components/schemas/Owner'
           description: ''
         '404':
           $ref: '#/components/responses/404_Not_Found'
@@ -829,13 +831,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Property'
+              $ref: '#/components/schemas/Owner'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Property'
+                $ref: '#/components/schemas/Owner'
           description: ''
         '404':
           $ref: '#/components/responses/404_Not_Found'
@@ -907,13 +909,17 @@ paths:
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
         This method is used for retrieving information about a
         particular property
-
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Images'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Property'
+                $ref: '#/components/schemas/Images'
           description: ''
         '404':
           $ref: '#/components/responses/404_Not_Found'
@@ -959,11 +965,7 @@ paths:
             summary: Example of multiple Image delete
             value: [1, 5, 7]   # ?ids=1,5,7
       responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Property'
+        '204':
           description: ''
         '422':
           $ref: '#/components/responses/422_Invalid_Data_Property'
@@ -984,7 +986,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Property'
+                $ref: '#/components/schemas/Images'
           description: ''
         '404':
           $ref: '#/components/responses/404_Not_Found'
@@ -1773,6 +1775,10 @@ components:
     Owner:
       type: object
       properties:
+        user_id:
+          type: integer
+          example: 2
+          writeOnly: true
         user:
           type: integer
           example: 2
@@ -1796,6 +1802,7 @@ components:
         is_creator:
           type: boolean
           example: false
+          readOnly: true
         permission_level:
           type: integer
           example: 100
@@ -1899,6 +1906,30 @@ components:
       - client_email
       - booked_from
       - booked_until
+    Images:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+          readOnly: true
+        premises:
+          type: integer
+          example: 1
+          readOnly: true
+        images:
+          type: array
+          items:
+            type: string
+            format: binary
+        uploaded_at:
+          type: string
+          readOnly: true
+          example: "2020-12-20T23:19:03+0300"
+        is_main:
+          type: boolean
+          readOnly: true
+          example: true
     User:
       type: object
       properties:
@@ -1959,10 +1990,10 @@ components:
         emails_url:
           type: string
           example: "http://testserver/api/v1/user/emails/"
-        date_created:
+        created_at:
           type: string
           example: "2020-12-20T23:19:03+0300"
-        last_updated:
+        updated_at:
           type: string
           example: "2020-12-20T23:19:03+0300"
     TokenObtainPair:
