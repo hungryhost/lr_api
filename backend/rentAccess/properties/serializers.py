@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.urls import reverse
-from rest_framework import serializers
+from rest_framework import serializers, status
 
 from userAccount.serializers import ProfileListSerializer, ProfileSerializer
 from .models import Property, PremisesAddresses, PremisesImages, Ownership, Bookings
@@ -415,6 +416,21 @@ class BookingsSerializer(serializers.ModelSerializer):
 			raise serializers.ValidationError({
 				"dates": "Dates are not valid",
 			})
+		query_1 = Q()
+		# query_1.add(Q(booked_property_id=1), Q.AND)
+		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
+		query_1.add(Q(booked_from__lte=attrs["booked_from"]) & Q(booked_until__gte=attrs["booked_from"]), query_1.connector)
+		query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
+		query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
+		query_1.add(Q(booked_property_id=1), Q.AND)
+		query_2 = Q()
+		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
+		queryset = Bookings.objects.filter(query_1).exclude(query_2)
+
+		if queryset.exists():
+			raise serializers.ValidationError({
+				"dates": "Cannot book with these dates",
+			}, code=status.HTTP_409_CONFLICT)
 		return super(BookingsSerializer, self).validate(attrs)
 
 	def create(self, validated_data):
@@ -474,6 +490,22 @@ class BookingCreateFromClientSerializer(serializers.ModelSerializer):
 			raise serializers.ValidationError({
 				"dates": "Dates are not valid",
 			})
+		query_1 = Q()
+		# query_1.add(Q(booked_property_id=1), Q.AND)
+		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
+		query_1.add(Q(booked_from__lte=attrs["booked_from"]) & Q(booked_until__gte=attrs["booked_from"]),
+					query_1.connector)
+		query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
+		query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
+		query_1.add(Q(booked_property_id=1), Q.AND)
+		query_2 = Q()
+		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
+		queryset = Bookings.objects.filter(query_1).exclude(query_2)
+
+		if queryset.exists():
+			raise serializers.ValidationError({
+				"dates": "Cannot book with these dates",
+			}, code=status.HTTP_409_CONFLICT)
 		return super(BookingCreateFromClientSerializer, self).validate(attrs)
 
 	def create(self, validated_data):
@@ -542,13 +574,44 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 			'created_at',
 			'updated_at']
 
+	def validate(self, attrs):
+		if attrs.get("booked_from") and attrs.get("booked_until"):
+			if (attrs["booked_from"] >= attrs["booked_until"]) \
+					or (attrs["booked_until"] <= attrs["booked_from"]):
+				raise serializers.ValidationError({
+					"dates": "Dates are not valid",
+				})
+			query_1 = Q()
+			# query_1.add(Q(booked_property_id=1), Q.AND)
+			# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
+			query_1.add(Q(booked_from__lte=attrs["booked_from"]) & Q(booked_until__gte=attrs["booked_from"]),
+						query_1.connector)
+			query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
+			query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
+			query_1.add(Q(booked_property_id=1), Q.AND)
+			query_2 = Q()
+			query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
+			queryset = Bookings.objects.filter(query_1).exclude(query_2)
+
+			if queryset.exists():
+				raise serializers.ValidationError({
+					"dates": "Cannot book with these dates",
+				}, code=status.HTTP_409_CONFLICT)
+		if (not attrs.get("booked_from") and attrs.get("booked_until")) or (
+				attrs.get("booked_from") and not attrs.get("booked_until")
+		):
+			raise serializers.ValidationError({
+				"dates": "Provide both dates",
+			})
+		return super(BookingUpdateAdminAndCreatorSerializer, self).validate(attrs)
+
 	def update(self, instance, validated_data):
-		status = validated_data.get("status", None)
+		status_ = validated_data.get("status", None)
 		number_of_clients = validated_data.get("number_of_clients", None)
 		booked_from = validated_data.get("booked_from", None)
 		booked_until = validated_data.get("booked_until", None)
 		if status:
-			instance.status = status
+			instance.status = status_
 		if number_of_clients:
 			instance.number_of_clients = number_of_clients
 		if booked_from:
@@ -629,6 +692,37 @@ class BookingUpdateClientSerializer(serializers.ModelSerializer):
 			'created_at',
 			'updated_at']
 
+	def validate(self, attrs):
+		if attrs.get("booked_from") and attrs.get("booked_until"):
+			if (attrs["booked_from"] >= attrs["booked_until"]) \
+					or (attrs["booked_until"] <= attrs["booked_from"]):
+				raise serializers.ValidationError({
+					"dates": "Dates are not valid",
+				})
+			query_1 = Q()
+			# query_1.add(Q(booked_property_id=1), Q.AND)
+			# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
+			query_1.add(Q(booked_from__lte=attrs["booked_from"]) & Q(booked_until__gte=attrs["booked_from"]),
+						query_1.connector)
+			query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
+			query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
+			query_1.add(Q(booked_property_id=1), Q.AND)
+			query_2 = Q()
+			query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
+			queryset = Bookings.objects.filter(query_1).exclude(query_2)
+
+			if queryset.exists():
+				raise serializers.ValidationError({
+					"dates": "Cannot book with these dates",
+				}, code=status.HTTP_409_CONFLICT)
+		if (not attrs.get("booked_from") and attrs.get("booked_until")) or (
+				attrs.get("booked_from") and not attrs.get("booked_until")
+		):
+			raise serializers.ValidationError({
+				"dates": "Provide both dates",
+			})
+		return super(BookingUpdateClientSerializer, self).validate(attrs)
+
 	def update(self, instance, validated_data):
 		number_of_clients = validated_data.get("number_of_clients", None)
 		booked_from = validated_data.get("booked_from", None)
@@ -649,11 +743,13 @@ class BulkFileUploadSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = PremisesImages
-		fields = ('premises',
-				  'images',
-				  'uploaded_at',
-				  'is_main')
-		read_only_fields = ['premises']
+		fields = (
+			'id',
+			'premises',
+			'images',
+			'uploaded_at',
+			'is_main')
+		read_only_fields = ['premises', 'id']
 
 	def create(self, validated_data):
 		images = validated_data.get('images', None)
