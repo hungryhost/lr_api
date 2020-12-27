@@ -29,13 +29,14 @@ from . import settings
 urlpatterns = [
     path('admin/', admin.site.urls),
     # ------------------- LOCK-API -------------------
-
+    path('lock-api/v1/echo/', include('locks.urls')),
+    path('lock-api/v1/check-access/', include('checkAccess.urls')),
+    # integrated into properties
     path('lock-api/v1/register/', include('register.urls')),
     path('lock-api/v1/key/', include('keys.urls')),
     path('lock-api/v1/lock/', include('locks.urls')),
-    path('lock-api/v1/echo/', include('locks.urls')),
     path('lock-api/v1/access/', include('schedule.urls')),
-    path('lock-api/v1/check-access/', include('checkAccess.urls')),
+
     # ------------------- SERVICE API -------------------
     path('api/v1/properties/', include('properties.urls'), name='properties'),
     # path('auth/', include('rest_framework.urls')),
