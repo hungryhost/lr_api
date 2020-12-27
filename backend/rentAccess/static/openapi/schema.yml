@@ -694,7 +694,7 @@ paths:
       operationId: listPropertyOwners
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-        
+
         ---
         Use this to access a list of owners for the property.
       parameters:
@@ -1784,7 +1784,7 @@ components:
         active:
           type: boolean
           example: true
-        property_type_id:
+        property_type:
           type: integer
           enum: [100, 200, 300]
           example: 100
