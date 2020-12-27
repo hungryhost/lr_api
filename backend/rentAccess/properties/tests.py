@@ -990,7 +990,7 @@ class TestsOfProperties(APITestCase):
 				path=reverse('properties:properties-availability-check', args=(resp_post.data["id"],)),
 				data=item,
 				format='json')
-			self.assertEqual(resp_check_available_not_ok.status_code, status.HTTP_226_IM_USED)
+			self.assertEqual(resp_check_available_not_ok.status_code, status.HTTP_409_CONFLICT)
 		for item in availability_list_of_test_cases_ok:
 			resp_check_available_ok = self.client.post(
 				path=reverse('properties:properties-availability-check', args=(resp_post.data["id"],)),
