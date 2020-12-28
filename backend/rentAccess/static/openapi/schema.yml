@@ -19,9 +19,7 @@ info:
       - __Property API Overview Schema__
         - [in .png](https://drive.google.com/file/d/1JQZ85QEowpoEcnGmM5FjuW9tjAB8lwFn/view?usp=sharing)
         - [in .drawio](https://drive.google.com/file/d/1Vi_iIHOfyeDa_CF8TzIoI00R2TuQgWXK/view?usp=sharing)
-      - __Current Workflow Schema__
-        - [in .png]()
-        - [in .drawio](https://drive.google.com/file/d/1iTT-WJVlFTVn0ezeVe3gBfV3K2_AdUYz/view?usp=sharing)
+      - [__Current Functionality Overview Schema__](https://yuiborodin.xyz/api/v1/service-specs/general/)
       - [Backend Changelog](https://git.miem.hse.ru/294/web-294/-/blob/test-build/backend/CHANGELOG.md)
 
     ---
