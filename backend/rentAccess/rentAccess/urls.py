@@ -48,7 +48,7 @@ urlpatterns = [
                       template_name='service-api-docs.html',
                   ), name='swagger-ui'),
     path('api/v1/service-specs/general/', TemplateView.as_view(
-                      template_name='doc_templates/294_WorkFlow.html',
+                      template_name='doc_templates/294_UserAndPropertiesFunctions.html',
                   ), name='workflow'),
     path('api/v1/lock-api-docs/', TemplateView.as_view(
                       template_name='lock-api-docs.html',
