@@ -254,7 +254,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		query_1.add(Q(booked_from__lte=datetime_start) & Q(booked_until__gte=datetime_start), query_1.connector)
 		query_1.add(Q(booked_from__lt=datetime_stop) & Q(booked_until__gte=datetime_stop), Q.OR)
 		query_1.add(Q(booked_from__gte=datetime_start) & Q(booked_from__lte=datetime_stop), Q.OR)
-		query_1.add(Q(booked_property_id=1), Q.AND)
+		query_1.add(Q(booked_property_id=pk), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from=datetime_stop) | Q(booked_until=datetime_start), query_2.connector)
 		queryset = Bookings.objects.filter(query_1).exclude(query_2)

@@ -738,6 +738,30 @@ class TestsOfProperties(APITestCase):
 		self.assertEqual(booking_object.booked_by.id, resp_retrieve_booking.data["booked_by"])
 		self.assertEqual(booking_object.id, resp_retrieve_booking.data["id"])
 
+	def test_add_booking_from_client(self):
+		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,
+									 format='json')
+
+		client_2 = APIClient()
+		client_3 = APIClient()
+
+		response_post_2 = client_2.post(
+			path=self.registration_url,
+			data=self.registration_json_correct_user_2,
+			format='json')
+
+		client_2.credentials(HTTP_AUTHORIZATION=f'Bearer {response_post_2.data["access"]}')
+		resp_create_booking = self.client.post(
+			path=reverse('properties:properties-bookings-list', args=(resp_post.data["id"],)),
+			data=self.create_booking_JSON,
+			format='json')
+		print(resp_create_booking.data, resp_create_booking.status_code)
+		resp_create_booking = self.client.post(
+			path=reverse('properties:properties-bookings-list', args=(resp_post.data["id"],)),
+			data=self.create_booking_JSON,
+			format='json')
+		print(resp_create_booking)
+
 	def test_permissions_for_bookings(self):
 		resp_post = self.client.post(
 			path=self.properties_list_url,
