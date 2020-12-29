@@ -28,6 +28,11 @@ def custom_exception_handler(exc, context):
 		response.data['errors'] = errors
 		response.data['status_code'] = 401
 		return response
+	if isinstance(exc, exceptions.PermissionDenied):
+		response.data = {}
+		errors = 'Forbidden : You do not have necessary permissions'
+		response.data['errors'] = errors
+		response.data['status_code'] = 403
 	"""
 	if response is not None:
 		# check if exception has dict items

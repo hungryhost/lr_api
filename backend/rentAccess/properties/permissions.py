@@ -24,7 +24,9 @@ class IsOwnerOrSuperuser(permissions.BasePermission):
 
 	# for object level permissions
 	def has_object_permission(self, request, view, obj):
-		return obj.author == request.user or request.user.is_superuser
+		if obj.owners.filter(user=request.user).exists() or obj.visibility == 100 or request.user.is_superuser:
+			return True
+		return False
 
 
 class BookingIsAdminOfPropertyOrSuperuser(permissions.BasePermission):
