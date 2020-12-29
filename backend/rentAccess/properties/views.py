@@ -3,7 +3,8 @@ from django.core.handlers import exception
 from register.models import Key, Lock
 from django.db.models import Q
 from django.http import Http404
-from rest_framework import generics, permissions, status, response, serializers, viewsets, mixins
+
+from rest_framework import generics, permissions, status, response, serializers, viewsets, mixins, exceptions
 from rest_framework.decorators import action, permission_classes
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -70,6 +71,8 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 	def get_queryset(self, *args, **kwargs):
 		if not Property.objects.filter(id=self.kwargs["pk"]).exists():
 			raise Http404
+		if not Ownership.objects.filter(premises_id=self.kwargs["pk"], user=self.request.user).exists():
+			raise exceptions.PermissionDenied
 		return Bookings.objects.all().filter(booked_property=self.kwargs["pk"])
 
 	def get_serializer_context(self):
