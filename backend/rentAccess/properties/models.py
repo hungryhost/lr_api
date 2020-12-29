@@ -1,5 +1,5 @@
 from django.db import models
-from datetime import datetime
+import datetime
 from django.contrib.auth.models import User
 # Create your models here.
 from common.models import PermissionLevels
@@ -73,6 +73,9 @@ class Ownership(models.Model):
                                          related_name='permission_levels',
                                          on_delete=models.CASCADE)
 #    initial_owner_object = InitialOwnershipManager()
+
+    def __str__(self):
+        return self.user.email + " " + str(self.permission_level_id)
 
 
 class PropertyLog(models.Model):
@@ -151,3 +154,7 @@ class Bookings(models.Model):
                                     on_delete=models.CASCADE, null=True, blank=True)
 
     is_deleted = models.BooleanField(default=False, null=False, blank=False)
+
+    def __str__(self):
+        return self.status + " " + "client: " + self.client_email + " from: " + str(self.booked_from.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)) \
+            + " Until: " + str(self.booked_until.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None))
