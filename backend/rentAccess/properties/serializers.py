@@ -422,11 +422,11 @@ class BookingsSerializer(serializers.ModelSerializer):
 		query_1.add(Q(booked_from__lte=attrs["booked_from"]) & Q(booked_until__gte=attrs["booked_from"]), query_1.connector)
 		query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
 		query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
-		query_1.add(Q(booked_property_id=1), Q.AND)
+		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
 		queryset = Bookings.objects.filter(query_1).exclude(query_2)
-
+		print(queryset)
 		if queryset.exists():
 			raise serializers.ValidationError({
 				"dates": "Cannot book with these dates",
@@ -497,7 +497,7 @@ class BookingCreateFromClientSerializer(serializers.ModelSerializer):
 					query_1.connector)
 		query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
 		query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
-		query_1.add(Q(booked_property_id=1), Q.AND)
+		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
 		queryset = Bookings.objects.filter(query_1).exclude(query_2)
@@ -588,7 +588,7 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 						query_1.connector)
 			query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
 			query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
-			query_1.add(Q(booked_property_id=1), Q.AND)
+			query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 			query_2 = Q()
 			query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
 			queryset = Bookings.objects.filter(query_1).exclude(query_2)
@@ -706,7 +706,7 @@ class BookingUpdateClientSerializer(serializers.ModelSerializer):
 						query_1.connector)
 			query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
 			query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
-			query_1.add(Q(booked_property_id=1), Q.AND)
+			query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 			query_2 = Q()
 			query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
 			queryset = Bookings.objects.filter(query_1).exclude(query_2)
