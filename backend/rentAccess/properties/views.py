@@ -3,23 +3,48 @@ from django.core.handlers import exception
 from register.models import Key, Lock
 from django.db.models import Q
 from django.http import Http404
-
+import logging
 from rest_framework import generics, permissions, status, response, serializers, viewsets, mixins, exceptions
 from rest_framework.decorators import action, permission_classes
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from .models import Property, Profile, Ownership, PremisesImages, Bookings
+
+from .models import Property, Profile, Ownership, PremisesImages, Bookings, LocksWithProperties
 from .serializers import PropertySerializer, PropertyUpdateSerializer, \
 	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer, BulkFileUploadSerializer, \
 	BookingsListSerializer, BookingsSerializer, BookingUpdateAdminAndCreatorSerializer, \
 	BookingUpdateAdminNotCreatorSerializer, BookingUpdateClientSerializer
 from .permissions import IsOwnerOrSuperuser, IsInitialOwner, BookingIsAdminOfPropertyOrSuperuser
 from .models import PropertyLog
+from locks.serializers import AddLockToPropertySerializer, LockSerializer, LockAndPropertySerializer
+
+logger = logging.getLogger('rentAccess.properties')
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 # TODO: owed refactoring: move bookings into their own app
 # TODO: fix permissions and requests for owners
+
+
+class LockList(generics.ListCreateAPIView):
+	queryset = Lock.objects.all()
+
+	def get_queryset(self):
+		if not Property.objects.filter(id=self.kwargs["pk"]).exists():
+			raise Http404
+		return LocksWithProperties.objects.filter(property_id=self.kwargs["pk"])
+
+	def get_serializer_class(self):
+		return AddLockToPropertySerializer
+
+	def get_serializer_context(self):
+		return {
+			'request': self.request,
+			'format': self.format_kwarg,
+			'view': self,
+			'property_id': self.kwargs["pk"]
+		}
 
 
 class PropertyListCreate(generics.ListCreateAPIView):
@@ -45,7 +70,7 @@ class PropertyListCreate(generics.ListCreateAPIView):
 			is_creator=True,
 			permission_level_id=400
 		)
-		return Response(status=status.HTTP_201_CREATED)
+		logger.info("%s created property", self.request.user.email)
 
 	def get_queryset(self, *args, **kwargs):
 		return Property.objects.all().filter(visibility=100)
@@ -73,7 +98,7 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 			raise Http404
 		if not Ownership.objects.filter(premises_id=self.kwargs["pk"], user=self.request.user).exists():
 			raise exceptions.PermissionDenied
-		return Bookings.objects.all().filter(booked_property=self.kwargs["pk"])
+		return Bookings.objects.all().filter(booked_property=self.kwargs["pk"], is_deleted=False)
 
 	def get_serializer_context(self):
 		return {
@@ -92,8 +117,9 @@ class BookingsAllList(generics.ListAPIView):
 	serializer_class = BookingsSerializer
 
 	def get_queryset(self, *args, **kwargs):
-		query = Q(booked_property__author=self.request.user)
-		query.add(Q(booked_property__owners__user=self.request.user), Q.OR)
+		query = Q()
+		query.add(Q(booked_property__author=self.request.user) & Q(is_deleted=False), query.connector)
+		query.add(Q(booked_property__owners__user=self.request.user) & Q(is_deleted=False), Q.OR)
 		return Bookings.objects.filter(
 			query
 		)
@@ -136,6 +162,12 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 
 	@action(detail=True, methods=['delete'])
 	def archive_booking(self, request, pk=None, booking_id=None):
+		# instead of deleting a row from db we set is_deleted = True
+		# after that a cron job with celery is set to remove the rows with is_deleted = True
+		# and transfer it into archive db
+		instance = self.get_object(booked_property=pk, booking_id=booking_id)
+		instance.is_deleted = True
+		instance.save()
 		return Response(status=status.HTTP_204_NO_CONTENT)
 
 	def get_queryset(self):
@@ -147,7 +179,7 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 
 	def get_object(self, booked_property=None, booking_id=None):
 		try:
-			obj = Bookings.objects.get(booked_property=booked_property, id=booking_id)
+			obj = Bookings.objects.get(booked_property=booked_property, id=booking_id, is_deleted=False)
 			self.check_object_permissions(self.request, obj)
 			return obj
 		except Bookings.DoesNotExist:
