@@ -35,13 +35,158 @@ DEBUG = env('DEBUG')
 SECRET_KEY = env('SECRET_KEY')
 
 ALLOWED_HOSTS = ['*']
-CORS_ORIGIN_ALLOW_ALL = False
-
-CORS_ORIGIN_WHITELIST = (
-    'http://localhost:8000',
-)
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
+
+LOGGING = {
+    # TODO: move paths to env file
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'file': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[{server_time}] {levelname} {message}',
+            # 'datefmt': '%Y-%m-%d %H:%M:%S'
+            'style': '{'
+        },
+        'request_file': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': "[{server_time}] {levelname} status_code={status_code} user_id={request.user.id} META={request.META}",
+            # 'datefmt': '%Y-%m-%d %H:%M:%S'
+            'style': '{'
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'db_log': {
+            'class': 'django_db_logger.db_log_handler.DatabaseLogHandler',
+            'level': 'DEBUG'
+        },
+        'server_logs_info': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': 'C:/web-294/web-294/backend/logs/server_info.log',
+
+        },
+        'request_logs_info': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'request_file',
+            'filename': 'C:/web-294/web-294/backend/logs/request_info.log',
+
+        },
+        'template_logs_info': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': 'C:/web-294/web-294/backend/logs/template_info.log',
+
+        },
+        'security_logs_info': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': 'C:/web-294/web-294/backend/logs/security_info.log',
+
+        },
+        'properties_images': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': 'C:/web-294/web-294/backend/logs/properties/images/main_info.log',
+
+        },
+        'properties_crud_info_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': 'C:/web-294/web-294/backend/logs/properties/main/crud_info.log'
+        },
+        'properties_owners_info_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': 'C:/web-294/web-294/backend/logs/properties/owners/info.log'
+        },
+        'properties_locks_info_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': 'C:/web-294/web-294/backend/logs/properties/locks/info.log'
+        },
+        'properties_bookings_info_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': 'C:/web-294/web-294/backend/logs/properties/bookings/info.log'
+        }
+
+    },
+    'loggers': {
+        'rentAccess.properties.crud.info': {
+            'level': 'INFO',
+            'handlers': ['properties_crud_info_file']
+        },
+        'rentAccess.properties.owners.info': {
+            'level': 'INFO',
+            'handlers': ['properties_owners_info_file']
+        },
+        'rentAccess.properties.bookings.info': {
+            'level': 'INFO',
+            'handlers': ['properties_bookings_info_file']
+        },
+        'rentAccess.properties.locks.info': {
+            'level': 'INFO',
+            'handlers': ['properties_locks_info_file']
+        },
+        'rentAccess.properties.images.info': {
+            'level': 'INFO',
+            'handlers': ['properties_images']
+        },
+        'django': {
+            'handlers': ['db_log'],
+            'level': 'ERROR'
+        },
+        'django.server': {
+            'handlers': ['server_logs_info'],
+            'level': 'INFO'
+        },
+        'django.request': {
+            'handlers': ['request_logs_info'],
+            'level': 'INFO'
+        },
+        'django.template': {
+            'handlers': ['template_logs_info'],
+            'level': 'INFO'
+        },
+        'django.security.*': {
+            'handlers': ['security_logs_info'],
+            'level': 'INFO'
+        }
+    }
+}
 
 SETTINGS_PATH = os.path.normpath(os.path.dirname(__file__))
 INSTALLED_APPS = [
@@ -64,6 +209,7 @@ INSTALLED_APPS = [
     'schedule',
     'locks',
     'checkAccess',
+    'django_db_logger',
 ]
 
 MIDDLEWARE = [
@@ -256,6 +402,7 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Europe/Moscow'
+
 # default_exchange = Exchange('default', type='direct')
 # priority_exchange = Exchange('priority_queue', type='direct')
 
@@ -271,8 +418,9 @@ CELERY_TIMEZONE = 'Europe/Moscow'
 # CELERY_DEFAULT_EXCHANGE = 'default'
 # CELERY_DEFAULT_ROUTING_KEY = 'default'
 # EMAIL SETTINGS
+
 EMAIL_USE_TLS = True
-EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
