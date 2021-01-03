@@ -1,5 +1,7 @@
 import datetime
 from django.core.handlers import exception
+
+from logger_helpers import get_client_ip
 from register.models import Key, Lock
 from django.db.models import Q
 from django.http import Http404
@@ -15,7 +17,8 @@ from .models import Property, Profile, Ownership, PremisesImages, Bookings, Lock
 from .serializers import PropertySerializer, PropertyUpdateSerializer, \
 	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer, BulkFileUploadSerializer, \
 	BookingsListSerializer, BookingsSerializer, BookingUpdateAdminAndCreatorSerializer, \
-	BookingUpdateAdminNotCreatorSerializer, BookingUpdateClientSerializer, PropertyOwnershipAddSerializer
+	BookingUpdateAdminNotCreatorSerializer, BookingUpdateClientSerializer, PropertyOwnershipAddSerializer, \
+	PropertyOwnershipUpdateSerializer
 from .permissions import IsOwnerOrSuperuser, IsInitialOwner, BookingIsAdminOfPropertyOrSuperuser
 from .models import PropertyLog
 from locks.serializers import AddLockToPropertySerializer, LockSerializer, LockAndPropertySerializer
@@ -53,8 +56,8 @@ class OwnersListCrete(generics.ListCreateAPIView):
 	def perform_create(self, serializer):
 		obj = serializer.save()
 		owners_logger.info(
-			f"object: owner; stage: view; action_type: create; user_id: {self.request.user.id}; owner_id: {obj.id}; "
-			f"property_id: {self.kwargs['pk']} ip_addr: {self.request.META.get('HTTP_X_FORWARDED_FOR')}; status: OK;")
+			f"object: owner; stage: view; action_type: create; user_id: {self.request.user.id}; "
+			f"owner_id: {obj.id}; property_id: {self.kwargs['pk']} ip_addr: {get_client_ip(self.request)}; status: OK;")
 
 	def get_queryset(self, *args, **kwargs):
 		return Ownership.objects.all()
@@ -94,7 +97,7 @@ class PropertyListCreate(generics.ListCreateAPIView):
 		)
 		crud_logger_info.info(
 			f"object: property; stage: view; action_type: create; user_id: {self.request.user.id}; property_id: {obj.id}; "
-			f"ip_addr: {self.request.META.get('HTTP_X_FORWARDED_FOR')}; status: OK;")
+			f"ip_addr: {get_client_ip(self.request)}; status: OK;")
 
 	def get_queryset(self, *args, **kwargs):
 		return Property.objects.all().filter(visibility=100)
@@ -216,6 +219,67 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 		return BookingsSerializer
 
 
+class OwnershipViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
+	r"""
+	ViewSet class for CRUD operations with owners of a property.
+	"""
+
+	@action(detail=True, methods=['get'])
+	def retrieve(self, request, pk=None, owner_id=None):
+		obj = self.get_object(pk=pk, owner_id=owner_id)
+		serializer = self.get_serializer(
+			data=self.request.data,
+			context={'request': request, 'property_id': pk}
+		)
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	@action(detail=True, methods=['patch'])
+	def partial_update(self, request, pk=None, owner_id=None):
+		instance = self.get_object(pk=pk, owner_id=owner_id)
+		serializer = PropertyOwnershipUpdateSerializer(
+			instance,
+			data=self.request.data,
+			partial=True,
+			context={'request': request, 'property_id': pk, 'owner_id': owner_id}
+		)
+		serializer.is_valid(raise_exception=True)
+		serializer.save()
+		owners_logger.info(
+			f"object: owner; stage: view; action_type: update; user_id: {self.request.user.id}; property_id: {instance.id}; "
+			f"owner_id: {instance.id}; ip_addr: {get_client_ip(self.request)}; status: OK;")
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	@action(detail=True, methods=['delete'])
+	def destroy(self, request, pk=None, owner_id=None):
+		instance = self.get_object(pk=pk, owner_id=owner_id)
+		instance.delete()
+		owners_logger.info(
+			f"object: owner; stage: view; action_type: delete; user_id: {self.request.user.id}; property_id: {pk}; "
+			f"owner_id: {owner_id}; ip_addr: {get_client_ip(self.request)}; status: OK;")
+		return Response(status=status.HTTP_204_NO_CONTENT)
+
+	def get_queryset(self):
+		return Ownership.objects.all()
+
+	def get_permissions(self):
+		if self.action in ['retrieve']:
+			permission_classes = [IsInitialOwner]
+		else:
+			permission_classes = [IsOwnerOrSuperuser]
+		return [permission() for permission in permission_classes]
+
+	def get_object(self, pk=None, owner_id=None):
+		try:
+			obj = Ownership.objects.get(premises=pk, user_id=owner_id)
+			self.check_object_permissions(self.request, obj)
+			return obj
+		except Ownership.DoesNotExist:
+			raise Http404
+
+	def get_serializer_class(self):
+		return PropertyOwnershipListSerializer
+
+
 class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
 	r""""
 	This viewSet defines the following endpoints:
@@ -232,11 +296,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		endpoint: properties/<property_id>/images/
 			- upload main and/or additional images
 			- delete main and/or additional images
-		endpoint: properties/<property_id>/owners/
-			- get list of owners
-			- add owner
-		endpoint: properties/<property_id>/owners/<user_id>/
-			- delete owner
+
 	"""
 
 	def retrieve(self, request, pk=None):
@@ -261,7 +321,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		serializer.save()
 		crud_logger_info.info(
 			f"object: property; stage: view; action_type: update; user_id: {self.request.user.id}; property_id: {instance.id}; "
-			f"ip_addr: {self.request.META.get('HTTP_X_FORWARDED_FOR')}; status: OK;")
+			f"ip_addr: {get_client_ip(self.request)}; status: OK;")
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['delete'])
@@ -270,38 +330,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		instance.delete()
 		crud_logger_info.info(
 			f"object: property; stage: view; action_type: delete; user_id: {self.request.user.id}; property_id: {pk}; "
-			f"ip_addr: {self.request.META.get('HTTP_X_FORWARDED_FOR')}; status: OK;")
-		return Response(status=status.HTTP_204_NO_CONTENT)
-
-	# @action(detail=True, methods=['get'])
-	# def list_owners(self, request, pk=None):
-
-	#	objects = self.get_object().filter(premises=pk).order_by('-is_creator')
-	#	page = self.paginate_queryset(objects)
-	#	if page is not None:
-	#		serializer = PropertyOwnershipListSerializer(page, many=True)
-	#		return self.get_paginated_response(serializer.data)
-	#	serializer = PropertyOwnershipListSerializer(objects, many=True)
-	#	return Response(serializer.data, status=status.HTTP_200_OK)
-
-	@action(detail=True, methods=['get'])
-	def retrieve_owner(self, request, pk=None, owner_id=None):
-		obj = self.get_object(pk=pk, owner_id=owner_id)
-
-		serializer = PropertyOwnershipListSerializer(obj)
-		return Response(serializer.data, status=status.HTTP_200_OK)
-
-	# @action(detail=True, methods=['post'])
-	# def add_owner(self, request, pk=None):
-	#
-	#	return Response(status=status.HTTP_200_OK)
-
-	@action(detail=True, methods=['delete'])
-	def destroy_owner(self, request, pk=None, owner_id=None):
-		obj = get_object_or_404(Ownership, premises=pk, user_id=owner_id)
-		if obj.is_creator:
-			return Response(status=status.HTTP_400_BAD_REQUEST)
-		obj.delete()
+			f"ip_addr: {get_client_ip(self.request)}; status: OK;")
 		return Response(status=status.HTTP_204_NO_CONTENT)
 
 	@action(detail=True, methods=['post'])
@@ -346,38 +375,21 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 			return Response(status=status.HTTP_400_BAD_REQUEST)
 
 	def get_queryset(self):
-		if self.action in ['retrieve_owner', 'list_owners']:
-			return Ownership.objects.all()
-		else:
-			return Property.objects.all()
+		return Property.objects.all()
 
 	def get_permissions(self):
-		if self.action in ['retrieve_owner']:
-			permission_classes = [IsInitialOwner]
-		else:
-			permission_classes = [IsOwnerOrSuperuser]
+		permission_classes = [IsOwnerOrSuperuser]
 		return [permission() for permission in permission_classes]
 
 	def get_object(self, pk=None, owner_id=None):
 		try:
-			if self.action in ['retrieve_owner', 'destroy_owner']:
-				obj = Ownership.objects.get(premises=pk, user_id=owner_id)
-				self.check_object_permissions(self.request, obj)
-				return obj
-		except Ownership.DoesNotExist:
-			raise Http404
-		try:
-			if self.action in ['partial_update', 'retrieve', 'delete_property',
-							   'get_availability']:
-				obj = Property.objects.get(pk=pk)
-				self.check_object_permissions(self.request, obj)
-				return obj
+			obj = Property.objects.get(pk=pk)
+			self.check_object_permissions(self.request, obj)
+			return obj
 		except Property.DoesNotExist:
 			raise Http404
 
 	def get_serializer_class(self):
-		if self.action in ['add_owner', 'retrieve_owner']:
-			return PropertyOwnershipListSerializer
 		return PropertySerializer
 
 
