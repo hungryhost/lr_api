@@ -1,7 +1,7 @@
 from django.urls import path
 from django.views.generic import TemplateView
 from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet, BookingsListCreateView, \
-	BookingsAllList, BookingsViewSet, LockList
+	BookingsAllList, BookingsViewSet, LockList, OwnersListCrete
 from register.views import CardList, KeyList
 # from .views import LockDetail
 app_name = 'properties'
@@ -18,10 +18,7 @@ urlpatterns = [
 		'get': 'retrieve_owner',
 		'delete': 'destroy_owner'
 	}), name='owners-details'),
-	path('<int:pk>/owners/', PropertiesViewSet.as_view({
-		'get': 'list_owners',
-		'post': 'add_owner'
-	}), name='owners-list'),
+	path('<int:pk>/owners/', OwnersListCrete.as_view(), name='owners-list'),
 	path('<int:pk>/', properties_details, name='properties-details'),
 	path('<int:pk>/bookings/', BookingsListCreateView.as_view(), name='properties-bookings-list'),
 	path('<int:pk>/images/', PropertyImagesViewSet.as_view(
