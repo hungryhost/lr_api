@@ -1,7 +1,7 @@
 from django.db import models
 from datetime import datetime, date
 
-from properties.models import Property
+
 from .validators import key_validator, card_validator
 import uuid
 
@@ -28,10 +28,6 @@ class Lock(models.Model):
     is_on = models.BooleanField('is_on', null=False, default=True)
     is_approved = models.BooleanField('is_approved', default=True)
     last_echo = models.DateTimeField('last_echo', auto_now_add=True)
-    property = models.ForeignKey(Property,
-                                 null=True,
-                                 related_name='locks',
-                                 on_delete=models.CASCADE)
 
     def echo(self, save=False) -> None:
         """Marks response from locks.
