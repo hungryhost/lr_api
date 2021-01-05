@@ -5,7 +5,7 @@ from rest_framework import serializers, status
 
 import logging
 
-from logger_helpers import get_client_ip
+from .logger_helpers import get_client_ip
 from userAccount.serializers import ProfileListSerializer, ProfileSerializer
 from .models import Property, PremisesAddresses, PremisesImages, Ownership, Bookings
 from userAccount.models import Profile
@@ -292,13 +292,13 @@ class PropertySerializer(serializers.ModelSerializer):
 
 
 class PropertyCreateSerializer(serializers.ModelSerializer):
-	title = serializers.CharField(required=True)
-	body = serializers.CharField(required=True)
+	title = serializers.CharField(required=True, max_length=50)
+	body = serializers.CharField(required=True, max_length=500)
 	price = serializers.IntegerField(required=True, validators=[validate_price])
 	active = serializers.BooleanField(required=False)
 	property_address = PropertyAddressesSerializer(many=False, required=True)
 	creator_id = serializers.IntegerField(read_only=True, source='author.id')
-	client_greeting_message = serializers.CharField(required=False)
+	client_greeting_message = serializers.CharField(required=False, max_length=500)
 	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
 	visibility = serializers.IntegerField(required=True)
 	requires_additional_confirmation = serializers.BooleanField(required=False)
@@ -354,7 +354,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 		requires_additional_confirmation = validated_data.get("requires_additional_confirmation", None)
 		if active is None:
 			active = True
-		if visibility is None:
+		if (visibility is None) or (visibility not in [100, 200, 300]):
 			visibility = 100
 		if not requires_additional_confirmation:
 			requires_additional_confirmation = False
