@@ -1,7 +1,6 @@
 from django.db import models
 import datetime
 from django.contrib.auth.models import User
-# Create your models here.
 from common.models import PermissionLevels
 from register.models import Lock
 from userAccount.models import *
@@ -27,15 +26,26 @@ class Property(models.Model):
 		(300, 'Only owner and admins can see'),
 	]
 	author = models.ForeignKey(User, related_name='properties', on_delete=models.CASCADE)
-	title = models.CharField(max_length=50)
-	body = models.TextField()
+	title = models.CharField(max_length=50, null=False, blank=False)
+	body = models.TextField(max_length=500, null=False, blank=False)
 	price = models.PositiveIntegerField()
-	visibility = models.IntegerField(choices=VISIBILITY_CHOICES, default=100)
-	active = models.BooleanField(default=True)
-	created_at = models.DateTimeField(auto_now_add=True)
-	updated_at = models.DateTimeField(auto_now_add=True)
-	property_type = models.ForeignKey(PropertyTypes,
-									to_field='property_type', related_name='property_types', on_delete=models.CASCADE)
+	visibility = models.IntegerField(
+		choices=VISIBILITY_CHOICES,
+		default=100,
+		null=False,
+		blank=False
+	)
+	active = models.BooleanField(default=True, null=False, blank=False)
+	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+	property_type = models.ForeignKey(
+		PropertyTypes,
+		to_field='property_type',
+		related_name='property_types',
+		on_delete=models.CASCADE,
+		null=False,
+		blank=False
+	)
 	maximum_number_of_clients = models.IntegerField(default=1, null=False, blank=False)
 	client_greeting_message = models.CharField(max_length=500, null=False, blank=True)
 	requires_additional_confirmation = models.BooleanField(default=False, null=False, blank=True)
