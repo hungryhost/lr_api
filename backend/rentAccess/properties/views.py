@@ -1,7 +1,7 @@
 import datetime
 from django.core.handlers import exception
 
-from logger_helpers import get_client_ip
+from .logger_helpers import get_client_ip
 from register.models import Key, Lock
 from django.db.models import Q
 from django.http import Http404
@@ -305,7 +305,6 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 			obj,
 			context={'request': request}
 		)
-
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['patch'])
@@ -341,11 +340,9 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		OR (@booked_from <= booked_from AND @booked_until >= booked_from) --case 4
 		"""
 		# TODO: consider moving the query into the model's methods or manager
-
 		obj = self.get_object(pk=pk)
 		datetime_start = self.request.data.get("booked_from", None)
 		datetime_stop = self.request.data.get("booked_until", None)
-
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
 		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
@@ -403,7 +400,6 @@ class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.Li
 		)
 		serializer.is_valid(raise_exception=True)
 		serializer.save()
-
 		return Response(status=status.HTTP_200_OK)
 
 	@action(detail=False, methods=['delete'])
