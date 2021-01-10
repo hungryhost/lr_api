@@ -61,86 +61,91 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
-        'db_log': {
-            'class': 'django_db_logger.db_log_handler.DatabaseLogHandler',
-            'level': 'DEBUG'
-        },
         'server_logs_info': {
+            'delay': True,
             'level': 'INFO',
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,
             'formatter': 'file',
-            'filename': 'C:/web-294/web-294/backend/logs/server_info.log',
+            'filename': env('SERVER_INFO_LOG_PATH'),
 
         },
         'request_logs_info': {
+            'delay': True,
             'level': 'INFO',
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,
             'formatter': 'request_file',
-            'filename': 'C:/web-294/web-294/backend/logs/request_info.log',
+            'filename': env('REQUEST_INFO_LOG_PATH'),
 
         },
         'template_logs_info': {
             'level': 'INFO',
+            'delay': True,
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,
             'formatter': 'file',
-            'filename': 'C:/web-294/web-294/backend/logs/template_info.log',
+            'filename': env('TEMPLATE_INFO_LOG_PATH'),
 
         },
         'security_logs_info': {
             'level': 'INFO',
+            'delay': True,
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,
             'formatter': 'file',
-            'filename': 'C:/web-294/web-294/backend/logs/security_info.log',
+            'filename': env('SECURITY_INFO_LOG_PATH'),
 
         },
         'properties_images': {
             'level': 'INFO',
+            'delay': True,
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,
             'formatter': 'file',
-            'filename': 'C:/web-294/web-294/backend/logs/properties/images/main_info.log',
+            'filename': env('PROPERTIES_IMAGES_INFO_LOG_PATH'),
 
         },
         'properties_crud_info_file': {
             'level': 'INFO',
+            'delay': True,
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,
             'formatter': 'file',
-            'filename': 'C:/web-294/web-294/backend/logs/properties/main/crud_info.log'
+            'filename': env('PROPERTIES_CRUD_INFO_LOG_PATH')
         },
         'properties_owners_info_file': {
             'level': 'INFO',
+            'delay': True,
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,
             'formatter': 'file',
-            'filename': 'C:/web-294/web-294/backend/logs/properties/owners/info.log'
+            'filename': env('PROPERTIES_OWNERS_INFO_LOG_PATH')
         },
         'properties_locks_info_file': {
             'level': 'INFO',
+            'delay': True,
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,
             'formatter': 'file',
-            'filename': 'C:/web-294/web-294/backend/logs/properties/locks/info.log'
+            'filename': env('PROPERTIES_LOCKS_INFO_LOG_PATH')
         },
         'properties_bookings_info_file': {
             'level': 'INFO',
+            'delay': True,
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'when': 'midnight',
             'interval': 1,
             'formatter': 'file',
-            'filename': 'C:/web-294/web-294/backend/logs/properties/bookings/info.log'
+            'filename': env('PROPERTIES_BOOKING_INFO_LOG_PATH')
         }
 
     },
@@ -164,10 +169,6 @@ LOGGING = {
         'rentAccess.properties.images.info': {
             'level': 'INFO',
             'handlers': ['properties_images']
-        },
-        'django': {
-            'handlers': ['db_log'],
-            'level': 'ERROR'
         },
         'django.server': {
             'handlers': ['server_logs_info'],
@@ -209,7 +210,6 @@ INSTALLED_APPS = [
     'schedule',
     'locks',
     'checkAccess',
-    'django_db_logger',
 ]
 
 MIDDLEWARE = [
@@ -335,8 +335,8 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 2,
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 50,
     'EXCEPTION_HANDLER': 'rentAccess.error_handler.custom_exception_handler',
     'DEFAULT_RENDERER_CLASSES': DEFAULT_RENDERER_CLASSES
 }
@@ -368,7 +368,7 @@ if DEBUG:
     }
 else:
     SIMPLE_JWT = {
-        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),
+        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
         'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
         'ROTATE_REFRESH_TOKENS': False,
         'BLACKLIST_AFTER_ROTATION': True,
@@ -402,7 +402,6 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Europe/Moscow'
-
 # default_exchange = Exchange('default', type='direct')
 # priority_exchange = Exchange('priority_queue', type='direct')
 
@@ -417,8 +416,8 @@ CELERY_TIMEZONE = 'Europe/Moscow'
 # CELERY_DEFAULT_QUEUE = 'default'
 # CELERY_DEFAULT_EXCHANGE = 'default'
 # CELERY_DEFAULT_ROUTING_KEY = 'default'
-# EMAIL SETTINGS
 
+# EMAIL SETTINGS
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
