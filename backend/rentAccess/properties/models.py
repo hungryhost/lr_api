@@ -74,7 +74,7 @@ class Ownership(models.Model):
 		(300, 'Only property initial owner and admins can see'),
 	]
 
-	visibility = models.IntegerField(choices=VISIBILITY_CHOICES, default=100, null=False, blank=True)
+	visibility = models.IntegerField(choices=VISIBILITY_CHOICES, default=250, null=False, blank=True)
 	premises = models.ForeignKey(Property, related_name='owners', on_delete=models.CASCADE, null=False, blank=False)
 	user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False)
 	is_creator = models.BooleanField(default=False, null=False, blank=True)
