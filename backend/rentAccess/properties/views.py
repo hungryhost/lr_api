@@ -31,8 +31,7 @@ images_logger = logging.getLogger('rentAccess.properties.images.info')
 
 
 # TODO: owed refactoring: move bookings into their own app
-# TODO: fix permissions and requests for owners
-
+# TODO: FIX NAMING OF SOME VARIABLES OR ELSE ITS CHAOS
 
 class LockList(generics.ListCreateAPIView):
 	queryset = Lock.objects.all()
@@ -77,7 +76,7 @@ class LockList(generics.ListCreateAPIView):
 class OwnersListCrete(generics.ListCreateAPIView):
 	def create(self, request, *args, **kwargs):
 		property_owners = self.get_property_object()
-		if not property_owners.objects.filter(premises_id=self.kwargs["pk"],
+		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
 						user=self.request.user, permission_level_id=400).exists():
 			raise exceptions.PermissionDenied
 		serializer = self.get_serializer(data=request.data)
@@ -98,6 +97,14 @@ class OwnersListCrete(generics.ListCreateAPIView):
 						user=self.request.user).exists() and self.request.method == "GET":
 			raise exceptions.PermissionDenied
 		return Ownership.objects.all().filter(premises_id=self.kwargs["pk"])
+
+	def get_serializer_context(self):
+		return {
+			'request': self.request,
+			'format': self.format_kwarg,
+			'view': self,
+			'property_id': self.kwargs["pk"]
+		}
 
 	def get_serializer_class(self):
 		if self.request.method == "GET":
