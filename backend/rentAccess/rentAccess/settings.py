@@ -40,7 +40,10 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:8000',
 )
-
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = True
 # Application definition
 
 SETTINGS_PATH = os.path.normpath(os.path.dirname(__file__))
@@ -181,8 +184,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day'
+        'anon': '10000/day',
+        'user': '10000/day'
     },
     'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%S%z",
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -190,7 +193,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 2,
+    'PAGE_SIZE': 10,
     'EXCEPTION_HANDLER': 'rentAccess.error_handler.custom_exception_handler',
     'DEFAULT_RENDERER_CLASSES': DEFAULT_RENDERER_CLASSES
 }
