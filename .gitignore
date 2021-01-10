@@ -28,6 +28,9 @@ yarn-error.log*
 __pycache__/
 migrations/
 *.py[cod]
+*.log
+.log
+*.log.*
 backend/.idea/
 backend/rentAccess/__pycache__/
 backend/rentAccess/media/*.png

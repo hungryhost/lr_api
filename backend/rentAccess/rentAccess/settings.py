@@ -37,6 +37,7 @@ SECRET_KEY = env('SECRET_KEY')
 ALLOWED_HOSTS = ['*']
 CORS_ORIGIN_ALLOW_ALL = True
 
+
 CORS_ORIGIN_WHITELIST = (
     'http://localhost:8000',
 )
@@ -44,7 +45,158 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_SSL_REDIRECT = True
+
 # Application definition
+
+LOGGING = {
+    # TODO: move paths to env file
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'file': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[{server_time}] {levelname} {message}',
+            # 'datefmt': '%Y-%m-%d %H:%M:%S'
+            'style': '{'
+        },
+        'request_file': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': "[{server_time}] {levelname} status_code={status_code} user_id={request.user.id} META={request.META}",
+            # 'datefmt': '%Y-%m-%d %H:%M:%S'
+            'style': '{'
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'server_logs_info': {
+            'delay': True,
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': env('SERVER_INFO_LOG_PATH'),
+
+        },
+        'request_logs_info': {
+            'delay': True,
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'request_file',
+            'filename': env('REQUEST_INFO_LOG_PATH'),
+
+        },
+        'template_logs_info': {
+            'level': 'INFO',
+            'delay': True,
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': env('TEMPLATE_INFO_LOG_PATH'),
+
+        },
+        'security_logs_info': {
+            'level': 'INFO',
+            'delay': True,
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': env('SECURITY_INFO_LOG_PATH'),
+
+        },
+        'properties_images': {
+            'level': 'INFO',
+            'delay': True,
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': env('PROPERTIES_IMAGES_INFO_LOG_PATH'),
+
+        },
+        'properties_crud_info_file': {
+            'level': 'INFO',
+            'delay': True,
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': env('PROPERTIES_CRUD_INFO_LOG_PATH')
+        },
+        'properties_owners_info_file': {
+            'level': 'INFO',
+            'delay': True,
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': env('PROPERTIES_OWNERS_INFO_LOG_PATH')
+        },
+        'properties_locks_info_file': {
+            'level': 'INFO',
+            'delay': True,
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': env('PROPERTIES_LOCKS_INFO_LOG_PATH')
+        },
+        'properties_bookings_info_file': {
+            'level': 'INFO',
+            'delay': True,
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'when': 'midnight',
+            'interval': 1,
+            'formatter': 'file',
+            'filename': env('PROPERTIES_BOOKING_INFO_LOG_PATH')
+        }
+
+    },
+    'loggers': {
+        'rentAccess.properties.crud.info': {
+            'level': 'INFO',
+            'handlers': ['properties_crud_info_file']
+        },
+        'rentAccess.properties.owners.info': {
+            'level': 'INFO',
+            'handlers': ['properties_owners_info_file']
+        },
+        'rentAccess.properties.bookings.info': {
+            'level': 'INFO',
+            'handlers': ['properties_bookings_info_file']
+        },
+        'rentAccess.properties.locks.info': {
+            'level': 'INFO',
+            'handlers': ['properties_locks_info_file']
+        },
+        'rentAccess.properties.images.info': {
+            'level': 'INFO',
+            'handlers': ['properties_images']
+        },
+        'django.server': {
+            'handlers': ['server_logs_info'],
+            'level': 'INFO'
+        },
+        'django.request': {
+            'handlers': ['request_logs_info'],
+            'level': 'INFO'
+        },
+        'django.template': {
+            'handlers': ['template_logs_info'],
+            'level': 'INFO'
+        },
+        'django.security.*': {
+            'handlers': ['security_logs_info'],
+            'level': 'INFO'
+        }
+    }
+}
 
 SETTINGS_PATH = os.path.normpath(os.path.dirname(__file__))
 INSTALLED_APPS = [
@@ -192,8 +344,10 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,
+
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 50,
+
     'EXCEPTION_HANDLER': 'rentAccess.error_handler.custom_exception_handler',
     'DEFAULT_RENDERER_CLASSES': DEFAULT_RENDERER_CLASSES
 }
@@ -225,7 +379,7 @@ if DEBUG:
     }
 else:
     SIMPLE_JWT = {
-        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),
+        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
         'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
         'ROTATE_REFRESH_TOKENS': False,
         'BLACKLIST_AFTER_ROTATION': True,
@@ -273,9 +427,10 @@ CELERY_TIMEZONE = 'Europe/Moscow'
 # CELERY_DEFAULT_QUEUE = 'default'
 # CELERY_DEFAULT_EXCHANGE = 'default'
 # CELERY_DEFAULT_ROUTING_KEY = 'default'
+
 # EMAIL SETTINGS
 EMAIL_USE_TLS = True
-EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
