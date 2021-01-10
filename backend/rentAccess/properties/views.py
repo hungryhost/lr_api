@@ -1,6 +1,6 @@
 import datetime
-from django.core.handlers import exception
 
+from .property_permissions import IsPublicProperty, PropertyOwner300, PropertyOwner400
 from .logger_helpers import get_client_ip
 from register.models import Key, Lock
 from django.db.models import Q
@@ -18,16 +18,18 @@ from .serializers import PropertySerializer, PropertyUpdateSerializer, \
 	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer, BulkFileUploadSerializer, \
 	BookingsListSerializer, BookingsSerializer, BookingUpdateAdminAndCreatorSerializer, \
 	BookingUpdateAdminNotCreatorSerializer, BookingUpdateClientSerializer, PropertyOwnershipAddSerializer, \
-	PropertyOwnershipUpdateSerializer
-from .permissions import IsOwnerOrSuperuser, IsInitialOwner, BookingIsAdminOfPropertyOrSuperuser
+	PropertyOwnershipUpdateSerializer, BookingCreateFromClientSerializer
+from .permissions import IsOwner, IsInitialOwner, BookingIsAdminOfPropertyOrSuperuser, IsOwnerLevel100, \
+	IsOwnerLevel200, IsOwnerLevel300, IsOwnerLevel400, IsClientOfBooking, IsSuperUser
 from .models import PropertyLog
 from locks.serializers import AddLockToPropertySerializer, LockSerializer, LockAndPropertySerializer
-
 
 crud_logger_info = logging.getLogger('rentAccess.properties.crud.info')
 owners_logger = logging.getLogger('rentAccess.properties.owners.info')
 bookings_logger = logging.getLogger('rentAccess.properties.bookings.info')
 images_logger = logging.getLogger('rentAccess.properties.images.info')
+
+
 # TODO: owed refactoring: move bookings into their own app
 # TODO: fix permissions and requests for owners
 
@@ -35,9 +37,22 @@ images_logger = logging.getLogger('rentAccess.properties.images.info')
 class LockList(generics.ListCreateAPIView):
 	queryset = Lock.objects.all()
 
+	def create(self, request, *args, **kwargs):
+		property_owners = self.get_property_object()
+		if not property_owners.objects.filter(premises_id=self.kwargs["pk"],
+						user=self.request.user, permission_level_id=400).exists():
+			raise exceptions.PermissionDenied
+		serializer = self.get_serializer(data=request.data)
+		serializer.is_valid(raise_exception=True)
+		self.perform_create(serializer)
+		headers = self.get_success_headers(serializer.data)
+		return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 	def get_queryset(self):
-		if not Property.objects.filter(id=self.kwargs["pk"]).exists():
-			raise Http404
+		property_owners = self.get_property_object()
+		if not property_owners.objects.filter(premises_id=self.kwargs["pk"],
+		user=self.request.user, permission_level_id=400).exists() and self.request.method == "GET":
+			raise exceptions.PermissionDenied
 		return LocksWithProperties.objects.filter(property_id=self.kwargs["pk"])
 
 	def get_serializer_class(self):
@@ -51,8 +66,26 @@ class LockList(generics.ListCreateAPIView):
 			'property_id': self.kwargs["pk"]
 		}
 
+	def get_property_object(self):
+		try:
+			property_owners = Property.objects.prefetch_related('owners').get(pk=self.kwargs["pk"])
+		except Property.DoesNotExist:
+			raise Http404
+		return property_owners
+
 
 class OwnersListCrete(generics.ListCreateAPIView):
+	def create(self, request, *args, **kwargs):
+		property_owners = self.get_property_object()
+		if not property_owners.objects.filter(premises_id=self.kwargs["pk"],
+						user=self.request.user, permission_level_id=400).exists():
+			raise exceptions.PermissionDenied
+		serializer = self.get_serializer(data=request.data)
+		serializer.is_valid(raise_exception=True)
+		self.perform_create(serializer)
+		headers = self.get_success_headers(serializer.data)
+		return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 	def perform_create(self, serializer):
 		obj = serializer.save()
 		owners_logger.info(
@@ -60,16 +93,23 @@ class OwnersListCrete(generics.ListCreateAPIView):
 			f"owner_id: {obj.id}; property_id: {self.kwargs['pk']} ip_addr: {get_client_ip(self.request)}; status: OK;")
 
 	def get_queryset(self, *args, **kwargs):
-		return Ownership.objects.all()
+		property_owners = self.get_property_object()
+		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
+						user=self.request.user).exists() and self.request.method == "GET":
+			raise exceptions.PermissionDenied
+		return Ownership.objects.all().filter(premises_id=self.kwargs["pk"])
 
 	def get_serializer_class(self):
 		if self.request.method == "GET":
 			return PropertyOwnershipListSerializer
 		return PropertyOwnershipAddSerializer
 
-	def get_permissions(self):
-		permission_classes = [IsAuthenticated]
-		return [permission() for permission in permission_classes]
+	def get_property_object(self):
+		try:
+			property_owners = Property.objects.prefetch_related('owners').get(pk=self.kwargs["pk"])
+		except Property.DoesNotExist:
+			raise Http404
+		return property_owners
 
 
 class PropertyListCreate(generics.ListCreateAPIView):
@@ -113,7 +153,20 @@ class PropertyListCreate(generics.ListCreateAPIView):
 
 
 class BookingsListCreateView(generics.ListCreateAPIView):
-	serializer_class = BookingsSerializer
+
+	def create(self, request, *args, **kwargs):
+		property_owners = self.get_property_object()
+
+		if (not property_owners.owners.filter(premises_id=self.kwargs["pk"],
+		user=self.request.user, permission_level_id__gte=200).exists()) or (
+			property_owners.visibility != 100
+		):
+			raise exceptions.PermissionDenied
+		serializer = self._get_serializer(data=request.data, _property=property_owners)
+		serializer.is_valid(raise_exception=True)
+		self.perform_create(serializer)
+		headers = self.get_success_headers(serializer.data)
+		return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 	def perform_create(self, serializer):
 		obj = serializer.save()
@@ -123,11 +176,23 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 			f"booking_id: {obj.id}; ip_addr: {self.request.META.get('HTTP_X_FORWARDED_FOR')}; status: OK;")
 
 	def get_queryset(self, *args, **kwargs):
-		if not Property.objects.filter(id=self.kwargs["pk"]).exists():
+		try:
+			property_owners = Property.objects.prefetch_related('owners').get(pk=self.kwargs["pk"])
+		except Property.DoesNotExist:
 			raise Http404
-		if not Ownership.objects.filter(premises_id=self.kwargs["pk"], user=self.request.user).exists():
+		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
+						user=self.request.user).exists() and self.request.method == "GET":
 			raise exceptions.PermissionDenied
 		return Bookings.objects.all().filter(booked_property=self.kwargs["pk"], is_deleted=False)
+
+	def _get_serializer(self, _property, *args, **kwargs):
+		"""
+		Return the serializer instance that should be used for validating and
+		deserializing input, and for serializing output.
+		"""
+		serializer_class = self._get_serializer_class(_property=_property)
+		kwargs.setdefault('context', self.get_serializer_context())
+		return serializer_class(*args, **kwargs)
 
 	def get_serializer_context(self):
 		return {
@@ -137,9 +202,19 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 			'property_id': self.kwargs["pk"]
 		}
 
-	def get_permissions(self):
-		permission_classes = [IsAuthenticated]
-		return [permission() for permission in permission_classes]
+	def _get_serializer_class(self, _property):
+		if _property.owners.filter(premises_id=self.kwargs["pk"],
+			user=self.request.user).exists():
+			return BookingsSerializer
+		else:
+			return BookingCreateFromClientSerializer
+
+	def get_property_object(self):
+		try:
+			property_owners = Property.objects.prefetch_related('owners').get(pk=self.kwargs["pk"])
+		except Property.DoesNotExist:
+			raise Http404
+		return property_owners
 
 
 class BookingsAllList(generics.ListAPIView):
@@ -172,7 +247,8 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 	def partial_update(self, request, pk=None, booking_id=None):
 		instance = self.get_object(booked_property=pk, booking_id=booking_id)
 		# booked_property = Property.objects.get(id=pk)
-
+		if self.request.user.email == instance.client_email:
+			serializer_class = BookingUpdateClientSerializer
 		if self.request.user == instance.booked_by:
 			serializer_class = BookingUpdateAdminAndCreatorSerializer
 		else:
@@ -204,7 +280,18 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 		return Bookings.objects.all()
 
 	def get_permissions(self):
-		permission_classes = [BookingIsAdminOfPropertyOrSuperuser]
+		if self.action == 'retrieve':
+			permission_classes = [
+				IsOwnerLevel100 | IsOwnerLevel200 | IsOwnerLevel300 |
+				IsOwnerLevel400 | IsClientOfBooking
+			]
+		elif self.action == 'partial_update':
+			permission_classes = [
+			IsOwnerLevel100 | IsOwnerLevel200 | IsOwnerLevel300 |
+			IsOwnerLevel400 | IsClientOfBooking
+			]
+		else:
+			permission_classes = [BookingIsAdminOfPropertyOrSuperuser]
 		return [permission() for permission in permission_classes]
 
 	def get_object(self, booked_property=None, booking_id=None):
@@ -262,10 +349,7 @@ class OwnershipViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generic
 		return Ownership.objects.all()
 
 	def get_permissions(self):
-		if self.action in ['retrieve']:
-			permission_classes = [IsInitialOwner]
-		else:
-			permission_classes = [IsOwnerOrSuperuser]
+		permission_classes = [IsInitialOwner]
 		return [permission() for permission in permission_classes]
 
 	def get_object(self, pk=None, owner_id=None):
@@ -375,7 +459,12 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		return Property.objects.all()
 
 	def get_permissions(self):
-		permission_classes = [IsOwnerOrSuperuser]
+		if self.action in ['retrieve', 'get_availability']:
+			permission_classes = [IsPublicProperty | IsOwner | IsSuperUser]
+		if self.action in ['partial_update', 'change_main_image']:
+			permission_classes = [PropertyOwner300 | PropertyOwner400 | IsSuperUser]
+		if self.action == 'delete_property':
+			permission_classes = [PropertyOwner400 | IsSuperUser]
 		return [permission() for permission in permission_classes]
 
 	def get_object(self, pk=None, owner_id=None):
@@ -428,7 +517,7 @@ class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.Li
 			return BulkFileUploadSerializer
 
 	def get_permissions(self):
-		permission_classes = [IsOwnerOrSuperuser, ]
+		permission_classes = [IsAuthenticated, ]
 		return [permission() for permission in permission_classes]
 
 	def get_parsers(self):
