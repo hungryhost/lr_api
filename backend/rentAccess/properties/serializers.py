@@ -6,9 +6,7 @@ from rest_framework import serializers, status
 import logging
 
 from .logger_helpers import get_client_ip
-from userAccount.serializers import ProfileListSerializer, ProfileSerializer
 from .models import Property, PremisesAddresses, PremisesImages, Ownership, Bookings
-from userAccount.models import Profile
 from .validators import validate_price
 
 
@@ -65,6 +63,7 @@ class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
 		model = Ownership
 		fields = (
 			'user',
+			'visibility',
 			'email',
 			'first_name',
 			'last_name',
@@ -74,6 +73,15 @@ class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
 			'created_at',
 			'updated_at'
 		)
+		read_only_fields = [
+			'user',
+			'first_name',
+			'last_name',
+			'patronymic',
+			'is_creator',
+			'created_at',
+			'updated_at'
+		]
 
 	def create(self, validated_data):
 		email = validated_data.get("email", None)
@@ -87,15 +95,17 @@ class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
 			})
 
 		if not visibility:
-			visibility = 300
+			visibility = 250
 		obj = Ownership.objects.create(
 			premises_id=self.context["property_id"],
 			user=user,
 			is_creator=False,
+			visibility=visibility,
 			permission_level_id=permission_level
 		)
 		owners_logger.info(
-			f"object: owner; stage: serializer; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
+			f"object: owner; stage: serializer; action_type: create; user_id: {self.context['request'].user.id}; "
+			f"property_id: {self.context['property_id']}; "
 			f"owner_id: {obj.id}; ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 		return obj
 
@@ -133,7 +143,8 @@ class PropertyOwnershipUpdateSerializer(serializers.ModelSerializer):
 			instance.visibility = visibility
 		instance.save()
 		owners_logger.info(
-			f"object: owner; stage: serializer; action_type: update; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
+			f"object: owner; stage: serializer; action_type: update; user_id: {self.context['request'].user.id}; "
+			f"property_id: {self.context['property_id']}; "
 			f"owner_id: {instance.id}; ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 		return instance
 
@@ -157,11 +168,12 @@ class PropertyAddressesSerializer(serializers.ModelSerializer):
 	country = serializers.CharField(max_length=100, required=True)
 	city = serializers.CharField(max_length=100, required=True)
 	street_1 = serializers.CharField(max_length=100, required=True)
-	street_2 = serializers.CharField(max_length=100, required=True)
+	street_2 = serializers.CharField(max_length=100, required=False)
 	building = serializers.CharField(max_length=20, required=True)
 	floor = serializers.CharField(max_length=20, required=True)
 	number = serializers.CharField(max_length=30, required=True)
 	zip_code = serializers.CharField(max_length=10, required=True)
+	directions_description = serializers.CharField(max_length=500, required=False)
 
 	class Meta:
 		model = PremisesAddresses
@@ -227,15 +239,15 @@ class PropertyListSerializer(serializers.ModelSerializer):
 		try:
 			image_object = PremisesImages.objects.get(premises=obj, is_main=True)
 			return self.context['request'].build_absolute_uri(image_object.image.url)
-		except Exception as e:
+		except Exception:
 			return ""
 
 	def get_owners_url(self, obj):
 		try:
 			return self.context.get('request').build_absolute_uri(
 				reverse('properties:property-list')) + '{id}/owners/'.format(id=obj.pk)
-		except Exception as e:
-			return str(e)
+		except Exception:
+			return ""
 
 
 class PropertySerializer(serializers.ModelSerializer):
@@ -280,15 +292,15 @@ class PropertySerializer(serializers.ModelSerializer):
 		try:
 			image_object = PremisesImages.objects.get(premises=obj, is_main=True)
 			return self.context['request'].build_absolute_uri(image_object.image.url)
-		except Exception as e:
+		except Exception:
 			return ""
 
 	def get_owners_url(self, obj):
 		try:
 			return self.context.get('request').build_absolute_uri(
 				reverse('properties:property-list')) + '{id}/owners/'.format(id=obj.pk)
-		except Exception as e:
-			return str(e)
+		except Exception:
+			return ""
 
 
 class PropertyCreateSerializer(serializers.ModelSerializer):
@@ -328,7 +340,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 		try:
 			image_object = PremisesImages.objects.get(premises=obj, is_main=True)
 			return self.context['request'].build_absolute_uri(image_object.image.url)
-		except Exception as e:
+		except Exception:
 			return ""
 
 	def is_valid(self, raise_exception=False):
@@ -364,7 +376,8 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 			visibility=visibility, requires_additional_confirmation=requires_additional_confirmation)
 		PremisesAddresses.objects.create(premises=property_to_create, **property_addresses)
 		crud_logger_info.info(
-			f"object: property; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {property_to_create.id}; "
+			f"object: property; stage: serialization; action_type: create; "
+			f"user_id: {self.context['request'].user.id}; property_id: {property_to_create.id}; "
 			f"ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 		return property_to_create
 
@@ -377,7 +390,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField(read_only=True)
 	visibility = serializers.IntegerField(required=False)
-	client_greeting_message = serializers.CharField(required=False)
+	client_greeting_message = serializers.CharField(required=False, allow_blank=True)
 	requires_additional_confirmation = serializers.BooleanField(required=False)
 
 	class Meta:
@@ -408,20 +421,21 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 		try:
 			image_object = PremisesImages.objects.get(premises=obj, is_main=True)
 			return self.context['request'].build_absolute_uri(image_object.image.url)
-		except Exception as e:
+		except Exception:
 			return ""
 
 	def to_representation(self, instance):
 
 		representation = super(PropertyUpdateSerializer, self).to_representation(instance)
-		representation.pop('visibility')
+		# representation.pop('visibility')
 		return representation
 
 	def is_valid(self, raise_exception=False):
 		ret = super(PropertyUpdateSerializer, self).is_valid(False)
 		if self._errors:
 			crud_logger_info.info(
-				f"object: property; stage: serialization; action_type: update; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
+				f"object: property; stage: serialization; action_type: update; "
+				f"user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
 				f"ip_addr: {get_client_ip(self.context['request'])}; serialization failed;")
 			if raise_exception:
 				raise serializers.ValidationError(self.errors)
@@ -442,6 +456,10 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 		visibility = validated_data.get("visibility", None)
 		property_type_id = validated_data.get("property_type_id", None)
 		requires_additional_confirmation = validated_data.get("requires_additional_confirmation", None)
+		greeting_message = validated_data.get("client_greeting_message")
+		if greeting_message or greeting_message == "":
+			instance.client_greeting_message = greeting_message
+
 		if title:
 			instance.title = title
 		if body:
@@ -485,7 +503,8 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			address_to_update.save()
 		instance.save()
 		crud_logger_info.info(
-			f"object: property; stage: serialization; action_type: update; user_id: {self.context['request'].user.id}; property_id: {instance.id}; "
+			f"object: property; stage: serialization; action_type: update; "
+			f"user_id: {self.context['request'].user.id}; property_id: {instance.id}; "
 			f"ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 		return instance
 
@@ -523,7 +542,8 @@ class BookingsSerializer(serializers.ModelSerializer):
 		ret = super(BookingsSerializer, self).is_valid(False)
 		if self._errors:
 			bookings_logger.info(
-				f"object: booking; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
+				f"object: booking; stage: serialization; action_type: create; "
+				f"user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
 				f"ip_addr: {get_client_ip(self.context['request'])}; status: NOT OK; serialization failed;")
 			if raise_exception:
 				raise serializers.ValidationError(self.errors)
@@ -535,6 +555,10 @@ class BookingsSerializer(serializers.ModelSerializer):
 				or (attrs["booked_until"] <= attrs["booked_from"]):
 			raise serializers.ValidationError({
 				"dates": "Dates are not valid",
+			})
+		if self.context["request"].user.email == attrs["client_email"]:
+			raise serializers.ValidationError({
+				"Error": "Cannot book property you own for yourself.",
 			})
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
@@ -568,13 +592,14 @@ class BookingsSerializer(serializers.ModelSerializer):
 			booked_by=self.context["request"].user
 		)
 		if Ownership.objects.filter(premises_id=self.context["property_id"],
-									user=self.context["request"].user).exists() or ( not
+									user=self.context["request"].user).exists() or (not
 				Property.objects.get(id=self.context["property_id"]).requires_additional_confirmation
 		):
 			created_booking.status = "ACCEPTED"
 		created_booking.save()
 		bookings_logger.info(
-			f"object: booking; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
+			f"object: booking; stage: serialization; action_type: create; "
+			f"user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
 			f"booking_id: {created_booking.id}; ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 
 		return created_booking
@@ -612,7 +637,8 @@ class BookingCreateFromClientSerializer(serializers.ModelSerializer):
 		ret = super(BookingCreateFromClientSerializer, self).is_valid(False)
 		if self._errors:
 			bookings_logger.info(
-				f"object: booking; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
+				f"object: booking; stage: serialization; action_type: create; "
+				f"user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
 				f"ip_addr: {get_client_ip(self.context['request'])}; status: NOT OK; serialization failed;")
 			if raise_exception:
 				raise serializers.ValidationError(self.errors)
@@ -658,7 +684,9 @@ class BookingCreateFromClientSerializer(serializers.ModelSerializer):
 			created_booking.status = "ACCEPTED"
 		created_booking.save()
 		bookings_logger.info(
-			f"object: booking; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; booking_id: {created_booking.id} "
+			f"object: booking; stage: serialization; action_type: create; "
+			f"user_id: {self.context['request'].user.id}; property_id: "
+			f"{self.context['property_id']}; booking_id: {created_booking.id} "
 			f"ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 
 		return created_booking
@@ -716,7 +744,8 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 		ret = super(BookingUpdateAdminAndCreatorSerializer, self).is_valid(False)
 		if self._errors:
 			bookings_logger.info(
-				f"object: booking; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
+				f"object: booking; stage: serialization; action_type: create; "
+				f"user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
 				f"ip_addr: {get_client_ip(self.context['request'])}; status: NOT OK; serialization failed;")
 			if raise_exception:
 				raise serializers.ValidationError(self.errors)
@@ -769,7 +798,8 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 
 		instance.save()
 		bookings_logger.info(
-			f"object: booking; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; booking_id: {instance.id} "
+			f"object: booking; stage: serialization; action_type: create; "
+			f"user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; booking_id: {instance.id} "
 			f"ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 
 		return instance
@@ -809,7 +839,8 @@ class BookingUpdateAdminNotCreatorSerializer(serializers.ModelSerializer):
 		ret = super(BookingUpdateAdminNotCreatorSerializer, self).is_valid(False)
 		if self._errors:
 			bookings_logger.info(
-				f"object: booking; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
+				f"object: booking; stage: serialization; action_type: create; "
+				f"user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
 				f"ip_addr: {get_client_ip(self.context['request'])}; status: NOT OK; serialization failed;")
 			if raise_exception:
 				raise serializers.ValidationError(self.errors)
@@ -821,7 +852,8 @@ class BookingUpdateAdminNotCreatorSerializer(serializers.ModelSerializer):
 			instance.status = status
 		instance.save()
 		bookings_logger.info(
-			f"object: booking; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; booking_id: {instance.id} "
+			f"object: booking; stage: serialization; action_type: create; "
+			f"user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; booking_id: {instance.id} "
 			f"ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 
 		return instance
@@ -862,7 +894,8 @@ class BookingUpdateClientSerializer(serializers.ModelSerializer):
 		ret = super(BookingUpdateClientSerializer, self).is_valid(False)
 		if self._errors:
 			bookings_logger.info(
-				f"object: booking; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
+				f"object: booking; stage: serialization; action_type: create; "
+				f"user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; "
 				f"ip_addr: {get_client_ip(self.context['request'])}; status: NOT OK; serialization failed;")
 			if raise_exception:
 				raise serializers.ValidationError(self.errors)
@@ -912,7 +945,8 @@ class BookingUpdateClientSerializer(serializers.ModelSerializer):
 
 		instance.save()
 		bookings_logger.info(
-			f"object: booking; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; booking_id: {instance.id} "
+			f"object: booking; stage: serialization; action_type: create; "
+			f"user_id: {self.context['request'].user.id}; property_id: {self.context['property_id']}; booking_id: {instance.id} "
 			f"ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 
 		return instance
@@ -935,7 +969,8 @@ class BulkFileUploadSerializer(serializers.ModelSerializer):
 		ret = super(BulkFileUploadSerializer, self).is_valid(False)
 		if self._errors:
 			images_logger.info(
-				f"object: image; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['premises_id']}; "
+				f"object: image; stage: serialization; action_type: create; "
+				f"user_id: {self.context['request'].user.id}; property_id: {self.context['premises_id']}; "
 				f"ip_addr: {get_client_ip(self.context['request'])}; status: NOT OK; serialization failed;")
 			if raise_exception:
 				raise serializers.ValidationError(self.errors)
