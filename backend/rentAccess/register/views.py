@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from .models import Lock, Card, Key
-from .serializers import LockSerializer, CardSerializer, KeySerializer
+from locks.serializers import LockSerializer
+from .serializers import  CardSerializer, KeySerializer
 from rest_framework.response import Response
 
 

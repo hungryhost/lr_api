@@ -22,7 +22,6 @@ images_logger = logging.getLogger('rentAccess.properties.images.info')
 class FilteringNotMainImagesListSerializer(serializers.ListSerializer):
 
 	def to_representation(self, data):
-		data = data.filter(is_main=False)
 		return super(FilteringNotMainImagesListSerializer, self).to_representation(data)
 
 

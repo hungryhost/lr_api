@@ -266,8 +266,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
 
@@ -305,8 +303,8 @@ DEFAULT_RENDERER_CLASSES = (
     'rest_framework.renderers.JSONRenderer',
 )
 # Media root and url definitions
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/var/www/media/'
+MEDIA_ROOT = os.path.join('/var/www/media')
+MEDIA_URL = '/media/'
 
 # Static root and file definitions
 STATICFILES_DIRS = [
