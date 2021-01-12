@@ -160,7 +160,8 @@ class PropertyListCreate(generics.ListCreateAPIView):
 
 
 class BookingsListCreateView(generics.ListCreateAPIView):
-
+	serializer_class = BookingsSerializer
+	
 	def create(self, request, *args, **kwargs):
 		property_owners = self.get_property_object()
 
