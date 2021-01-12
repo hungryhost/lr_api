@@ -33,7 +33,7 @@ migrations/
 *.log.*
 backend/.idea/
 backend/rentAccess/__pycache__/
-backend/rentAccess/media/*.png
+backend/rentAccess/media/*
 backend/rentAccess/media/*.jpg
 backend/venv/
 backend/rentAccess/**/*.sqlite3

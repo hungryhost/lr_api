@@ -1,7 +1,8 @@
 from rest_framework import response, decorators, permissions, status, generics
 from django.core.exceptions import ObjectDoesNotExist
 from .serializers import EchoSerializer
-from locks.serializers import LockSerializer
+
+from .serializers import LockSerializer
 from register.models import Lock
 
 
