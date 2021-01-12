@@ -1,15 +1,21 @@
 from rest_framework import generics, status
 from .models import Lock, Card, Key
-from .serializers import LockSerializer, CardSerializer, KeySerializer
+from locks.serializers import LockSerializer
+from .serializers import CardSerializer, KeySerializer
 from rest_framework.response import Response
-
+from locks.serializers import AddLockToPropertySerializer
 
 # TODO: Add permissions and logs
 # TODO: replace this to locks and keys apps
 
+
 class LockList(generics.ListCreateAPIView):
-    serializer_class = LockSerializer
     queryset = Lock.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return AddLockToPropertySerializer
+        return LockSerializer
 
 
 class CardList(generics.ListCreateAPIView):

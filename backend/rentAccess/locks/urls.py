@@ -6,5 +6,5 @@ from .views import LockDetail
 
 urlpatterns = [
     path('', views.echo),
-    path('<int:pk>/', LockDetail.as_view()),
+    # path('<int:lock_id>/', LockDetail.as_view()),
 ]

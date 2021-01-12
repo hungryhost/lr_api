@@ -1,7 +1,7 @@
 from rest_framework import response, decorators, permissions, status, generics
 from django.core.exceptions import ObjectDoesNotExist
 from .serializers import EchoSerializer
-from register.serializers import LockSerializer
+from locks.serializers import LockSerializer
 from register.models import Lock
 
 
@@ -13,7 +13,7 @@ class LockDetail(generics.RetrieveUpdateDestroyAPIView):
         """
         Return a lock determined by the id portion of the URL.
         """
-        lock_id = self.kwargs['pk']
+        lock_id = self.kwargs['lock_id']
         return Lock.objects.filter(id=lock_id)
 
 

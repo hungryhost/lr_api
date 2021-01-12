@@ -31,7 +31,6 @@ class PropertiesTests(APITestCase):
 	r"""
 	This class of tests is used for testing of the Properties endpoints.
 	What is covered in this class:
-		- listing properties
 		- adding a property [OK]
 		- changing a property [OK]
 		- adding owners
@@ -54,6 +53,8 @@ class PropertiesTests(APITestCase):
 		PropertyTypes.objects.create(property_type=200, description="Null")
 		PermissionLevels.objects.create(p_level=400, description="Null")
 		PermissionLevels.objects.create(p_level=300, description="Null")
+		PermissionLevels.objects.create(p_level=200, description="Null")
+		PermissionLevels.objects.create(p_level=100, description="Null")
 
 		self.false_token = "adamantly"
 
@@ -118,221 +119,8 @@ class PropertiesTests(APITestCase):
 				"requires_additional_confirmation": False,
 				"visibility": 100
 			}
-		self.create_booking_JSON = \
-			{
-				"number_of_clients": 1,
-				"client_email": "test1@test.com",
-				"booked_from": "2020-12-29T17:34+0300",
-				"booked_until": "2020-12-29T19:34+0300"
-			}
-		self.create_booking_wrong_dates_1_JSON = \
-			{
-				"number_of_clients": 1,
-				"client_email": "test1@test.com",
-				"booked_from": "2020-12-29T17:34+0300",
-				"booked_until": "2020-12-29T16:34+0300"
-			}
-		self.correct_response_for_creation_booking_JSON = \
-			{
-				"id": 1,
-				"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
-				"client_email": self.create_booking_JSON["client_email"],
-				"status": "ACCEPTED",
-				"booked_from": "2020-12-29T17:34+0300",
-				"booked_until": "2020-12-29T19:34+0300",
-				"booked_by": 1
-			}
-		self.booking_create_response_client_JSON = \
-			{
 
-				"booked_property": {
-					"id": 1,
-					"creator_id": 1,
-					"title": "test_property_1",
-					"body": "test_description_1",
-					"price": 100,
-					"active": True,
-					"property_type": 100,
-					"main_image": "",
-					"visibility": 100,
-					"property_address": {
-						"country": "Country_test_1",
-						"city": "City_test_1",
-						"street_1": "street_test_1",
-						"street_2": "street_test_2",
-						"building": "1",
-						"floor": "1",
-						"number": "1",
-						"zip_code": "100000",
-						"directions_description": ""
-					},
-				},
-				"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
-				"client_email": self.create_booking_JSON["client_email"],
-				"status": "ACCEPTED",
-				"booked_from": "2020-12-20T17:34:37.318000+03:00",
-				"booked_until": "2020-12-21T17:34:37.318000+03:00",
-
-			}
-		# this response is generally shown fro clients
-		self.retrieve_booking_response_client_JSON = \
-			{
-				"id": 1,
-				"booked_property": {
-					"id": 1,
-					"creator_id": 1,
-					"title": "test_property_1",
-					"body": "test_description_1",
-					"price": 100,
-					"active": True,
-					"property_type": 100,
-					"main_image": "",
-					"visibility": 100,
-					"property_address": {
-						"country": "Country_test_1",
-						"city": "City_test_1",
-						"street_1": "street_test_1",
-						"street_2": "street_test_2",
-						"building": "1",
-						"floor": "1",
-						"number": "1",
-						"zip_code": "100000",
-						"directions_description": ""
-					},
-					"requires_additional_confirmation": False,
-					"client_greeting_message": ""
-				},
-				"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
-				"client_email": self.create_booking_JSON["client_email"],
-				"status": "ACCEPTED",
-				"booked_from": "2020-12-29T17:34+0300",
-				"booked_until": "2020-12-29T19:34+0300",
-				"booked_by": 1,
-			}
-		self.retrieve_booking_response_admin_JSON = \
-				{
-					"id": 1,
-					"booked_property": {
-						"id": 1,
-						"creator_id": 1,
-						"title": "test_property_1",
-						"body": "test_description_1",
-						"price": 100,
-						"active": True,
-						"property_type": 100,
-						"main_image": "",
-						"visibility": 100,
-						"property_address": {
-							"country": "Country_test_1",
-							"city": "City_test_1",
-							"street_1": "street_test_1",
-							"street_2": "street_test_2",
-							"building": "1",
-							"floor": "1",
-							"number": "1",
-							"zip_code": "100000",
-							"directions_description": ""
-						},
-						"requires_additional_confirmation": False,
-						"client_greeting_message": ""
-					},
-					"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
-					"client_email": self.create_booking_JSON["client_email"],
-					"status": "ACCEPTED",
-					"booked_from": "2020-12-29T17:34+0300",
-					"booked_until": "2020-12-29T19:34+0300",
-					"booked_by": 1,
-				}
-		self.retrieve_booking_response_admin_with_locks_JSON = \
-			{
-				"id": 1,
-				"clients": [
-					{
-						"existing_id": None,
-						"existing_user_url": None,
-						"first_name": "test_1_fname",
-						"last_name": "test_1_sname",
-						"patronymic": "test_1_pname",
-						"email": "test1@test.com",
-						"description": "some example description"
-					}
-				],
-				"property": [
-					{
-						# "property_url":""
-						"id": 1,
-						"creator_id": 1,
-						"title": "test_property_1",
-						"body": "test_description_1",
-						"property_type": 100,
-						"price": 100,
-						"main_image": "",
-						"active": True,
-						"property_address": [
-							{
-								"country": "Country_test_1",
-								"city": "City_test_1",
-								"street_1": "street_test_1",
-								"street_2": "street_test_2",
-								"building": "1",
-								"floor": "1",
-								"number": "1",
-								"zip_code": "100000"
-							}
-						],
-						"created_at": "2020-12-08T00:31:45.226645+03:00",
-						"updated_at": "2020-12-08T00:31:45.226645+03:00"
-					}
-				],
-				"locks": [
-					{
-						"id": 1,
-						"description": "description"
-					}
-				],
-				"number_of_clients": 1,
-				"status": "AWAITING",
-				"booked_from": "2020-12-07T14:34:37.318Z",
-				"booked_until": "2020-12-07T14:34:37.318Z",
-				"booked_by": 1,
-				"booked_at": "2020-12-07T14:34:37.318Z",
-				"updated_at": "2020-12-07T14:34:37.318Z"
-			}
-		self.register_access_response_JSON = \
-			{
-				"id": 1,
-				"code": 1234,
-				"access_start": "2020-12-07T14:34:37.318Z",
-				"access_stop": "2020-12-07T14:34:37.318Z",
-			}
-		self.registration_json_correct = \
-			{
-				"first_name": "test_case_fn",
-				"last_name": "test_case_ln",
-				"email": "test_case_email@test.com",
-				"password": "test_pass_test_pass",
-				"password2": "test_pass_test_pass"
-			}
-		self.registration_json_correct_user_2 = \
-			{
-				"first_name": "test_case_fn2",
-				"last_name": "test_case_ln2",
-				"email": "test_case_email2@test.com",
-				"password": "test_pass_test_pass2",
-				"password2": "test_pass_test_pass2"
-			}
-		self.registration_json_correct_user_3 = \
-			{
-				"first_name": "test_case_fn3",
-				"last_name": "test_case_ln3",
-				"email": "test_case_email3@test.com",
-				"password": "test_pass_test_pass3",
-				"password2": "test_pass_test_pass3"
-			}
 		self.properties_list_url = reverse('properties:properties-list')
-		#self.owners_list_url = reverse('properties:properties-owners-list', args=[self.correct_response_for_creation_property_JSON["id"]])
-		# self.owners_details_url = reverse('properties:owners-details')
-		#self.bookings_list_url = reverse('properties:bookings-list')
 		self.client_1 = APIClient()
 		self.client_2 = APIClient()
 		self.client_3 = APIClient()
@@ -357,76 +145,83 @@ class PropertiesTests(APITestCase):
 				path=self.registration_url,
 				data=client_json,
 				format='json')
-			self.responses[self.client_id] = response_post
+			self.responses[self.client_id] = response_post.data
 			self.client_id += 1
 			client.credentials(HTTP_AUTHORIZATION=f'Bearer {response_post.data["access"]}')
-
 		self.client_no_auth = APIClient()
 		self.client_bad_auth = APIClient()
 		self.client_bad_auth.credentials(HTTP_AUTHORIZATION=f'Bearer {self.false_token}')
 
 	def test_create_property(self):
-		property_json_1 = PropertyJson(creator_id=1)
-		property_json_1_request = property_json_1.get_request_json()
-		property_request_address_1 = AddressJson().get_address_json()
-		property_json_1_request["property_address"] = property_request_address_1
-		property_response_json_1 = property_json_1.get_response_json()
-		property_response_json_1["property_address"] = property_request_address_1
-		resp = self.client_1.post(self.properties_list_url, property_json_1_request,
-		                          format='json')
+		for user_id in self.responses:
+			property_json_1 = PropertyJson(creator_id=user_id)
+			property_json_1_request = property_json_1.get_request_json()
+			property_request_address_1 = AddressJson().get_address_json()
+			property_json_1_request["property_address"] = property_request_address_1
+			property_response_json_1 = property_json_1.get_response_json()
+			property_response_json_1["property_address"] = property_request_address_1
+
+			resp = self.list_of_clients[user_id-1].post(
+						path=self.properties_list_url,
+						data=property_json_1_request,
+						format='json'
+					)
+
+			self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+			ownership_obj = Ownership.objects.get(
+				user=user_id,
+				premises=resp.data["id"])
+			created_property = Property.objects.get(pk=resp.data["id"])
+			created_address = PremisesAddresses.objects.get(premises=resp.data["id"])
+			self.assertEqual(created_property.pk, resp.data["id"])
+			resp.data.pop('created_at')
+			resp.data.pop('updated_at')
+
+			self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+			self.assertEqual(resp.data["title"], property_response_json_1["title"])
+			self.assertEqual(resp.data["body"], property_response_json_1["body"])
+
+			self.assertEqual(resp.data["price"], property_response_json_1["price"])
+			self.assertEqual(resp.data["visibility"], property_response_json_1["visibility"])
+
+			self.assertEqual(resp.data["property_address"], property_response_json_1["property_address"])
+			self.assertEqual(resp.data["creator_id"], property_response_json_1["creator_id"])
+
+			self.assertEqual(self.responses[user_id]["personal_info"]["first_name"], ownership_obj.user.first_name)
+			self.assertEqual(self.responses[user_id]["personal_info"]["last_name"], ownership_obj.user.last_name)
+			self.assertEqual(self.responses[user_id]["personal_info"]["email"], ownership_obj.user.email)
+			self.assertEqual(400, ownership_obj.permission_level_id)
+
+			self.assertEqual(resp.data["id"], ownership_obj.premises_id)
+			self.assertEqual(property_response_json_1["title"], ownership_obj.premises.title)
+			self.assertEqual(property_response_json_1["body"], ownership_obj.premises.body)
+			self.assertEqual(property_response_json_1["creator_id"], ownership_obj.user.id)
+
+			self.assertEqual(created_property.title, resp.data["title"])
+			self.assertEqual(created_property.body, resp.data["body"])
+			self.assertEqual(created_property.price, resp.data["price"])
+			self.assertEqual(created_property.visibility, resp.data["visibility"])
+			self.assertEqual(created_property.active, resp.data["active"])
+			self.assertEqual(created_property.author.id, resp.data["creator_id"])
+
+			p_address = resp.data['property_address']
+			self.assertEqual(created_address.country, p_address["country"])
+			self.assertEqual(created_address.city, p_address["city"])
+			self.assertEqual(created_address.building, p_address["building"])
+			self.assertEqual(created_address.street_1, p_address["street_1"])
+			self.assertEqual(created_address.street_2, p_address["street_2"])
+			self.assertEqual(created_address.floor, p_address["floor"])
+			self.assertEqual(created_address.number, p_address["number"])
+			self.assertEqual(created_address.zip_code, p_address["zip_code"])
+			# print(created_property.owners.get(premises=resp.data["id"]).permission_level.p_level)
+
 		no_auth_resp = self.client_no_auth.post(self.properties_list_url, self.create_property_JSON,
 												format='json')
 		bad_auth_resp = self.client_bad_auth.post(self.properties_list_url, self.create_property_JSON,
 												  format='json')
-
 		self.assertEqual(no_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
 		self.assertEqual(bad_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
-		self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-		#ownership_obj = Ownership.objects.get(user=self.correct_response_for_creation_property_JSON["creator_id"],
-		#                                      premises=resp.data["id"])
-		created_property = Property.objects.get(pk=resp.data["id"])
-		created_address = PremisesAddresses.objects.get(premises=resp.data["id"])
-		self.assertEqual(created_property.pk, resp.data["id"])
-		resp.data.pop('created_at')
-		resp.data.pop('updated_at')
-		resp.data.pop('id')
-
-		self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
-
-		#self.assertEqual(resp.data, property_response_json_1)
-
-		#self.assertEqual(self.registration_json_correct["first_name"], ownership_obj.user.first_name)
-		#self.assertEqual(self.registration_json_correct["last_name"], ownership_obj.user.last_name)
-		#self.assertEqual(self.registration_json_correct["email"], ownership_obj.user.email)
-		#self.assertEqual(400, ownership_obj.permission_level_id)
-
-		#self.assertEqual(self.correct_response_for_creation_property_JSON["id"], ownership_obj.premises_id)
-		#self.assertEqual(self.correct_response_for_creation_property_JSON["title"], ownership_obj.premises.title)
-		#self.assertEqual(self.correct_response_for_creation_property_JSON["body"], ownership_obj.premises.body)
-		#self.assertEqual(self.correct_response_for_creation_property_JSON["creator_id"], ownership_obj.user.id)
-
-
-
-		self.assertEqual(created_property.title, resp.data["title"])
-		self.assertEqual(created_property.body, resp.data["body"])
-		self.assertEqual(created_property.price, resp.data["price"])
-		self.assertEqual(created_property.visibility, resp.data["visibility"])
-		self.assertEqual(created_property.active, resp.data["active"])
-		self.assertEqual(created_property.author.id, resp.data["creator_id"])
-
-
-		p_address = resp.data['property_address']
-		self.assertEqual(created_address.country, p_address["country"])
-		self.assertEqual(created_address.city, p_address["city"])
-		self.assertEqual(created_address.building, p_address["building"])
-		self.assertEqual(created_address.street_1, p_address["street_1"])
-		self.assertEqual(created_address.street_2, p_address["street_2"])
-		self.assertEqual(created_address.floor, p_address["floor"])
-		self.assertEqual(created_address.number, p_address["number"])
-		self.assertEqual(created_address.zip_code, p_address["zip_code"])
-		# print(created_property.owners.get(premises=resp.data["id"]).permission_level.p_level)
-		resp = self.client_1.post(self.properties_list_url, self.create_booking_JSON,
-		                          format='json')
 
 	def test_update_property(self):
 		resp_post = self.client_1.post(self.properties_list_url, self.create_property_JSON,
@@ -787,6 +582,4 @@ class PropertiesTests(APITestCase):
 			# print(item, resp_check_available_ok.status_code)
 			self.assertEqual(resp_check_available_ok.status_code, status.HTTP_200_OK)
 
-	def test_multiple_create_properties(self):
-		for i in range(10):
-			self.test_create_property()
+

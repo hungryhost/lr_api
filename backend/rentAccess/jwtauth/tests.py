@@ -5,7 +5,6 @@ from rest_framework.test import APIClient, APITestCase
 import logging
 User = get_user_model()
 
-logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 
 class TestsOfJWTUtils(APITestCase):

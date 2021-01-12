@@ -19,6 +19,7 @@ from rest_framework.test import APIClient, APITestCase
 from common.models import PermissionLevels
 from properties.serializers import BookingsSerializer
 from properties.models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages, Bookings
+from user_tests.json_generator import UserRegistrationJSON
 
 User = get_user_model()
 
@@ -27,7 +28,20 @@ class BookingsTests(APITestCase):
 	r"""
 	Class for testing locks-related endpoints.
 	What is covered in this class:
-
+		- Adding a lock for the property
+		- Changing a lock
+		- Deleting a lock
+		- Retrieving a lock
+		- Adding multiple locks for the property
+		- Adding card for the lock on the property
+		- Adding a master-key for the lock on the property
+		- Permissions for adding locks
+		- Permissions for adding cards
+		- Permissions for adding master-keys
+		- Permissions for accessing a list of locks
+		- Permissions for accessing info about a single lock
+		- Permissions for changing a lock
+		- Permissions for deleting a lock
 
 	Note: since this API uses rest_framework_simplejwt we do not test the token
 	issuing mechanism, i.e. refresh, verify, etc.
@@ -36,6 +50,7 @@ class BookingsTests(APITestCase):
 	def setUp(self) -> None:
 		# TODO: add booking-related bodies of resp/req
 		PropertyTypes.objects.create(property_type=100, description="Null")
+		PropertyTypes.objects.create(property_type=200, description="Null")
 		PermissionLevels.objects.create(p_level=400, description="Null")
 		PermissionLevels.objects.create(p_level=300, description="Null")
 
@@ -57,232 +72,6 @@ class BookingsTests(APITestCase):
 			'number',
 			'zip_code'
 		]
-		self.create_property_JSON = \
-			{
-				"title": "test_property_1",
-				"body": "test_description_1",
-				"price": 100,
-				"visibility": 100,
-				"property_type": 100,
-				"property_address":
-					{
-						"country": "Country_test_1",
-						"city": "City_test_1",
-						"street_1": "street_test_1",
-						"street_2": "street_test_2",
-						"building": "1",
-						"floor": "1",
-						"number": "1",
-						"zip_code": "100000"
-					}
-
-			}
-		self.correct_response_for_creation_property_JSON = \
-			{
-				"id": 1,
-				"creator_id": 1,
-				"title": "test_property_1",
-				"body": "test_description_1",
-				"property_type": 100,
-				"main_image": "",
-				"price": 100,
-				"active": True,
-				"property_address":
-					{
-						"country": "Country_test_1",
-						"city": "City_test_1",
-						"street_1": "street_test_1",
-						"street_2": "street_test_2",
-						"building": "1",
-						"floor": "1",
-						"number": "1",
-						"zip_code": "100000",
-						"directions_description": ""
-					},
-				"client_greeting_message": "",
-				"requires_additional_confirmation": False,
-				"visibility": 100
-			}
-		self.create_booking_JSON = \
-			{
-				"number_of_clients": 1,
-				"client_email": "test1@test.com",
-				"booked_from": "2020-12-29T17:34+0300",
-				"booked_until": "2020-12-29T19:34+0300"
-			}
-		self.create_booking_wrong_dates_1_JSON = \
-			{
-				"number_of_clients": 1,
-				"client_email": "test1@test.com",
-				"booked_from": "2020-12-29T17:34+0300",
-				"booked_until": "2020-12-29T16:34+0300"
-			}
-		self.correct_response_for_creation_booking_JSON = \
-			{
-				"id": 1,
-				"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
-				"client_email": self.create_booking_JSON["client_email"],
-				"status": "ACCEPTED",
-				"booked_from": "2020-12-29T17:34+0300",
-				"booked_until": "2020-12-29T19:34+0300",
-				"booked_by": 1
-			}
-		self.booking_create_response_client_JSON = \
-			{
-
-				"booked_property": {
-					"id": 1,
-					"creator_id": 1,
-					"title": "test_property_1",
-					"body": "test_description_1",
-					"price": 100,
-					"active": True,
-					"property_type": 100,
-					"main_image": "",
-					"visibility": 100,
-					"property_address": {
-						"country": "Country_test_1",
-						"city": "City_test_1",
-						"street_1": "street_test_1",
-						"street_2": "street_test_2",
-						"building": "1",
-						"floor": "1",
-						"number": "1",
-						"zip_code": "100000",
-						"directions_description": ""
-					},
-				},
-				"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
-				"client_email": self.create_booking_JSON["client_email"],
-				"status": "ACCEPTED",
-				"booked_from": "2020-12-20T17:34:37.318000+03:00",
-				"booked_until": "2020-12-21T17:34:37.318000+03:00",
-
-			}
-		# this response is generally shown fro clients
-		self.retrieve_booking_response_client_JSON = \
-			{
-				"id": 1,
-				"booked_property": {
-					"id": 1,
-					"creator_id": 1,
-					"title": "test_property_1",
-					"body": "test_description_1",
-					"price": 100,
-					"active": True,
-					"property_type": 100,
-					"main_image": "",
-					"visibility": 100,
-					"property_address": {
-						"country": "Country_test_1",
-						"city": "City_test_1",
-						"street_1": "street_test_1",
-						"street_2": "street_test_2",
-						"building": "1",
-						"floor": "1",
-						"number": "1",
-						"zip_code": "100000",
-						"directions_description": ""
-					},
-					"requires_additional_confirmation": False,
-					"client_greeting_message": ""
-				},
-				"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
-				"client_email": self.create_booking_JSON["client_email"],
-				"status": "ACCEPTED",
-				"booked_from": "2020-12-29T17:34+0300",
-				"booked_until": "2020-12-29T19:34+0300",
-				"booked_by": 1,
-			}
-		self.retrieve_booking_response_admin_JSON = \
-			{
-				"id": 1,
-				"booked_property": {
-					"id": 1,
-					"creator_id": 1,
-					"title": "test_property_1",
-					"body": "test_description_1",
-					"price": 100,
-					"active": True,
-					"property_type": 100,
-					"main_image": "",
-					"visibility": 100,
-					"property_address": {
-						"country": "Country_test_1",
-						"city": "City_test_1",
-						"street_1": "street_test_1",
-						"street_2": "street_test_2",
-						"building": "1",
-						"floor": "1",
-						"number": "1",
-						"zip_code": "100000",
-						"directions_description": ""
-					},
-					"requires_additional_confirmation": False,
-					"client_greeting_message": ""
-				},
-				"number_of_clients": int(self.create_booking_JSON["number_of_clients"]),
-				"client_email": self.create_booking_JSON["client_email"],
-				"status": "ACCEPTED",
-				"booked_from": "2020-12-29T17:34+0300",
-				"booked_until": "2020-12-29T19:34+0300",
-				"booked_by": 1,
-			}
-		self.retrieve_booking_response_admin_with_locks_JSON = \
-			{
-				"id": 1,
-				"clients": [
-					{
-						"existing_id": None,
-						"existing_user_url": None,
-						"first_name": "test_1_fname",
-						"last_name": "test_1_sname",
-						"patronymic": "test_1_pname",
-						"email": "test1@test.com",
-						"description": "some example description"
-					}
-				],
-				"property": [
-					{
-						# "property_url":""
-						"id": 1,
-						"creator_id": 1,
-						"title": "test_property_1",
-						"body": "test_description_1",
-						"property_type": 100,
-						"price": 100,
-						"main_image": "",
-						"active": True,
-						"property_address": [
-							{
-								"country": "Country_test_1",
-								"city": "City_test_1",
-								"street_1": "street_test_1",
-								"street_2": "street_test_2",
-								"building": "1",
-								"floor": "1",
-								"number": "1",
-								"zip_code": "100000"
-							}
-						],
-						"created_at": "2020-12-08T00:31:45.226645+03:00",
-						"updated_at": "2020-12-08T00:31:45.226645+03:00"
-					}
-				],
-				"locks": [
-					{
-						"id": 1,
-						"description": "description"
-					}
-				],
-				"number_of_clients": 1,
-				"status": "AWAITING",
-				"booked_from": "2020-12-07T14:34:37.318Z",
-				"booked_until": "2020-12-07T14:34:37.318Z",
-				"booked_by": 1,
-				"booked_at": "2020-12-07T14:34:37.318Z",
-				"updated_at": "2020-12-07T14:34:37.318Z"
-			}
 		self.register_access_response_JSON = \
 			{
 				"id": 1,
@@ -315,16 +104,37 @@ class BookingsTests(APITestCase):
 				"password2": "test_pass_test_pass3"
 			}
 		self.properties_list_url = reverse('properties:properties-list')
-		self.owners_list_url = reverse('properties:owners-list',
-									   args=[self.correct_response_for_creation_property_JSON["id"]])
+		#self.owners_list_url = reverse('properties:properties-owners-list', args=[self.correct_response_for_creation_property_JSON["id"]])
 		# self.owners_details_url = reverse('properties:owners-details')
-		# self.bookings_list_url = reverse('properties:bookings-list')
+		#self.bookings_list_url = reverse('properties:bookings-list')
+		self.client_1 = APIClient()
+		self.client_2 = APIClient()
+		self.client_3 = APIClient()
+		self.client_4 = APIClient()
+		self.client_5 = APIClient()
+		self.client_6 = APIClient()
+		self.client_7 = APIClient()
+		self.client_8 = APIClient()
+		self.client_9 = APIClient()
+		self.client_10 = APIClient()
 
-		self.response_post = self.client.post(
-			path=self.registration_url,
-			data=self.registration_json_correct,
-			format='json')
-		self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.response_post.data["access"]}')
+		self.list_of_clients = [
+			self.client_1, self.client_2, self.client_3, self.client_4,
+			self.client_5, self.client_6, self.client_7, self.client_8,
+			self.client_9, self.client_10
+		]
+		self.responses = {}
+		self.client_id = 1
+
+		for client in self.list_of_clients:
+			client_json = UserRegistrationJSON().get_request_json()
+			response_post = client.post(
+				path=self.registration_url,
+				data=client_json,
+				format='json')
+			self.responses[self.client_id] = response_post.data
+			self.client_id += 1
+			client.credentials(HTTP_AUTHORIZATION=f'Bearer {response_post.data["access"]}')
 		self.client_no_auth = APIClient()
 		self.client_bad_auth = APIClient()
 		self.client_bad_auth.credentials(HTTP_AUTHORIZATION=f'Bearer {self.false_token}')

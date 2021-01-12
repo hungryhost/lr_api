@@ -95,22 +95,3 @@ class ProfileDetail(generics.RetrieveUpdateDestroyAPIView):
 		return [permission() for permission in permission_classes]
 
 
-class ChangePasswordView(generics.UpdateAPIView):
-	queryset = User.objects.all()
-	permission_classes = (IsAuthenticated, IsCurrentUserOrSuperuser,)
-	serializer_class = ChangePasswordSerializer
-
-
-
-
-class ProfileUploadUserPic(generics.CreateAPIView):
-	# TODO: finish upload class
-	queryset = UserImages.objects.all()
-	parser_classes = (FormParser, MultiPartParser)
-	serializer_class = FileUploadSerializer
-	permission_classes = (IsAuthenticated, IsCurrentUserOrSuperuser,)
-
-
-
-class ProfileDeleteUserPic(generics.DestroyAPIView):
-	pass

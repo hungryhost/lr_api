@@ -3,6 +3,7 @@ from django.http import Http404
 from rest_framework import status, exceptions
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
+from rest_framework.serializers import ValidationError
 
 
 def custom_exception_handler(exc, context):
@@ -33,6 +34,7 @@ def custom_exception_handler(exc, context):
 		errors = 'Forbidden : You do not have necessary permissions'
 		response.data['errors'] = errors
 		response.data['status_code'] = 403
+
 	"""
 	if response is not None:
 		# check if exception has dict items

@@ -23,8 +23,24 @@ User = get_user_model()
 class BookingsTests(APITestCase):
 	r"""
 	Class for testing bookings-related endpoints.
-	What is covered in this class:
 
+	What is covered in this class:
+		- Adding a booking [owners]
+		- Adding a booking [clients]
+		- Changing a booking [owners]
+
+			- When created by an owner
+			- When created by a client
+		- Changing a booking [clients]
+
+			- When created by an owner
+			- When created by a client
+		- Deleting a booking
+		- Permissions for adding a booking
+		- Permissions for accessing a list of bookings for all properties
+		- Permissions for accessing a list of bookings for a single property
+		- Permissions for changing a booking
+		- Permissions for deleting a booking
 
 	Note: since this API uses rest_framework_simplejwt we do not test the token
 	issuing mechanism, i.e. refresh, verify, etc.
@@ -316,7 +332,7 @@ class BookingsTests(APITestCase):
 									   args=[self.correct_response_for_creation_property_JSON["id"]])
 		# self.owners_details_url = reverse('properties:owners-details')
 		# self.bookings_list_url = reverse('properties:bookings-list')
-
+		self.client = APIClient()
 		self.response_post = self.client.post(
 			path=self.registration_url,
 			data=self.registration_json_correct,
@@ -325,6 +341,12 @@ class BookingsTests(APITestCase):
 		self.client_no_auth = APIClient()
 		self.client_bad_auth = APIClient()
 		self.client_bad_auth.credentials(HTTP_AUTHORIZATION=f'Bearer {self.false_token}')
+
+	def test__booking_from_owner(self):
+
+		resp_create_booking = self.client.post(reverse('properties:properties-bookings-list', args=(1,)),
+								data=self.create_booking_JSON, format='json')
+		print(resp_create_booking.data)
 
 	def test_add_booking_from_owner(self):
 		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,

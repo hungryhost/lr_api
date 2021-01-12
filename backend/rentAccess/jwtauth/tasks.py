@@ -14,9 +14,10 @@ logger = get_task_logger(__name__)
 def email_confirmation_task(duration, data):
     """
     This method sends confirmation email to the new user.
+
     :param duration: duration of the delay
     :param data: dictionary of data
-    Version: 1.0
+
     """
     sleep(duration)
     plaintext = get_template('email_confirmation.txt')
