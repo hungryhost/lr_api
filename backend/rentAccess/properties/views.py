@@ -435,6 +435,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		obj = self.get_object(pk=pk)
 		datetime_start = self.request.data.get("booked_from", None)
 		datetime_stop = self.request.data.get("booked_until", None)
+		number_of_clients = self.request.data.get("number_of_clients", None)
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
 		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
