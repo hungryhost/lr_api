@@ -161,7 +161,7 @@ class PropertyListCreate(generics.ListCreateAPIView):
 
 class BookingsListCreateView(generics.ListCreateAPIView):
 	serializer_class = BookingsSerializer
-	
+
 	def create(self, request, *args, **kwargs):
 		property_owners = self.get_property_object()
 
@@ -468,6 +468,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		return Property.objects.all()
 
 	def get_permissions(self):
+		permission_classes = []
 		if self.action in ['retrieve', 'get_availability']:
 			permission_classes = [IsPublicProperty | IsOwner | IsSuperUser]
 		if self.action in ['partial_update', 'change_main_image']:
