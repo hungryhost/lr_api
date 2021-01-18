@@ -13,15 +13,47 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf.urls import url
+from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.db import router
+from django.urls import path, include, re_path
+from django.views.generic import TemplateView
+from rest_framework import permissions
 from rest_framework_simplejwt import views as jwt_views
 from rest_framework_simplejwt.views import TokenVerifyView
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+from . import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/property/', include('properties.urls')),
-    path('auth/', include('rest_framework.urls')),
-    path('api/auth/', include('jwtauth.urls'), name='jwtauth'),
-    path('api/profile/', include('userAccount.urls')),
-]
+    # ------------------- LOCK-API -------------------
+    path('lock-api/v1/echo/', include('locks.urls')),
+    path('lock-api/v1/check-access/', include('checkAccess.urls')),
+    # integrated into properties
+    path('lock-api/v1/register/', include('register.urls')),
+    path('lock-api/v1/key/', include('keys.urls')),
+    path('lock-api/v1/lock/', include('locks.urls')),
+    path('lock-api/v1/access/', include('schedule.urls')),
+
+    # ------------------- SERVICE API -------------------
+    path('api/v1/properties/', include('properties.urls'), name='properties'),
+    # path('auth/', include('rest_framework.urls')),
+    path('api/v1/auth/', include('jwtauth.urls'), name='jwtauth'),
+    path('api/v1/users/', include('userAccount.urls')),
+    path('api/v1/user/', include('userAccount.urls_v2'), name='userAccount'),
+    # ------------------- DOCS -------------------
+    path('api/v1/service-api-docs/', TemplateView.as_view(
+                      template_name='service-api-docs.html',
+                  ), name='swagger-ui'),
+    path('api/v1/service-specs/general/', TemplateView.as_view(
+                      template_name='294_UserAndPropertiesFunctions.html',
+                  ), name='workflow'),
+    path('api/v1/lock-api-docs/', TemplateView.as_view(
+                      template_name='lock-api-docs.html',
+                  ), name='swagger-ui'),
+] + (
+        static(settings.STATIC_URL, document_root=settings.STATIC_ROOT) +
+        static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+)
