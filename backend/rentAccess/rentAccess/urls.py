@@ -24,7 +24,7 @@ from rest_framework_simplejwt import views as jwt_views
 from rest_framework_simplejwt.views import TokenVerifyView
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from . import settings
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),

@@ -6,7 +6,8 @@ from django.core.mail import send_mail, EmailMultiAlternatives
 from django.core.management import call_command
 from django.template import Context
 from django.template.loader import get_template
-from rentAccess.settings import EMAIL_HOST_USER
+from django.conf import settings
+
 logger = get_task_logger(__name__)
 
 
@@ -25,7 +26,7 @@ def email_confirmation_task(duration, data):
     context = {'username': data["first_name"], 'confirmation_link': data["confirmation_link"]}
     text_content = plaintext.render(context)
     html_content = htmly.render(context)
-    message = EmailMultiAlternatives(data["subject"], text_content, EMAIL_HOST_USER, [data["email"]])
+    message = EmailMultiAlternatives(data["subject"], text_content, settings.EMAIL_HOST_USER, [data["email"]])
     # send_mail(data["subject"], data["body"], EMAIL_HOST_USER, [data["email"]])
     message.attach_alternative(html_content, "text/html")
     message.send()
