@@ -1,4 +1,4 @@
-from string_utils import generate_random_string
+from api_tests.string_utils import generate_random_string
 import random
 
 

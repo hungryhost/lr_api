@@ -9,7 +9,7 @@ import pytz
 from unittest import TestCase
 from PIL import Image
 from .json_generator import AddressJson, PropertyJson
-from user_tests.json_generator import UserRegistrationJSON
+from api_tests.user_tests.json_generator import UserRegistrationJSON
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.urls import reverse
@@ -21,13 +21,13 @@ from properties.serializers import BookingsSerializer
 from properties.models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages, Bookings
 from ..image_utils import generate_list_of_images
 from ..string_utils import (generate_random_string,
-										generate_random_list_of_strings,
-										generate_random_list_of_numbers)
+                            generate_random_list_of_strings,
+                            generate_random_list_of_numbers)
 
 User = get_user_model()
 
 
-class PropertiesTests(APITestCase):
+class PropertiesTests(APITestCase, APIClient):
 	r"""
 	This class of tests is used for testing of the Properties endpoints.
 	What is covered in this class:
@@ -60,7 +60,7 @@ class PropertiesTests(APITestCase):
 
 		self.token_verify_url = reverse('jwtauth:token_verify')
 		self.token_obtain_ulr = reverse('jwtauth:token_obtain_pair')
-		self.registration_url = reverse('jwtauth:register')
+		self.registration_url = "/api/v1/auth/register/"
 		self.login_url = reverse('jwtauth:token_obtain_pair')
 		self.logout_url = reverse('jwtauth:logout')
 		self.logout_all_url = reverse('jwtauth:logout_all')
@@ -161,11 +161,11 @@ class PropertiesTests(APITestCase):
 			property_response_json_1 = property_json_1.get_response_json()
 			property_response_json_1["property_address"] = property_request_address_1
 
-			resp = self.list_of_clients[user_id-1].post(
-						path=self.properties_list_url,
-						data=property_json_1_request,
-						format='json'
-					)
+			resp = self.list_of_clients[user_id - 1].post(
+				path=self.properties_list_url,
+				data=property_json_1_request,
+				format='json'
+			)
 
 			self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
 			ownership_obj = Ownership.objects.get(
@@ -214,12 +214,12 @@ class PropertiesTests(APITestCase):
 			self.assertEqual(created_address.floor, p_address["floor"])
 			self.assertEqual(created_address.number, p_address["number"])
 			self.assertEqual(created_address.zip_code, p_address["zip_code"])
-			# print(created_property.owners.get(premises=resp.data["id"]).permission_level.p_level)
+		# print(created_property.owners.get(premises=resp.data["id"]).permission_level.p_level)
 
 		no_auth_resp = self.client_no_auth.post(self.properties_list_url, self.create_property_JSON,
-												format='json')
+		                                        format='json')
 		bad_auth_resp = self.client_bad_auth.post(self.properties_list_url, self.create_property_JSON,
-												  format='json')
+		                                          format='json')
 		self.assertEqual(no_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
 		self.assertEqual(bad_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -231,7 +231,7 @@ class PropertiesTests(APITestCase):
 		list_of_prices = generate_random_list_of_numbers()
 		# TODO: optimise the loops below so it doesn't look that horrible
 		new_property_details_url = reverse('properties:properties-details',
-										   args=(resp_post.data["id"],))
+		                                   args=(resp_post.data["id"],))
 		data_for_bad_auth = \
 			{
 				"title": list_of_titles[random.randint(0, len(list_of_titles) - 1)],
@@ -239,9 +239,9 @@ class PropertiesTests(APITestCase):
 				"price": 200,
 			}
 		no_auth_resp = self.client_no_auth.patch(new_property_details_url,
-												 data=data_for_bad_auth, format='json')
+		                                         data=data_for_bad_auth, format='json')
 		bad_auth_resp = self.client_bad_auth.patch(new_property_details_url,
-												   data=data_for_bad_auth, format='json')
+		                                           data=data_for_bad_auth, format='json')
 
 		# print(bad_auth_resp._headers)
 		self.assertEqual(no_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -368,7 +368,7 @@ class PropertiesTests(APITestCase):
 		self.assertEqual(Property.objects.all().count(), 2)
 		resp_delete = self.client_1.delete(
 			reverse('properties:properties-details',
-			args=(resp_post.data["id"],)),
+			        args=(resp_post.data["id"],)),
 			format='json')
 		self.assertEqual(resp_delete.status_code, status.HTTP_204_NO_CONTENT)
 		self.assertEqual(Property.objects.all().count(), 1)
@@ -382,7 +382,7 @@ class PropertiesTests(APITestCase):
 		images = generate_list_of_images()
 		resp_auth_1 = self.client_1.put(
 			reverse('properties:properties-images-list',
-					args=(resp_post.data["id"],)),
+			        args=(resp_post.data["id"],)),
 			data={
 				'images': [
 					images[0],
@@ -397,7 +397,7 @@ class PropertiesTests(APITestCase):
 			format='multipart')
 		resp_get = self.client_1.get(
 			reverse('properties:properties-details',
-					args=(resp_post.data["id"],)),
+			        args=(resp_post.data["id"],)),
 			format='json')
 		self.assertEqual(resp_auth_1.status_code, status.HTTP_200_OK)
 		self.assertIsNot(resp_get.data["property_images"], [])
@@ -418,7 +418,7 @@ class PropertiesTests(APITestCase):
 			format='json')
 		resp_auth_1 = self.client_1.put(
 			reverse('properties:properties-main-image-setter',
-					args=(resp_post.data["id"],)),
+			        args=(resp_post.data["id"],)),
 			data={
 				"image_id": 1
 			},
@@ -427,7 +427,7 @@ class PropertiesTests(APITestCase):
 		images = generate_list_of_images()
 		resp_auth_1 = self.client_1.put(
 			reverse('properties:properties-images-list',
-					args=(resp_post.data["id"],)),
+			        args=(resp_post.data["id"],)),
 			data={
 				'images': [
 					images[0],
@@ -441,7 +441,7 @@ class PropertiesTests(APITestCase):
 
 		resp_auth_1 = self.client_1.put(
 			reverse('properties:properties-main-image-setter',
-					args=(resp_post.data["id"],)),
+			        args=(resp_post.data["id"],)),
 			data={
 				"image_id": 3
 			},
@@ -449,12 +449,12 @@ class PropertiesTests(APITestCase):
 		self.assertEqual(resp_auth_1.status_code, status.HTTP_200_OK)
 		resp_get = self.client_1.get(
 			reverse('properties:properties-details',
-					args=(resp_post.data["id"],)),
+			        args=(resp_post.data["id"],)),
 			format='json')
 
 		for item in resp_get.data["property_images"]:
 			self.assertEqual(len(resp_get.data["property_images"]),
-							 PremisesImages.objects.filter(premises_id=resp_post.data["id"]).count() - 1)
+			                 PremisesImages.objects.filter(premises_id=resp_post.data["id"]).count() - 1)
 			self.assertIsNot(item["id"], 3)
 
 	def test_delete_images(self):
@@ -465,7 +465,7 @@ class PropertiesTests(APITestCase):
 		images = generate_list_of_images()
 		resp_auth_1 = self.client_1.put(
 			reverse('properties:properties-images-list',
-					args=(resp_post.data["id"],)),
+			        args=(resp_post.data["id"],)),
 			data={
 				'images': [
 					images[0],
@@ -581,5 +581,3 @@ class PropertiesTests(APITestCase):
 				format='json')
 			# print(item, resp_check_available_ok.status_code)
 			self.assertEqual(resp_check_available_ok.status_code, status.HTTP_200_OK)
-
-

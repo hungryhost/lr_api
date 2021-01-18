@@ -18,8 +18,9 @@ from rest_framework.test import APIClient, APITestCase
 
 from common.models import PermissionLevels
 from properties.serializers import BookingsSerializer
+
 from properties.models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages, Bookings
-from user_tests.json_generator import UserRegistrationJSON
+from api_tests.user_tests.json_generator import UserRegistrationJSON
 
 User = get_user_model()
 
