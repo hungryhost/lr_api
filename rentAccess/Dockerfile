@@ -33,14 +33,12 @@ RUN pip install --no-cache /wheels/*
 # set work directory
 WORKDIR /usr/src/app
 
-# copy entrypoint.sh
-COPY entrypoint.sh /usr/src/app/entrypoint.sh
-
-# copy our django project
 ADD . /usr/src/app
+COPY entrypoint.sh /usr/src/app/entrypoint.sh
 RUN mkdir  ./logs/
+RUN chmod +rwx -R /usr/src/app/
+RUN chmod +rwx /usr/src/app/entrypoint.sh
 RUN chmod +rwx ./logs/
 # run entrypoint.sh
-RUN chmod 777 -R /usr/src/app/
-RUN chmod 777 /usr/src/app/entrypoint.sh
+
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
