@@ -2,7 +2,7 @@ version: '3'
 
 services:
   django:
-    build: .
+    build: ./rentAccess
     container_name: django_sb
     ports:
       - '8000:8000'
@@ -10,15 +10,19 @@ services:
       - .env
     command: gunicorn rentAccess.wsgi:application --bind 0.0.0.0:8000
     volumes:
-    - ./rentAccess:.
+      - ./rentAccess/:/usr/src/app/
   celery:
     container_name: cl01
-    build: .
+    build: ./rentAccess
     command: celery -A rentAccess worker -l info --purge
+    env_file:
+      - .env
     volumes:
-      - ./rentAccess:.
+      - ./rentAccess/:/usr/src/app/
   celery-beat:
-    build: .
+    build: ./rentAccess
     command: celery -A rentAccess beat -l info
+    env_file:
+      - .env
     volumes:
-      - ./rentAccess:.
+      - ./rentAccess/:/usr/src/app/
