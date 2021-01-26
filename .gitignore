@@ -32,10 +32,10 @@ migrations/
 .log
 *.log.*
 backend/.idea/
-backend/rentAccess/__pycache__/
-backend/rentAccess/media/*
-backend/rentAccess/media/*.jpg
-backend/venv/
-backend/rentAccess/**/*.sqlite3
+rentAccess/__pycache__/
+rentAccess/media/*
+rentAccess/media/*.jpg
+venv/
+rentAccess/**/*.sqlite3
 .env.development.server
 .env
