@@ -22,3 +22,5 @@ services:
     command: celery -A rentAccess beat -l info
     volumes:
       - app: /usr/src/app/
+volumes:
+  app:
