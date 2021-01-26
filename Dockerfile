@@ -34,7 +34,7 @@ RUN pip install --no-cache /wheels/*
 WORKDIR /usr/src/app
 
 # copy entrypoint.sh
-COPY ./rentAccess/entrypoint.sh /usr/src/app/entrypoint.sh
+COPY ./entrypoint.sh /usr/src/app/entrypoint.sh
 
 # copy our django project
 COPY ./rentAccess .
