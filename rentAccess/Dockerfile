@@ -36,9 +36,9 @@ WORKDIR /usr/src/app
 ADD . /usr/src/app
 COPY entrypoint.sh /usr/src/app/entrypoint.sh
 RUN mkdir  ./logs/
-RUN chmod +rwx -R /usr/src/app/
-RUN chmod +rwx /usr/src/app/entrypoint.sh
+RUN chmod 755 -R /usr/src/app/
+RUN chmod +x /usr/src/app/entrypoint.sh
 RUN chmod +rwx ./logs/
 # run entrypoint.sh
 
-ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
+CMD  ['python manage.py migrate --noinput']
