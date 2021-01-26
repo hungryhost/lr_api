@@ -13,10 +13,10 @@ templates_root = root('templates')
 
 env = environ.Env()
 # reading env file
-environ.Env.read_env(env_file=root('../.env'))
+environ.Env.read_env(env_file=root('.env'))
 # site root points to rentAccess root folder
 SITE_ROOT = root()
-
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 DEBUG = env.bool('DEBUG', default=False)
 SECRET_KEY = env.str('SECRET_KEY')
 ALLOWED_HOSTS = env("ALLOWED_HOSTS").split(",")
