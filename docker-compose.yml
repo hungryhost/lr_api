@@ -10,15 +10,15 @@ services:
       - .env
     command: gunicorn rentAccess.wsgi:application --bind 0.0.0.0:8000
     volumes:
-    - ./rentAccess:/usr/src/app
+    - ./rentAccess:.
   celery:
     container_name: cl01
     build: .
     command: celery -A rentAccess worker -l info --purge
     volumes:
-      - ./rentAccess:/usr/src/app
+      - ./rentAccess:.
   celery-beat:
     build: .
     command: celery -A rentAccess beat -l info
     volumes:
-      - ./rentAccess:/usr/src/app
+      - ./rentAccess:.
