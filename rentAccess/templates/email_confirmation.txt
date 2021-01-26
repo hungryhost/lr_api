@@ -1,4 +1,0 @@
-Hello {{ username }} - your email needs confirmation.
-Please click the link below to confirm your email.
-{{confirmation_link}}
-lockandrent.ru
