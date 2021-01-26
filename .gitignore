@@ -26,7 +26,6 @@ yarn-error.log*
 ############### backend ##############
 /.idea/
 __pycache__/
-migrations/
 *.py[cod]
 *.log
 .log
@@ -36,6 +35,8 @@ rentAccess/__pycache__/
 rentAccess/media/*
 rentAccess/media/*.jpg
 venv/
-rentAccess/**/*.sqlite3
+*.sqlite3
 .env.development.server
 .env
+/rentAccess/static/
+
