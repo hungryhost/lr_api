@@ -1,0 +1,4 @@
+Здравствуйте, {{ full_name }}!
+{{email_body}}
+{{link}}
+Команда lockandrent.ru
