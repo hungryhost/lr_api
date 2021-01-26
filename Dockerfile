@@ -38,7 +38,8 @@ COPY ./entrypoint.sh /usr/src/app/entrypoint.sh
 
 # copy our django project
 COPY ./rentAccess .
-RUN mkdir ./logs/
+RUN mkdir -r  ./usr/src/app/logs/
+RUN chmod +rwx /usr/src/app/logs/
 # run entrypoint.sh
 RUN chmod +x /usr/src/app/entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
