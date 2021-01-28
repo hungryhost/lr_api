@@ -14,6 +14,7 @@ from .models import Documents, UserImages, BillingAddresses
 from .serializers import (ChangePasswordSerializer,
 						  FileUploadSerializer,
 						  ProfileUpdateSerializer, ProfileDetailSerializer)
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -35,8 +36,9 @@ class UserPropertiesList(generics.ListAPIView):
 	lookup_field = "user_id"
 
 	def get_queryset(self, *args, **kwargs):
-		author = get_object_or_404(User, id=self.request.user.id)
-		return Property.objects.all().filter(author=author)
+		query = Q()
+		query.add(Q(owners__user=self.request.user), query.connector)
+		return Property.objects.all().filter(query)
 
 	def get_permissions(self):
 		permission_classes = [IsAuthenticated]
