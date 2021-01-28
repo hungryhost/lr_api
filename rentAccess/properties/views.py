@@ -150,7 +150,7 @@ class PropertyListCreate(generics.ListCreateAPIView):
 
 	def get_serializer_class(self):
 		if self.request.method == "GET":
-			return PropertySerializer
+			return PropertyListSerializer
 		return PropertyCreateSerializer
 
 	def get_permissions(self):
@@ -237,9 +237,13 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	def retrieve(self, request, pk=None):
 		obj = self.get_object(pk=pk)
+
 		serializer = PropertySerializer(
 			obj,
-			context={'request': request}
+			context={
+				'request': request,
+				'availability': obj.availability,
+			}
 		)
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
