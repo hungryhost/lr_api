@@ -3,9 +3,21 @@ from uuid import uuid4
 
 from django.db import models
 import datetime
-from common.models import PermissionLevels
 from register.models import Lock
 from django.conf import settings
+
+
+class PermissionLevels(models.Model):
+	p_level = models.PositiveIntegerField(primary_key=True)
+	description = models.CharField(max_length=150, null=True, blank=True)
+
+
+class PropertyPermission(models.Model):
+	codename = models.CharField(max_length=100, primary_key=True)
+	description = models.CharField(max_length=255, null=True, blank=True)
+
+	def __int__(self):
+		return self.codename
 
 
 class PropertyTypes(models.Model):
@@ -27,10 +39,13 @@ class Property(models.Model):
 		(200, 'Only within the organisation'),
 		(300, 'Only owner and admins can see'),
 	]
-	author = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='properties', on_delete=models.CASCADE)
+	BOOKING_CHOICES = [
+		(200, 'Hourly booking'),
+		(100, 'Daily booking'),
+	]
 	title = models.CharField(max_length=50, null=False, blank=False)
 	body = models.TextField(max_length=500, null=False, blank=False)
-	price = models.PositiveIntegerField()
+	price = models.PositiveIntegerField(null=True, blank=True)
 	visibility = models.IntegerField(
 		choices=VISIBILITY_CHOICES,
 		default=100,
@@ -48,9 +63,24 @@ class Property(models.Model):
 		null=False,
 		blank=False
 	)
-	maximum_number_of_clients = models.IntegerField(default=1, null=False, blank=False)
 	client_greeting_message = models.CharField(max_length=500, null=False, blank=True)
 	requires_additional_confirmation = models.BooleanField(default=False, null=False, blank=True)
+
+	booking_type = models.IntegerField(
+		choices=BOOKING_CHOICES,
+		default=100,
+		null=False,
+		blank=False
+	)
+
+	def __str__(self):
+		return self.title
+
+
+class Availability(models.Model):
+	premises = models.OneToOneField(Property, related_name='availability',
+		on_delete=models.CASCADE, null=False, blank=False)
+	available_days = models.CharField(max_length=7, default='1111111', null=False, blank=False)
 
 	# interval between bookings in minutes
 	booking_interval = models.IntegerField(default=0, null=False, blank=True)
@@ -63,8 +93,15 @@ class Property(models.Model):
 	# if -1, then no limit
 	maximum_booking_length = models.IntegerField(default=-1, null=False, blank=True)
 
-	def __str__(self):
-		return self.title
+	maximum_number_of_clients = models.IntegerField(default=1, null=False, blank=False)
+
+	# these settings are for daily bookings
+	departure_time = models.TimeField(null=True, blank=True)
+	arrive_until = models.TimeField(null=True, blank=True)
+	# these settings are for hourly bookings
+	available_from = models.TimeField(null=True, blank=True)
+	available_until = models.TimeField(null=True, blank=True)
+	available_hours = models.CharField(max_length=255, null=True, blank=True)
 
 
 class Ownership(models.Model):
@@ -91,6 +128,17 @@ class Ownership(models.Model):
 		return str(self.premises.title) + " " + str(self.permission_level_id)
 
 
+class OwnerPermission(models.Model):
+	permission_code = models.ForeignKey(PropertyPermission, to_field='codename',
+		on_delete=models.CASCADE, null=False, blank=False)
+	owner = models.ForeignKey(Ownership, on_delete=models.CASCADE, null=False, blank=False)
+	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
+	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
+
+	def __str__(self):
+		return str(self.owner.user) + " - " + str(self.permission_code.codename)
+
+
 class PropertyLog(models.Model):
 	listed_prop = models.ForeignKey(Property, on_delete=models.CASCADE)
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -108,7 +156,7 @@ class PropertyLog(models.Model):
 
 
 def path_and_rename(instance, filename):
-	path = ''
+	path = 'property-images'
 	ext = filename.split('.')[-1]
 	# get filename
 	if instance.pk:
