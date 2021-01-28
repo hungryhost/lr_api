@@ -207,7 +207,6 @@ class PropertyAddressesListSerializer(serializers.ModelSerializer):
 
 class PropertyListSerializer(serializers.ModelSerializer):
 	property_address = PropertyAddressesSerializer(many=False, read_only=True)
-	creator_id = serializers.IntegerField(read_only=True, source='author.id')
 	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
 	id = serializers.IntegerField(read_only=True)
 	client_greeting_message = serializers.CharField(required=False)
@@ -217,7 +216,6 @@ class PropertyListSerializer(serializers.ModelSerializer):
 
 		fields = (
 			'id',
-			'creator_id',
 			'title',
 			'body',
 			'price',
@@ -258,7 +256,6 @@ class PropertySerializer(serializers.ModelSerializer):
 	"""
 	property_address = PropertyAddressesSerializer(many=False, read_only=True)
 	property_images = PropertyImagesSerializer(many=True, read_only=True)
-	creator_id = serializers.IntegerField(read_only=True, source='author.id')
 	owners = PropertyOwnershipListSerializer(many=True, read_only=True)
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField()
@@ -273,7 +270,6 @@ class PropertySerializer(serializers.ModelSerializer):
 			'body',
 			'price',
 			'can_edit',
-			'creator_id',
 			'active',
 			'property_type',
 			'main_image',
@@ -314,10 +310,9 @@ class PropertySerializer(serializers.ModelSerializer):
 class PropertyCreateSerializer(serializers.ModelSerializer):
 	title = serializers.CharField(required=True, max_length=50)
 	body = serializers.CharField(required=True, max_length=500)
-	price = serializers.IntegerField(required=True, validators=[validate_price])
+	price = serializers.IntegerField(required=False, validators=[validate_price])
 	active = serializers.BooleanField(required=False)
 	property_address = PropertyAddressesSerializer(many=False, required=True)
-	creator_id = serializers.IntegerField(read_only=True, source='author.id')
 	client_greeting_message = serializers.CharField(required=False, max_length=500)
 	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
 	visibility = serializers.IntegerField(required=True)
@@ -328,7 +323,6 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 
 		fields = [
 			'id',
-			'creator_id',
 			'title',
 			'body',
 			'price',
@@ -366,12 +360,14 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 
 		title = validated_data["title"]
 		body = validated_data["body"]
-		price = validated_data["price"]
+		price = validated_data.get("price", None)
 		visibility = validated_data.get("visibility", None)
 
 		property_type = validated_data["property_type"]
 		active = validated_data.get("active", None)
 		requires_additional_confirmation = validated_data.get("requires_additional_confirmation", None)
+		if price is None:
+			price = None
 		if active is None:
 			active = True
 		if (visibility is None) or (visibility not in [100, 200, 300]):
@@ -379,7 +375,6 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 		if not requires_additional_confirmation:
 			requires_additional_confirmation = False
 		property_to_create = Property.objects.create(
-			author=self.context['request'].user,
 			title=title, body=body, price=price, active=active, property_type=property_type,
 			visibility=visibility, requires_additional_confirmation=requires_additional_confirmation)
 		PremisesAddresses.objects.create(premises=property_to_create, **property_addresses)
@@ -393,7 +388,6 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 class PropertyUpdateSerializer(serializers.ModelSerializer):
 	property_address = PropertyAddressesSerializer(many=False, required=False)
 	property_images = PropertyImagesSerializer(many=True, required=False)
-	creator_id = serializers.IntegerField(read_only=True, source='author.id')
 	owners = PropertyOwnershipListSerializer(many=True, required=False)
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField(read_only=True)
@@ -403,13 +397,11 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = Property
-		author_id = serializers.Field(source='author')
 		fields = (
 			'id',
 			'title',
 			'body',
 			'price',
-			'creator_id',
 			'active',
 			'property_type',
 			'main_image',
@@ -423,7 +415,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'updated_at',
 
 		)
-		read_only_fields = ['creator_id', 'id']
+		read_only_fields = ['id']
 
 	def get_main_image(self, obj):
 		try:
