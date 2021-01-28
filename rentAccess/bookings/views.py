@@ -114,8 +114,7 @@ class BookingsAllList(generics.ListAPIView):
 
 	def get_queryset(self, *args, **kwargs):
 		query = Q()
-		query.add(Q(booked_property__author=self.request.user) & Q(is_deleted=False), query.connector)
-		query.add(Q(booked_property__owners__user=self.request.user) & Q(is_deleted=False), Q.OR)
+		query.add(Q(booked_property__owners__user=self.request.user) & Q(is_deleted=False), query.connector)
 		return Bookings.objects.filter(
 			query
 		)
