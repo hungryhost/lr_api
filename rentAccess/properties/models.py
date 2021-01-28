@@ -87,21 +87,19 @@ class Availability(models.Model):
 
 	# maximum number of bookings a day (from 0:00 until 23:59
 	# if -1, then no limit
-	maximum_number_of_bookings_daily = models.IntegerField(default=-1, null=False, blank=True)
+	# maximum_number_of_bookings_daily = models.IntegerField(default=-1, null=False, blank=True)
 
 	# maximum length of bookings for the property in minutes
 	# if -1, then no limit
-	maximum_booking_length = models.IntegerField(default=-1, null=False, blank=True)
+	# maximum_booking_length = models.IntegerField(default=-1, null=False, blank=True)
 
 	maximum_number_of_clients = models.IntegerField(default=1, null=False, blank=False)
 
-	# these settings are for daily bookings
-	departure_time = models.TimeField(null=True, blank=True)
-	arrive_until = models.TimeField(null=True, blank=True)
-	# these settings are for hourly bookings
 	available_from = models.TimeField(null=True, blank=True)
 	available_until = models.TimeField(null=True, blank=True)
 	available_hours = models.CharField(max_length=255, null=True, blank=True)
+	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
+	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 
 
 class Ownership(models.Model):
