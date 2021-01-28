@@ -16,7 +16,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from common.models import PermissionLevels
+from properties.models import PermissionLevels
 from bookings.models import Bookings
 from properties.models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages
 from ..image_utils import generate_list_of_images
@@ -96,7 +96,6 @@ class PropertiesTests(APITestCase, APIClient):
 			}
 		self.correct_response_for_creation_property_JSON = \
 			{
-				"creator_id": 1,
 				"title": "test_property_1",
 				"body": "test_description_1",
 				"property_type": 100,
@@ -186,7 +185,6 @@ class PropertiesTests(APITestCase, APIClient):
 			self.assertEqual(resp.data["visibility"], property_response_json_1["visibility"])
 
 			self.assertEqual(resp.data["property_address"], property_response_json_1["property_address"])
-			self.assertEqual(resp.data["creator_id"], property_response_json_1["creator_id"])
 
 			self.assertEqual(self.responses[user_id]["personal_info"]["first_name"], ownership_obj.user.first_name)
 			self.assertEqual(self.responses[user_id]["personal_info"]["last_name"], ownership_obj.user.last_name)
@@ -196,14 +194,12 @@ class PropertiesTests(APITestCase, APIClient):
 			self.assertEqual(resp.data["id"], ownership_obj.premises_id)
 			self.assertEqual(property_response_json_1["title"], ownership_obj.premises.title)
 			self.assertEqual(property_response_json_1["body"], ownership_obj.premises.body)
-			self.assertEqual(property_response_json_1["creator_id"], ownership_obj.user.id)
 
 			self.assertEqual(created_property.title, resp.data["title"])
 			self.assertEqual(created_property.body, resp.data["body"])
 			self.assertEqual(created_property.price, resp.data["price"])
 			self.assertEqual(created_property.visibility, resp.data["visibility"])
 			self.assertEqual(created_property.active, resp.data["active"])
-			self.assertEqual(created_property.author.id, resp.data["creator_id"])
 
 			p_address = resp.data['property_address']
 			self.assertEqual(created_address.country, p_address["country"])
@@ -349,7 +345,6 @@ class PropertiesTests(APITestCase, APIClient):
 		self.assertEqual(created_property.price, resp_auth.data["price"])
 		self.assertEqual(created_property.visibility, 100)
 		self.assertEqual(created_property.active, resp_auth.data["active"])
-		self.assertEqual(created_property.author.id, resp_auth.data["creator_id"])
 		resp_auth = self.client_1.patch(new_property_details_url,
 		                                data=self.create_property_JSON, format='json')
 
