@@ -5,9 +5,10 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
-from properties.models import Bookings, Property
-from properties.serializers import BookingsSerializer, PropertyListSerializer, BookingsListSerializer
+from bookings.models import Bookings
+from properties.models import Property
+from bookings.serializers import BookingsSerializer, BookingsListSerializer
+from properties.serializers import PropertyListSerializer
 from .permissions import IsOwnerOrSuperuser
 from .models import Documents, UserImages, BillingAddresses
 from .serializers import (ChangePasswordSerializer,

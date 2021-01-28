@@ -17,8 +17,8 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from common.models import PermissionLevels
-from properties.serializers import BookingsSerializer
-from properties.models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages, Bookings
+from bookings.models import Bookings
+from properties.models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages
 from ..image_utils import generate_list_of_images
 from ..string_utils import (generate_random_string,
                             generate_random_list_of_strings,
