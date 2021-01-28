@@ -236,27 +236,13 @@ WSGI_APPLICATION = 'rentAccess.wsgi.application'
 
 
 # Databases
-if not DEBUG:
-	DATABASES = {
-		'default': {
-			'ENGINE': 'django.db.backends.postgresql',
-			'NAME': env("DB_NAME"),
-			"USER": env("DB_USER"),
-			"PASSWORD": env("DB_PASSWORD"),
-			"HOST": env("DB_HOST"),
-			"PORT": env("DB_PORT"),
-			"OPTIONS": {
-				'options': '-c search_path=django'
-			}
-		}
+DATABASES = {
+	'default': {
+		'ENGINE': 'django.db.backends.sqlite3',
+		'NAME': 'db.sqlite3',
 	}
-else:
-	DATABASES = {
-		'default': {
-			'ENGINE': 'django.db.backends.sqlite3',
-			'NAME': 'db.sqlite3',
-		}
-	}
+}
+
 AUTH_PASSWORD_VALIDATORS = [
 	{
 		'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -321,8 +307,6 @@ REST_FRAMEWORK = {
 	'DEFAULT_RENDERER_CLASSES': DEFAULT_RENDERER_CLASSES
 }
 if DEBUG:
-	################################################
-
 	SIMPLE_JWT = {
 		'ACCESS_TOKEN_LIFETIME': timedelta(minutes=3600),
 		'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
@@ -348,10 +332,10 @@ if DEBUG:
 		'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
 		'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 	}
-# Media root and url definitions
 
 else:
 	################################################
+	# Media root and url definitions
 
 	SIMPLE_JWT = {
 		'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
@@ -378,8 +362,6 @@ else:
 		'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
 		'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 	}
-
-# CELERY CONFIG
 MEDIA_ROOT = os.path.join('media')
 MEDIA_URL = '/media/'
 
@@ -389,6 +371,8 @@ STATICFILES_DIRS = [
 ]
 STATIC_URL = '/static/'
 STATIC_ROOT = '/static/'
+# CELERY CONFIG
+
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", default='redis://127.0.0.1:6379')
 CELERY_RESULT_BACKEND = env.str('CELERY_RESULT_BACKEND', default='redis://127.0.0.1:6379')
 CELERY_ACCEPT_CONTENT = ['application/json']
