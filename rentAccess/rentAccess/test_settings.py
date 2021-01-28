@@ -234,7 +234,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rentAccess.wsgi.application'
 
-
+if env.bool('SQL_DEBUG', False):
+	MIDDLEWARE += ('sql_middleware.SqlPrintingMiddleware',)
 # Databases
 DATABASES = {
 	'default': {

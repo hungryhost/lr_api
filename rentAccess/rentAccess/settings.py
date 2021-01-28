@@ -271,6 +271,8 @@ AUTH_PASSWORD_VALIDATORS = [
 		'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
 	},
 ]
+if env.bool('SQL_DEBUG', False):
+	MIDDLEWARE += ('sql_middleware.SqlPrintingMiddleware',)
 
 LANGUAGE_CODE = 'en-us'
 
