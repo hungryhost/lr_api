@@ -1,6 +1,6 @@
 from django.contrib import admin
-from .models import (Property, PropertyLog, Ownership, PremisesImages, PremisesAddresses, PropertyTypes,
-					Bookings, LocksWithProperties)
+from .models import (Property, PropertyLog, Ownership, PremisesImages, PremisesAddresses, PropertyTypes, LocksWithProperties)
+from bookings.models import Bookings
 # Register your models here.
 app = 'properties'
 

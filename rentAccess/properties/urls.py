@@ -1,8 +1,9 @@
 from django.urls import path
 from django.views.generic import TemplateView
-from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet, BookingsListCreateView, \
-	BookingsAllList, BookingsViewSet, LockList, OwnersListCrete, OwnershipViewSet
+from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet, \
+	LockList, OwnersListCrete, OwnershipViewSet
 from register.views import CardList, KeyList
+from bookings.views import BookingsListCreateView, BookingsViewSet, BookingsAllList
 # from .views import LockDetail
 app_name = 'properties'
 

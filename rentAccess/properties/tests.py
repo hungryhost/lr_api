@@ -17,8 +17,9 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from common.models import PermissionLevels
-from .serializers import BookingsSerializer
-from .models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages, Bookings
+from bookings.serializers import BookingsSerializer
+from .models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages
+from bookings.models import Bookings
 
 User = get_user_model()
 
