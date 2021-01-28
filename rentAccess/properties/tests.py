@@ -16,7 +16,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from common.models import PermissionLevels
+from properties.models import PermissionLevels
 from bookings.serializers import BookingsSerializer
 from .models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages
 from bookings.models import Bookings
