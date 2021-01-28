@@ -22,7 +22,7 @@ def send_booking_email_to_client(duration, data, has_key=False):
 	:param data: dictionary of data
 
 	"""
-	from .models import Bookings, Property, PremisesAddresses
+	from properties.models import Property, PremisesAddresses
 	User = get_user_model()
 	booked_property = Property.objects.get(id=data['p_id'])
 	address = PremisesAddresses.objects.get(premises_id=data['p_id'])
@@ -56,7 +56,7 @@ def send_booking_email_to_client(duration, data, has_key=False):
 		context = {'header': header_empty, 'email_body': email_body}
 	text_content = plaintext.render(context)
 	html_content = htmly.render(context)
-	message = EmailMultiAlternatives('Бронирование создано!', text_content, 'LockAndRent <no-reply@lockandrent.ru>',
+	message = EmailMultiAlternatives('Бронирование создано!', text_content, 'LockAndRent <bookings@lockandrent.ru>',
 	                                 [data["email"]])
 	# send_mail(data["subject"], data["body"], EMAIL_HOST_USER, [data["email"]])
 	message.attach_alternative(html_content, "text/html")
