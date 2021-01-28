@@ -34,6 +34,4 @@ class AccountTypes(models.Model):
 	acc_type = models.CharField(max_length=50, primary_key=True)
 
 
-class PermissionLevels(models.Model):
-	p_level = models.PositiveIntegerField(primary_key=True)
-	description = models.CharField(max_length=150, null=True, blank=True)
+
