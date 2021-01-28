@@ -74,6 +74,25 @@ class PropertiesTests(APITestCase, APIClient):
 			'number',
 			'zip_code'
 		]
+		self.availability_input_daily = \
+			{
+				"arrival_time_from": "11:00",
+				"departure_time_until": "14:00",
+				"available_days": [
+					0, 1, 3
+				],
+				"maximum_number_of_clients": 12,
+			}
+		self.availability_input_hourly = \
+			{
+				"available_from": "08:00",
+				"available_until": "18:00",
+				"available_days": [
+					0, 1, 3
+				],
+				"maximum_number_of_clients": 12,
+				"booking_interval": 15
+			}
 		self.create_property_JSON = \
 			{
 				"title": "test_property_1",
@@ -81,6 +100,8 @@ class PropertiesTests(APITestCase, APIClient):
 				"price": 100,
 				"visibility": 100,
 				"property_type": 100,
+				"booking_type": 100,
+				"availability": self.availability_input_daily,
 				"property_address":
 					{
 						"country": "Country_test_1",
@@ -159,6 +180,8 @@ class PropertiesTests(APITestCase, APIClient):
 			property_json_1_request["property_address"] = property_request_address_1
 			property_response_json_1 = property_json_1.get_response_json()
 			property_response_json_1["property_address"] = property_request_address_1
+			property_json_1_request["booking_type"] = 100
+			property_json_1_request["availability"] = self.availability_input_daily
 
 			resp = self.list_of_clients[user_id - 1].post(
 				path=self.properties_list_url,
