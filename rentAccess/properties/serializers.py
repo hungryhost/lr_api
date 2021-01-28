@@ -1,3 +1,5 @@
+from abc import ABC
+
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.urls import reverse
@@ -6,9 +8,9 @@ from rest_framework import serializers, status
 import logging
 
 from .logger_helpers import get_client_ip
-from .models import Property, PremisesAddresses, PremisesImages, Ownership
+from .models import Property, PremisesAddresses, PremisesImages, Ownership, Availability
 from .validators import validate_price
-
+from .availability_utils import available_days_to_db, available_days_from_db
 
 #
 #
@@ -17,6 +19,62 @@ crud_logger_info = logging.getLogger('rentAccess.properties.crud.info')
 owners_logger = logging.getLogger('rentAccess.properties.owners.info')
 bookings_logger = logging.getLogger('rentAccess.properties.bookings.info')
 images_logger = logging.getLogger('rentAccess.properties.images.info')
+
+
+class DaysListField(serializers.ListField):
+	child = serializers.IntegerField(min_value=0, max_value=6)
+
+
+class AvailabilityCreateSerializer(serializers.Serializer):
+	available_days = DaysListField(required=True, allow_empty=False, max_length=7)
+	departure_time_until = serializers.TimeField(required=False)
+	arrival_time_from = serializers.TimeField(required=False)
+	maximum_number_of_clients = serializers.IntegerField(min_value=1, required=True)
+	available_until = serializers.TimeField(required=False)
+	available_from = serializers.TimeField(required=False)
+	booking_interval = serializers.IntegerField(required=False)
+
+
+class AvailabilityDailySerializer(serializers.ModelSerializer):
+	departure_time_until = serializers.TimeField(required=False, source='available_until')
+	arrival_time_from = serializers.TimeField(required=False, source='available_from')
+	maximum_number_of_clients = serializers.IntegerField(min_value=1, required=True)
+
+	class Meta:
+		model = Availability
+		fields = [
+			'available_days',
+			'departure_time_until',
+			'arrival_time_from',
+			'maximum_number_of_clients',
+		]
+
+	def to_representation(self, instance):
+		representation = super().to_representation(instance)
+		representation['available_days'] = available_days_from_db(instance.available_days)
+		return representation
+
+
+class AvailabilityHourlySerializer(serializers.ModelSerializer):
+	available_until = serializers.TimeField(required=False)
+	available_from = serializers.TimeField(required=False)
+	booking_interval = serializers.IntegerField(required=False)
+	maximum_number_of_clients = serializers.IntegerField(min_value=1, required=True)
+
+	class Meta:
+		model = Availability
+		fields = [
+			'available_days',
+			'available_until',
+			'available_from',
+			'booking_interval',
+			'maximum_number_of_clients'
+		]
+
+	def to_representation(self, instance):
+		representation = super().to_representation(instance)
+		representation['available_days'] = available_days_from_db(instance.available_days)
+		return representation
 
 
 class FilteringNotMainImagesListSerializer(serializers.ListSerializer):
@@ -31,7 +89,7 @@ class PropertyOwnershipListSerializer(serializers.ModelSerializer):
 	last_name = serializers.CharField(source='user.last_name', read_only=True)
 
 	patronymic = serializers.CharField(max_length=50, source='user.profile.patronymic',
-									   read_only=True)
+	                                   read_only=True)
 
 	class Meta:
 		model = Ownership
@@ -56,7 +114,7 @@ class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
 	last_name = serializers.CharField(source='user.last_name', read_only=True)
 
 	patronymic = serializers.CharField(max_length=50, source='user.profile.patronymic',
-									read_only=True)
+	                                   read_only=True)
 
 	class Meta:
 		model = Ownership
@@ -254,6 +312,7 @@ class PropertySerializer(serializers.ModelSerializer):
 	Version: 1.0
 	Last Update: 16.11.2020
 	"""
+	availability = serializers.SerializerMethodField('get_availability')
 	property_address = PropertyAddressesSerializer(many=False, read_only=True)
 	property_images = PropertyImagesSerializer(many=True, read_only=True)
 	owners = PropertyOwnershipListSerializer(many=True, read_only=True)
@@ -271,6 +330,7 @@ class PropertySerializer(serializers.ModelSerializer):
 			'price',
 			'can_edit',
 			'active',
+			'availability',
 			'property_type',
 			'main_image',
 			'owners',
@@ -285,9 +345,17 @@ class PropertySerializer(serializers.ModelSerializer):
 		)
 		read_only_fields = ['id']
 
+	def get_availability(self, obj):
+		if obj.booking_type == 100:
+			serializer = AvailabilityDailySerializer(self.context['availability'])
+			return serializer.data
+		else:
+			serializer = AvailabilityHourlySerializer(self.context['availability'])
+			return serializer.data
+
 	def get_can_edit(self, obj):
 		if Ownership.objects.filter(premises=obj,
-			user=self.context["request"].user).exists():
+		                            user=self.context["request"].user).exists():
 			return True
 		else:
 			return False
@@ -308,6 +376,7 @@ class PropertySerializer(serializers.ModelSerializer):
 
 
 class PropertyCreateSerializer(serializers.ModelSerializer):
+	availability = AvailabilityCreateSerializer(many=False, required=True)
 	title = serializers.CharField(required=True, max_length=50)
 	body = serializers.CharField(required=True, max_length=500)
 	price = serializers.IntegerField(required=False, validators=[validate_price])
@@ -317,7 +386,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
 	visibility = serializers.IntegerField(required=True)
 	requires_additional_confirmation = serializers.BooleanField(required=False)
-
+	booking_type = serializers.IntegerField(required=True)
 	class Meta:
 		model = Property
 
@@ -329,14 +398,25 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 			'active',
 			'property_type',
 			'main_image',
+			'availability',
 			'visibility',
 			'property_address',
 			'requires_additional_confirmation',
 			'client_greeting_message',
+			'booking_type',
 			'created_at',
 			'updated_at',
 		]
 		read_only_fields = ['creator', 'id']
+
+	def to_representation(self, instance):
+		if instance.booking_type == 100:
+			serializer = AvailabilityDailySerializer(instance.availability)
+		if instance.booking_type == 200:
+			serializer = AvailabilityHourlySerializer(instance.availability)
+		representation = super().to_representation(instance)
+		representation['availability'] = serializer.data
+		return representation
 
 	def get_main_image(self, obj):
 		try:
@@ -355,14 +435,47 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 				raise serializers.ValidationError(self.errors)
 		return ret
 
+	def validate(self, attrs):
+		if attrs['booking_type'] == 100:
+			necessary_keys = [
+				'arrival_time_from',
+				'departure_time_until',
+				'available_days',
+				'maximum_number_of_clients',
+			]
+			availability = attrs['availability']
+			keys = list(availability.keys())
+			print(keys)
+			if not all(key in necessary_keys for key in keys):
+				raise serializers.ValidationError({
+					"availability": "Not all attributed of daily availability are provided",
+				})
+		if attrs['booking_type'] == 200:
+			necessary_keys = [
+				'available_from',
+				'available_until',
+				'available_days',
+				'maximum_number_of_clients',
+				'booking_interval'
+			]
+			availability = attrs['availability']
+			keys = list(availability.keys())
+			print(keys)
+			if not all(key in necessary_keys for key in keys):
+				raise serializers.ValidationError({
+					"availability": "Not all attributed of hourly availability are provided",
+				})
+		return super(PropertyCreateSerializer, self).validate(attrs)
+
 	def create(self, validated_data):
 		property_addresses = validated_data.pop('property_address')
+		property_availability = validated_data.pop('availability')
 
 		title = validated_data["title"]
 		body = validated_data["body"]
 		price = validated_data.get("price", None)
 		visibility = validated_data.get("visibility", None)
-
+		booking_type = validated_data.get("booking_type", None)
 		property_type = validated_data["property_type"]
 		active = validated_data.get("active", None)
 		requires_additional_confirmation = validated_data.get("requires_additional_confirmation", None)
@@ -376,8 +489,28 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 			requires_additional_confirmation = False
 		property_to_create = Property.objects.create(
 			title=title, body=body, price=price, active=active, property_type=property_type,
+			booking_type=booking_type,
 			visibility=visibility, requires_additional_confirmation=requires_additional_confirmation)
+
 		PremisesAddresses.objects.create(premises=property_to_create, **property_addresses)
+		available_days = available_days_to_db(property_availability["available_days"])
+		maximum_number_of_clients = property_availability["maximum_number_of_clients"]
+		booking_interval = 0
+		if booking_type == 100:
+			available_from = property_availability["arrival_time_from"]
+			available_until = property_availability["departure_time_until"]
+		if booking_type == 200:
+			available_from = property_availability["available_from"]
+			available_until = property_availability["available_until"]
+			booking_interval = property_availability["booking_interval"]
+		Availability.objects.create(
+			premises=property_to_create,
+			available_days=available_days,
+			booking_interval=booking_interval,
+			maximum_number_of_clients=maximum_number_of_clients,
+			available_from=available_from,
+			available_until=available_until
+			)
 		crud_logger_info.info(
 			f"object: property; stage: serialization; action_type: create; "
 			f"user_id: {self.context['request'].user.id}; property_id: {property_to_create.id}; "
@@ -386,6 +519,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 
 
 class PropertyUpdateSerializer(serializers.ModelSerializer):
+	availability = AvailabilityCreateSerializer(many=False, required=False)
 	property_address = PropertyAddressesSerializer(many=False, required=False)
 	property_images = PropertyImagesSerializer(many=True, required=False)
 	owners = PropertyOwnershipListSerializer(many=True, required=False)
@@ -404,6 +538,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'price',
 			'active',
 			'property_type',
+			'availability',
 			'main_image',
 			'owners',
 			'property_address',
@@ -425,9 +560,12 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			return ""
 
 	def to_representation(self, instance):
-
-		representation = super(PropertyUpdateSerializer, self).to_representation(instance)
-		# representation.pop('visibility')
+		if instance.booking_type == 100:
+			serializer = AvailabilityDailySerializer(instance.availability)
+		if instance.booking_type == 200:
+			serializer = AvailabilityHourlySerializer(instance.availability)
+		representation = super().to_representation(instance)
+		representation['availability'] = serializer.data
 		return representation
 
 	def is_valid(self, raise_exception=False):
@@ -449,6 +587,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 		:return: instance
 		"""
 		address_data = validated_data.pop("property_address", None)
+		availability_data = validated_data.pop("availability", None)
 		title = validated_data.get("title", None)
 		body = validated_data.get("body", None)
 		price = validated_data.get("price", None)
@@ -459,7 +598,6 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 		greeting_message = validated_data.get("client_greeting_message")
 		if greeting_message or greeting_message == "":
 			instance.client_greeting_message = greeting_message
-
 		if title:
 			instance.title = title
 		if body:
@@ -474,6 +612,36 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			instance.property_type_id = property_type_id
 		if requires_additional_confirmation:
 			instance.requires_additional_confirmation = requires_additional_confirmation
+		if availability_data:
+			availability_to_update = Availability.objects.get(premises_id=instance.id)
+			available_days_from_request = availability_data.get("available_days", None)
+			if available_days_from_request:
+				available_days = available_days_to_db(available_days_from_request)
+			else:
+				available_days = None
+			maximum_number_of_clients = availability_data.get("maximum_number_of_clients", None)
+			if available_days:
+				availability_to_update.available_days = available_days
+			if maximum_number_of_clients:
+				availability_to_update.maximum_number_of_clients = maximum_number_of_clients
+			if instance.booking_type == 100:
+				available_from = availability_data.get("arrival_time_from", None)
+				available_until = availability_data.get("departure_time_until", None)
+				if available_from:
+					availability_to_update.available_from = available_from
+				if available_until:
+					availability_to_update.available_until = available_until
+			if instance.booking_type == 200:
+				booking_interval = availability_data.get("booking_interval", None)
+				available_from = availability_data.get("available_from", None)
+				available_until = availability_data.get("available_until", None)
+				if booking_interval:
+					availability_to_update.booking_interval = booking_interval
+				if available_from:
+					availability_to_update.available_from = available_from
+				if available_until:
+					availability_to_update.available_until = available_until
+			availability_to_update.save()
 		if address_data:
 			address_to_update = PremisesAddresses.objects.get(premises_id=instance.id)
 			country = address_data.get('country', None)
