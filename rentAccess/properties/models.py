@@ -80,7 +80,7 @@ class Property(models.Model):
 class Availability(models.Model):
 	premises = models.OneToOneField(Property, related_name='availability',
 		on_delete=models.CASCADE, null=False, blank=False)
-	available_days = models.CharField(max_length=7, default='1111111', null=False, blank=False)
+	open_days = models.CharField(max_length=7, default='1111111', null=False, blank=False)
 
 	# interval between bookings in minutes
 	booking_interval = models.IntegerField(default=0, null=False, blank=True)
