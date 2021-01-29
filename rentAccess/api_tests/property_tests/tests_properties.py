@@ -81,7 +81,7 @@ class PropertiesTests(APITestCase, APIClient):
 				"available_days": [
 					0, 1, 3
 				],
-				"maximum_number_of_clients": 12,
+				"maximum_number_of_clients": 12
 			}
 		self.availability_input_hourly = \
 			{
@@ -172,6 +172,75 @@ class PropertiesTests(APITestCase, APIClient):
 		self.client_bad_auth = APIClient()
 		self.client_bad_auth.credentials(HTTP_AUTHORIZATION=f'Bearer {self.false_token}')
 
+	def test_create_property_for_daily_with_price(self):
+		for user_id in self.responses:
+			property_json_1 = PropertyJson(creator_id=user_id)
+			property_json_1_request = property_json_1.get_request_json()
+			property_request_address_1 = AddressJson().get_address_json()
+			property_json_1_request["property_address"] = property_request_address_1
+			property_response_json_1 = property_json_1.get_response_json()
+			property_response_json_1["property_address"] = property_request_address_1
+			property_json_1_request["availability"] = self.availability_input_daily
+
+			resp = self.list_of_clients[user_id - 1].post(
+				path=self.properties_list_url,
+				data=property_json_1_request,
+				format='json'
+			)
+
+			self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+			ownership_obj = Ownership.objects.get(
+				user=user_id,
+				premises=resp.data["id"])
+			created_property = Property.objects.get(pk=resp.data["id"])
+			created_address = PremisesAddresses.objects.get(premises=resp.data["id"])
+			self.assertEqual(created_property.pk, resp.data["id"])
+			resp.data.pop('created_at')
+			resp.data.pop('updated_at')
+
+			self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+			self.assertEqual(resp.data["title"], property_response_json_1["title"])
+			self.assertEqual(resp.data["body"], property_response_json_1["body"])
+
+			self.assertEqual(resp.data["price"], property_response_json_1["price"])
+			self.assertEqual(resp.data["visibility"], property_response_json_1["visibility"])
+
+			self.assertEqual(resp.data["property_address"], property_response_json_1["property_address"])
+
+			self.assertEqual(self.responses[user_id]["personal_info"]["first_name"], ownership_obj.user.first_name)
+			self.assertEqual(self.responses[user_id]["personal_info"]["last_name"], ownership_obj.user.last_name)
+			self.assertEqual(self.responses[user_id]["personal_info"]["email"], ownership_obj.user.email)
+			self.assertEqual(400, ownership_obj.permission_level_id)
+
+			self.assertEqual(resp.data["id"], ownership_obj.premises_id)
+			self.assertEqual(property_response_json_1["title"], ownership_obj.premises.title)
+			self.assertEqual(property_response_json_1["body"], ownership_obj.premises.body)
+
+			self.assertEqual(created_property.title, resp.data["title"])
+			self.assertEqual(created_property.body, resp.data["body"])
+			self.assertEqual(created_property.price, resp.data["price"])
+			self.assertEqual(created_property.visibility, resp.data["visibility"])
+			self.assertEqual(created_property.active, resp.data["active"])
+
+			p_address = resp.data['property_address']
+			self.assertEqual(created_address.country, p_address["country"])
+			self.assertEqual(created_address.city, p_address["city"])
+			self.assertEqual(created_address.building, p_address["building"])
+			self.assertEqual(created_address.street_1, p_address["street_1"])
+			self.assertEqual(created_address.street_2, p_address["street_2"])
+			self.assertEqual(created_address.floor, p_address["floor"])
+			self.assertEqual(created_address.number, p_address["number"])
+			self.assertEqual(created_address.zip_code, p_address["zip_code"])
+		# print(created_property.owners.get(premises=resp.data["id"]).permission_level.p_level)
+
+		no_auth_resp = self.client_no_auth.post(self.properties_list_url, self.create_property_JSON,
+		                                        format='json')
+		bad_auth_resp = self.client_bad_auth.post(self.properties_list_url, self.create_property_JSON,
+		                                          format='json')
+		self.assertEqual(no_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
+		self.assertEqual(bad_auth_resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
 	def test_create_property(self):
 		for user_id in self.responses:
 			property_json_1 = PropertyJson(creator_id=user_id)
@@ -180,7 +249,6 @@ class PropertiesTests(APITestCase, APIClient):
 			property_json_1_request["property_address"] = property_request_address_1
 			property_response_json_1 = property_json_1.get_response_json()
 			property_response_json_1["property_address"] = property_request_address_1
-			property_json_1_request["booking_type"] = 100
 			property_json_1_request["availability"] = self.availability_input_daily
 
 			resp = self.list_of_clients[user_id - 1].post(
