@@ -9,6 +9,7 @@ class Bookings(models.Model):
 	booked_until = models.DateTimeField(null=False, blank=False)
 	booked_property = models.ForeignKey(Property, related_name="booked_property",
 										on_delete=models.CASCADE, null=False, blank=False)
+	price = models.IntegerField(null=True, blank=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now_add=True)
 	client_email = models.EmailField(null=False, blank=True)
