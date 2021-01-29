@@ -3,10 +3,14 @@ import logging
 from django.shortcuts import render
 import datetime
 
+from rest_framework.generics import GenericAPIView
+from rest_framework.settings import api_settings
+
 from bookings.models import Bookings
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.http import Http404
-from rest_framework import generics, permissions, status, response, serializers, viewsets, mixins, exceptions
+from rest_framework import generics, permissions, status, response, serializers, viewsets, mixins, exceptions, \
+	decorators
 from rest_framework.decorators import action, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
@@ -15,28 +19,46 @@ from register.models import Key
 from .permissions import IsOwnerLevel100, IsOwnerLevel200, IsOwnerLevel300, IsOwnerLevel400, \
 	IsClientOfBooking, BookingIsAdminOfPropertyOrSuperuser
 from rest_framework import generics
-from properties.models import LocksWithProperties, Property
-from .serializers import BookingsListSerializer, BookingsSerializer, BookingUpdateAdminAndCreatorSerializer, \
-	BookingUpdateAdminNotCreatorSerializer, BookingUpdateClientSerializer, BookingCreateFromClientSerializer
+from properties.models import LocksWithProperties, Property, Ownership
+from .serializers import BookingsListSerializer, BookingUpdateAdminAndCreatorSerializer, \
+	BookingUpdateAdminNotCreatorSerializer, BookingUpdateClientSerializer, \
+	DailyBookingCreateFromClientSerializer, DailyBookingCreateFromOwnerSerializer, \
+	HourlyBookingCreateFromClientSerializer, HourlyBookingCreateFromOwnerSerializer
 
 bookings_logger = logging.getLogger('rentAccess.properties.bookings.info')
 
 
 class BookingsListCreateView(generics.ListCreateAPIView):
-	serializer_class = BookingsSerializer
+	serializer_class = BookingsListSerializer
 
 	def create(self, request, *args, **kwargs):
-		property_owners = self.get_property_object()
-		_owner_flag = property_owners.owners.filter(premises_id=self.kwargs["pk"],
-		user=self.request.user, permission_level_id__gte=200).exists()
+		user = self.request.user
+		try:
+			related_property = Property.objects.prefetch_related(
+				Prefetch('owners', queryset=Ownership.objects.prefetch_related('user').all())).get(pk=self.kwargs['pk'])
+		except Property.DoesNotExist:
+			raise Http404
+		permitted_owners = []
+		ownerships = [owner for owner in related_property.owners.all()]
+		for owner in ownerships:
+			if owner.permission_level_id == 400:
+				permitted_owners.append(owner)
 
-		if property_owners.visibility != 100:
-			if _owner_flag is False:
-				raise exceptions.PermissionDenied
+		owners = [owner.user for owner in ownerships]
 
-		serializer = self._get_serializer(data=request.data, _property=property_owners)
-		serializer.is_valid(raise_exception=True)
+		if related_property.visibility != 100 and (not (user in permitted_owners)):
+			# if the property is not publicly visible
+			# we must check whether the user is an owner and has appropriate permission
+			raise exceptions.PermissionDenied
+		if user in owners:
+			serializer = self._get_serializer(data=request.data, _property=related_property, _owner=True)
+			serializer.is_valid(raise_exception=True)
+		else:
+			serializer = self._get_serializer(data=request.data, _property=related_property, _owner=False)
+			serializer.is_valid(raise_exception=True)
+
 		self.perform_create(serializer)
+
 		headers = self.get_success_headers(serializer.data)
 		return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
@@ -57,60 +79,58 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 			key = Key(lock_id=lwp.lock_id, access_start=obj.booked_from, access_stop=obj.booked_until)
 			key.save()
 			data['key']: key.code
-			# send_booking_email_to_client(has_key=True, data=data, duration=0)
+		# send_booking_email_to_client(has_key=True, data=data, duration=0)
 		else:
 			pass
-			# send_booking_email_to_client(has_key=False, data=data, duration=0)
-		# in here we initialize the key
-		bookings_logger.info(
-			f"object: booking; stage: view; action_type: create; user_id: {self.request.user.id}; property_id: {self.kwargs['pk']}; "
-			f"booking_id: {obj.id}; ip_addr: {self.request.META.get('HTTP_X_FORWARDED_FOR')}; status: OK;")
+		# send_booking_email_to_client(has_key=False, data=data, duration=0)
 
 	def get_queryset(self, *args, **kwargs):
 		try:
-			property_owners = Property.objects.prefetch_related('owners').get(pk=self.kwargs["pk"])
+			property_owners = Property.objects.prefetch_related(
+				Prefetch('owners', queryset=Ownership.objects.prefetch_related('user').all())).get(pk=self.kwargs['pk'])
 		except Property.DoesNotExist:
 			raise Http404
-		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
-						user=self.request.user).exists() and self.request.method == "GET":
+		ownerships = [owner.user for owner in property_owners.owners.all()]
+		if not (self.request.user in ownerships) and self.request.method == "GET":
 			raise exceptions.PermissionDenied
-		return Bookings.objects.all().filter(booked_property=self.kwargs["pk"], is_deleted=False)
+		return Bookings.objects.all().filter(booked_property=self.kwargs['pk'], is_deleted=False)
 
-	def _get_serializer(self, _property, *args, **kwargs):
+	def _get_serializer(self, _property, _owner=None, *args, **kwargs):
 		"""
 		Return the serializer instance that should be used for validating and
 		deserializing input, and for serializing output.
 		"""
-		serializer_class = self._get_serializer_class(_property=_property)
-		kwargs.setdefault('context', self.get_serializer_context())
+		serializer_class = self._get_serializer_class(_property=_property, _owner=_owner)
+		kwargs.setdefault('context', self._get_serializer_context(_property=_property))
 		return serializer_class(*args, **kwargs)
 
-	def get_serializer_context(self):
+	def _get_serializer_context(self, _property):
 		return {
 			'request': self.request,
 			'format': self.format_kwarg,
 			'view': self,
-			'property_id': self.kwargs["pk"]
+			'property_id': self.kwargs["pk"],
+			'property': _property
 		}
 
-	def _get_serializer_class(self, _property):
-		if _property.owners.filter(premises_id=self.kwargs["pk"],
-			user=self.request.user).exists():
-			return BookingsSerializer
+	def _get_serializer_class(self, _property, _owner):
+		if self.request.method == 'GET':
+			return BookingsListSerializer
 		else:
-			return BookingCreateFromClientSerializer
-		# return BookingsSerializer
-
-	def get_property_object(self):
-		try:
-			property_owners = Property.objects.prefetch_related('owners').get(pk=self.kwargs["pk"])
-		except Property.DoesNotExist:
-			raise Http404
-		return property_owners
+			if _owner:
+				if _property.booking_type == 100:
+					return DailyBookingCreateFromOwnerSerializer
+				else:
+					return HourlyBookingCreateFromOwnerSerializer
+			else:
+				if _property.booking_type == 100:
+					return DailyBookingCreateFromClientSerializer
+				else:
+					return HourlyBookingCreateFromClientSerializer
 
 
 class BookingsAllList(generics.ListAPIView):
-	serializer_class = BookingsSerializer
+	serializer_class = BookingsListSerializer
 
 	def get_queryset(self, *args, **kwargs):
 		query = Q()
@@ -128,7 +148,7 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 	# TODO: instead of deleting a booking -- archive it so that we don't loose any information
 	def retrieve(self, request, pk=None, booking_id=None):
 		obj = self.get_object(booked_property=pk, booking_id=booking_id)
-		serializer = BookingsSerializer(
+		serializer = BookingsListSerializer(
 			obj,
 			context={'request': request, 'property_id': pk}
 		)
@@ -178,8 +198,8 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 			]
 		elif self.action == 'partial_update':
 			permission_classes = [
-			IsOwnerLevel100 | IsOwnerLevel200 | IsOwnerLevel300 |
-			IsOwnerLevel400 | IsClientOfBooking
+				IsOwnerLevel100 | IsOwnerLevel200 | IsOwnerLevel300 |
+				IsOwnerLevel400 | IsClientOfBooking
 			]
 		else:
 			permission_classes = [BookingIsAdminOfPropertyOrSuperuser]
@@ -194,5 +214,4 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 			raise Http404
 
 	def get_serializer_class(self):
-		return BookingsSerializer
-
+		return BookingsListSerializer
