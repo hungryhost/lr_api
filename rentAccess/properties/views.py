@@ -236,8 +236,9 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 	"""
 
 	def retrieve(self, request, pk=None):
-		obj = self.get_object(pk=pk)
-
+		#obj = self.get_object(pk=pk)
+		obj = Property.objects.prefetch_related('availability').get(id=pk)
+		self.check_object_permissions(self.request, obj)
 		serializer = PropertySerializer(
 			obj,
 			context={
