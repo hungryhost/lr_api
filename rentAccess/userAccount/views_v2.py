@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from bookings.models import Bookings
 from properties.models import Property
-from bookings.serializers import BookingsSerializer, BookingsListSerializer
+from bookings.serializers import BookingsListSerializer
 from properties.serializers import PropertyListSerializer
 from .permissions import IsOwnerOrSuperuser
 from .models import Documents, UserImages, BillingAddresses
@@ -20,7 +20,7 @@ User = get_user_model()
 
 
 class UserBookingsList(generics.ListAPIView):
-	serializer_class = BookingsSerializer
+	serializer_class = BookingsListSerializer
 
 	def get_queryset(self, *args, **kwargs):
 		author = get_object_or_404(User, id=self.request.user.id)
