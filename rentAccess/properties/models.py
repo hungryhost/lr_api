@@ -105,13 +105,10 @@ class Availability(models.Model):
 class Ownership(models.Model):
 	VISIBILITY_CHOICES = [
 		(100, 'Publicly Visible'),
-		(150, 'Visible for those who booked the property'),
-		(200, 'Only within the organisation scope'),
-		(250, 'Only within the property owners scope'),
-		(300, 'Only property initial owner and admins can see'),
+		(200, 'Not visible'),
 	]
 
-	visibility = models.IntegerField(choices=VISIBILITY_CHOICES, default=250, null=False, blank=True)
+	visibility = models.IntegerField(choices=VISIBILITY_CHOICES, default=100, null=False, blank=True)
 	premises = models.ForeignKey(Property, related_name='owners', on_delete=models.CASCADE, null=False, blank=False)
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='ownership', on_delete=models.CASCADE, null=False, blank=False)
 	is_creator = models.BooleanField(default=False, null=False, blank=True)
@@ -129,7 +126,8 @@ class Ownership(models.Model):
 class OwnerPermission(models.Model):
 	permission_code = models.ForeignKey(PropertyPermission, to_field='codename',
 		on_delete=models.CASCADE, null=False, blank=False)
-	owner = models.ForeignKey(Ownership, on_delete=models.CASCADE, null=False, blank=False)
+	owner = models.ForeignKey(Ownership, related_name='granted_permissions',
+		on_delete=models.CASCADE, null=False, blank=False)
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 

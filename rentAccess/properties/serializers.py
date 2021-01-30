@@ -26,7 +26,7 @@ class DaysListField(serializers.ListField):
 
 
 class AvailabilityCreateSerializer(serializers.Serializer):
-	open_days = DaysListField(required=True, allow_empty=False, max_length=7)
+	open_days = DaysListField(required=True, allow_empty=True, max_length=7)
 	departure_time_until = serializers.TimeField(required=False)
 	arrival_time_from = serializers.TimeField(required=False)
 	maximum_number_of_clients = serializers.IntegerField(min_value=1, required=True)
@@ -58,7 +58,6 @@ class AvailabilityDailySerializer(serializers.ModelSerializer):
 class AvailabilityHourlySerializer(serializers.ModelSerializer):
 	available_until = serializers.TimeField(required=False)
 	available_from = serializers.TimeField(required=False)
-	booking_interval = serializers.IntegerField(required=False)
 	maximum_number_of_clients = serializers.IntegerField(min_value=1, required=True)
 
 	class Meta:
@@ -67,7 +66,6 @@ class AvailabilityHourlySerializer(serializers.ModelSerializer):
 			'open_days',
 			'available_until',
 			'available_from',
-			'booking_interval',
 			'maximum_number_of_clients'
 		]
 
@@ -78,17 +76,21 @@ class AvailabilityHourlySerializer(serializers.ModelSerializer):
 
 
 class FilteringNotMainImagesListSerializer(serializers.ListSerializer):
-
 	def to_representation(self, data):
 		return super(FilteringNotMainImagesListSerializer, self).to_representation(data)
+
+
+class FilteringContactsListSerializer(serializers.ListSerializer):
+	def to_representation(self, data):
+		data = data.filter(visibility=100)
+		return super(FilteringContactsListSerializer, self).to_representation(data)
 
 
 class PropertyOwnershipListSerializer(serializers.ModelSerializer):
 	email = serializers.CharField(read_only=True, source='user.email')
 	first_name = serializers.CharField(source='user.first_name', read_only=True)
 	last_name = serializers.CharField(source='user.last_name', read_only=True)
-
-	patronymic = serializers.CharField(max_length=50, source='user.profile.patronymic',
+	middle_name = serializers.CharField(max_length=50, source='user.middle_name',
 	                                   read_only=True)
 
 	class Meta:
@@ -98,7 +100,7 @@ class PropertyOwnershipListSerializer(serializers.ModelSerializer):
 			'email',
 			'first_name',
 			'last_name',
-			'patronymic',
+			'middle_name',
 			'is_creator',
 			'permission_level',
 			'created_at',
@@ -315,7 +317,8 @@ class PropertySerializer(serializers.ModelSerializer):
 	availability = serializers.SerializerMethodField('get_availability')
 	property_address = PropertyAddressesSerializer(many=False, read_only=True)
 	property_images = PropertyImagesSerializer(many=True, read_only=True)
-	owners = PropertyOwnershipListSerializer(many=True, read_only=True)
+	contacts = FilteringContactsListSerializer(
+		child=PropertyOwnershipListSerializer(), source='owners')
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField()
 	can_edit = serializers.SerializerMethodField('get_can_edit')
@@ -333,7 +336,7 @@ class PropertySerializer(serializers.ModelSerializer):
 			'availability',
 			'property_type',
 			'main_image',
-			'owners',
+			'contacts',
 			'property_address',
 			'property_images',
 			'visibility',
@@ -426,16 +429,6 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 		except Exception:
 			return ""
 
-	def is_valid(self, raise_exception=False):
-		ret = super(PropertyCreateSerializer, self).is_valid(False)
-		if self._errors:
-			crud_logger_info.info(
-				f"object: property; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; "
-				f"ip_addr: {get_client_ip(self.context['request'])}; status: NOT OK; serialization failed; ")
-			if raise_exception:
-				raise serializers.ValidationError(self.errors)
-		return ret
-
 	def validate(self, attrs):
 		if attrs['booking_type'] == 100:
 			necessary_keys = [
@@ -457,7 +450,6 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 				'available_until',
 				'open_days',
 				'maximum_number_of_clients',
-				'booking_interval'
 			]
 			availability = attrs['availability']
 			keys = list(availability.keys())
@@ -508,7 +500,6 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 		if booking_type == 200:
 			available_from = property_availability["available_from"]
 			available_until = property_availability["available_until"]
-			booking_interval = property_availability["booking_interval"]
 		Availability.objects.create(
 			premises=property_to_create,
 			open_days=open_days,
@@ -528,7 +519,8 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 	availability = AvailabilityCreateSerializer(many=False, required=False)
 	property_address = PropertyAddressesSerializer(many=False, required=False)
 	property_images = PropertyImagesSerializer(many=True, required=False)
-	owners = PropertyOwnershipListSerializer(many=True, required=False)
+	contacts = FilteringContactsListSerializer(
+		child=PropertyOwnershipListSerializer(), source='owners')
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField(read_only=True)
 	visibility = serializers.IntegerField(required=False)
@@ -546,7 +538,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'property_type',
 			'availability',
 			'main_image',
-			'owners',
+			'contacts',
 			'property_address',
 			'property_images',
 			'visibility',
