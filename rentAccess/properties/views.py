@@ -2,6 +2,7 @@ import datetime
 
 import pytz
 
+from .availability_utils import available_days_from_db
 from bookings.models import Bookings
 from .property_permissions import IsPublicProperty, PropertyOwner300, PropertyOwner400
 from .logger_helpers import get_client_ip
@@ -152,54 +153,75 @@ class PropertyListCreate(generics.ListCreateAPIView):
 			f"ip_addr: {get_client_ip(self.request)}; status: OK;")
 
 	def get_queryset(self, *args, **kwargs):
-		properties = Property.objects.all().prefetch_related('owners')
+		properties = Property.objects.all().select_related('availability')
 		queryset = properties.filter(~Q(owners__user=self.request.user) & Q(visibility=100))
 		title = self.request.query_params.get('title', None)
 		d_start = self.request.query_params.get('d_start', None)
 		d_end = self.request.query_params.get('d_end', None)
 		h_start = self.request.query_params.get('h_start', None)
 		h_end = self.request.query_params.get('h_end', None)
+		booking_type = self.request.query_params.get('booking_type', None)
 		try:
 			d_start = datetime.datetime.strptime(d_start, "%Y-%m-%d").date()
 			d_end = datetime.datetime.strptime(d_end, "%Y-%m-%d").date()
-			print(d_start, d_end)
+
 		except Exception:
 			d_start = None
 			d_end = None
 		try:
 			h_start = datetime.datetime.strptime(h_start, "%Y-%m-%dT%H:%M")
 			h_end = datetime.datetime.strptime(h_end, "%Y-%m-%dT%H:%M")
-			print(type(h_end))
-			print((h_end))
 			h_start = self.request.user.timezone.localize(h_start)
 			h_end = self.request.user.timezone.localize(h_end)
-			print(h_start, h_end)
 		except Exception as e:
-			print(self.request.user.timezone)
-			print(e)
 			h_start = None
 			h_end = None
 		if title is not None:
 			queryset = queryset.filter(title__icontains=title)
 		# due to the complexity of the filtering
 		# it is better to handle dates here rather than in the filter backend
-		if d_end and d_start:
-			queryset = queryset.exclude(
-				bookings__booked_from__date__gte=d_start,
-				bookings__booked_until__date__lte=d_end
-			)
-		if h_start and h_end:
+		if d_end and d_start and booking_type == '100':
 			query_1 = Q()
-			# query_1.add(Q(booked_property_id=1), Q.AND)
-			# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
-			query_1.add(Q(bookings__booked_from__lte=h_start) & Q(bookings__booked_until__gte=h_start), query_1.connector)
-			query_1.add(Q(bookings__booked_from__lt=h_start) & Q(bookings__booked_until__gte=h_start), Q.OR)
-			query_1.add(Q(bookings__booked_from__gte=h_start) & Q(bookings__booked_from__lte=h_start), Q.OR)
+			query_1.add(Q(bookings__booked_from__date__lte=d_start) & Q(bookings__booked_until__date__gte=d_start),
+			            query_1.connector)
+			query_1.add(Q(bookings__booked_from__date__lt=d_end) & Q(bookings__booked_until__date__gte=d_end), Q.OR)
+			query_1.add(Q(bookings__booked_from__date__gte=d_start) & Q(bookings__booked_from__date__lte=d_end), Q.OR)
 			query_2 = Q()
-			query_1.add(Q(bookings__booked_from=h_end) | Q(bookings__booked_until=h_start), Q.AND)
+			query_2.add(Q(bookings__booked_from__date=d_end) | Q(bookings__booked_until__date=d_start), Q.AND)
+
+			bad_ids = []
+			if queryset.exists():
+				for _property in queryset:
+					days = available_days_from_db(_property.availability.open_days)
+					if not (d_start.weekday() in days) or not (d_end.weekday() in days):
+						bad_ids.append(_property.id)
 			queryset = queryset.exclude(
-				query_1
-			)
+				query_1 & ~query_2
+			).exclude(Q(id__in=bad_ids))
+
+		if h_start and h_end and booking_type == '200':
+			query_1 = Q()
+			query_1.add(Q(bookings__booked_from__lte=h_start) & Q(bookings__booked_until__gte=h_start),
+			            query_1.connector)
+			query_1.add(Q(bookings__booked_from__lt=h_end) & Q(bookings__booked_until__gte=h_end), Q.OR)
+			query_1.add(Q(bookings__booked_from__gte=h_start) & Q(bookings__booked_from__lte=h_end), Q.OR)
+			query_2 = Q()
+			query_2.add(Q(bookings__booked_from=h_end) | Q(bookings__booked_until=h_start), query_2.connector)
+			query_3 = Q()
+			query_3.add(
+				Q(availability__available_from__gt=h_start.time()) | Q(availability__available_until__lt=h_end.time()),
+				query_3.connector)
+
+			bad_ids = []
+			if queryset.exists():
+				for _property in queryset:
+					days = available_days_from_db(_property.availability.open_days)
+					if not (h_start.weekday() in days) or not (h_end.weekday() in days):
+						bad_ids.append(_property.id)
+
+			queryset = queryset.exclude(
+				query_1 & ~query_2
+			).exclude(query_3).exclude(Q(id__in=bad_ids))
 		return queryset
 
 	def get_serializer_class(self):
