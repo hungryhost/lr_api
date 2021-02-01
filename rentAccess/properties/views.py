@@ -1,5 +1,7 @@
 import datetime
 
+import pytz
+
 from bookings.models import Bookings
 from .property_permissions import IsPublicProperty, PropertyOwner300, PropertyOwner400
 from .logger_helpers import get_client_ip
@@ -7,6 +9,9 @@ from register.models import Key, Lock
 from django.db.models import Q
 from django.http import Http404
 import logging
+from django_filters import rest_framework as dj_filters
+from .filters import PropertyFilter
+from rest_framework import filters
 from rest_framework import generics, permissions, status, response, serializers, viewsets, mixins, exceptions
 from rest_framework.decorators import action, permission_classes
 from rest_framework.generics import get_object_or_404
@@ -36,7 +41,7 @@ class LockList(generics.ListCreateAPIView):
 	def create(self, request, *args, **kwargs):
 		property_owners = self.get_property_object()
 		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
-						user=self.request.user, permission_level_id=400).exists():
+		                                     user=self.request.user, permission_level_id=400).exists():
 			raise exceptions.PermissionDenied
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
@@ -47,7 +52,8 @@ class LockList(generics.ListCreateAPIView):
 	def get_queryset(self):
 		property_owners = self.get_property_object()
 		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
-		user=self.request.user, permission_level_id=400).exists() and self.request.method == "GET":
+		                                     user=self.request.user,
+		                                     permission_level_id=400).exists() and self.request.method == "GET":
 			raise exceptions.PermissionDenied
 		return LocksWithProperties.objects.filter(property_id=self.kwargs["pk"])
 
@@ -74,7 +80,7 @@ class OwnersListCrete(generics.ListCreateAPIView):
 	def create(self, request, *args, **kwargs):
 		property_owners = self.get_property_object()
 		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
-						user=self.request.user, permission_level_id=400).exists():
+		                                     user=self.request.user, permission_level_id=400).exists():
 			raise exceptions.PermissionDenied
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
@@ -91,7 +97,7 @@ class OwnersListCrete(generics.ListCreateAPIView):
 	def get_queryset(self, *args, **kwargs):
 		property_owners = self.get_property_object()
 		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
-						user=self.request.user).exists() and self.request.method == "GET":
+		                                     user=self.request.user).exists() and self.request.method == "GET":
 			raise exceptions.PermissionDenied
 		return Ownership.objects.all().filter(premises_id=self.kwargs["pk"])
 
@@ -123,6 +129,8 @@ class PropertyListCreate(generics.ListCreateAPIView):
 	Version: 1.0
 	Last Update: 16.11.2020
 	"""
+	filter_backends = (dj_filters.DjangoFilterBackend,)
+	filterset_class = PropertyFilter
 
 	def perform_create(self, serializer):
 		obj = serializer.save()
@@ -146,6 +154,52 @@ class PropertyListCreate(generics.ListCreateAPIView):
 	def get_queryset(self, *args, **kwargs):
 		properties = Property.objects.all().prefetch_related('owners')
 		queryset = properties.filter(~Q(owners__user=self.request.user) & Q(visibility=100))
+		title = self.request.query_params.get('title', None)
+		d_start = self.request.query_params.get('d_start', None)
+		d_end = self.request.query_params.get('d_end', None)
+		h_start = self.request.query_params.get('h_start', None)
+		h_end = self.request.query_params.get('h_end', None)
+		try:
+			d_start = datetime.datetime.strptime(d_start, "%Y-%m-%d").date()
+			d_end = datetime.datetime.strptime(d_end, "%Y-%m-%d").date()
+			print(d_start, d_end)
+		except Exception:
+			d_start = None
+			d_end = None
+		try:
+			h_start = datetime.datetime.strptime(h_start, "%Y-%m-%dT%H:%M")
+			h_end = datetime.datetime.strptime(h_end, "%Y-%m-%dT%H:%M")
+			print(type(h_end))
+			print((h_end))
+			h_start = self.request.user.timezone.localize(h_start)
+			h_end = self.request.user.timezone.localize(h_end)
+			print(h_start, h_end)
+		except Exception as e:
+			print(self.request.user.timezone)
+			print(e)
+			h_start = None
+			h_end = None
+		if title is not None:
+			queryset = queryset.filter(title__icontains=title)
+		# due to the complexity of the filtering
+		# it is better to handle dates here rather than in the filter backend
+		if d_end and d_start:
+			queryset = queryset.exclude(
+				bookings__booked_from__date__gte=d_start,
+				bookings__booked_until__date__lte=d_end
+			)
+		if h_start and h_end:
+			query_1 = Q()
+			# query_1.add(Q(booked_property_id=1), Q.AND)
+			# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
+			query_1.add(Q(bookings__booked_from__lte=h_start) & Q(bookings__booked_until__gte=h_start), query_1.connector)
+			query_1.add(Q(bookings__booked_from__lt=h_start) & Q(bookings__booked_until__gte=h_start), Q.OR)
+			query_1.add(Q(bookings__booked_from__gte=h_start) & Q(bookings__booked_from__lte=h_start), Q.OR)
+			query_2 = Q()
+			query_1.add(Q(bookings__booked_from=h_end) | Q(bookings__booked_until=h_start), Q.AND)
+			queryset = queryset.exclude(
+				query_1
+			)
 		return queryset
 
 	def get_serializer_class(self):
@@ -236,7 +290,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 	"""
 
 	def retrieve(self, request, pk=None):
-		#obj = self.get_object(pk=pk)
+		# obj = self.get_object(pk=pk)
 		obj = Property.objects.prefetch_related('availability').get(id=pk)
 		self.check_object_permissions(self.request, obj)
 		serializer = PropertySerializer(
