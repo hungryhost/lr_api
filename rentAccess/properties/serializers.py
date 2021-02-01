@@ -226,8 +226,7 @@ class PropertyImagesSerializer(serializers.ModelSerializer):
 class PropertyAddressesSerializer(serializers.ModelSerializer):
 	country = serializers.CharField(max_length=100, required=True)
 	city = serializers.CharField(max_length=100, required=True)
-	street_1 = serializers.CharField(max_length=100, required=True)
-	street_2 = serializers.CharField(max_length=100, required=False)
+	street = serializers.CharField(max_length=255, required=True)
 	building = serializers.CharField(max_length=20, required=True)
 	floor = serializers.CharField(max_length=20, required=True)
 	number = serializers.CharField(max_length=30, required=True)
@@ -239,8 +238,7 @@ class PropertyAddressesSerializer(serializers.ModelSerializer):
 		fields = (
 			'country',
 			'city',
-			'street_1',
-			'street_2',
+			'street',
 			'building',
 			'floor',
 			'number',
@@ -255,8 +253,7 @@ class PropertyAddressesListSerializer(serializers.ModelSerializer):
 		fields = (
 			'country',
 			'city',
-			'street_1',
-			'street_2',
+			'street',
 			'building',
 			'floor',
 			'number',
@@ -282,6 +279,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
 			'active',
 			'property_type',
 			'main_image',
+			'booking_type',
 			'visibility',
 			'property_address',
 			'requires_additional_confirmation',
@@ -382,7 +380,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 	availability = AvailabilityCreateSerializer(many=False, required=True)
 	title = serializers.CharField(required=True, max_length=50)
 	body = serializers.CharField(required=True, max_length=500)
-	price = serializers.IntegerField(required=False, validators=[validate_price])
+	price = serializers.IntegerField(allow_null=True, required=False, validators=[validate_price])
 	active = serializers.BooleanField(required=False)
 	property_address = PropertyAddressesSerializer(many=False, required=True)
 	client_greeting_message = serializers.CharField(required=False, max_length=500)
@@ -644,8 +642,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			address_to_update = PremisesAddresses.objects.get(premises_id=instance.id)
 			country = address_data.get('country', None)
 			paddr_city = address_data.get('city', None)
-			paddr_street_1 = address_data.get('street_1', None)
-			paddr_street_2 = address_data.get('street_2', None)
+			paddr_street = address_data.get('street', None)
 			paddr_building = address_data.get('building', None)
 			paddr_floor = address_data.get('floor', None)
 			paddr_number = address_data.get('number', None)
@@ -654,10 +651,8 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 				address_to_update.country = country
 			if paddr_city:
 				address_to_update.city = paddr_city
-			if paddr_street_1:
-				address_to_update.street_1 = paddr_street_1
-			if paddr_street_2:
-				address_to_update.street_2 = paddr_street_2
+			if paddr_street:
+				address_to_update.street = paddr_street
 			if paddr_building:
 				address_to_update.building = paddr_building
 			if paddr_floor:
