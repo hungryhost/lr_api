@@ -17,7 +17,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from properties.models import PermissionLevels
-from bookings.serializers import BookingsSerializer
+from bookings.serializers import HourlyBookingsFromOwnerSerializer
 from .models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages
 from bookings.models import Bookings
 
@@ -674,7 +674,7 @@ class TestsOfProperties(APITestCase):
 			booked_property=resp_post.data["id"],
 			booked_from=resp_retrieve_booking.data["booked_from"],
 			booked_until=resp_retrieve_booking.data["booked_until"])
-		serialized_object = BookingsSerializer(booking_object)
+		serialized_object = HourlyBookingsFromOwnerSerializer(booking_object)
 
 		self.assertEqual(booking_object.status, resp_retrieve_booking.data["status"])
 		self.assertEqual(booking_object.client_email, resp_retrieve_booking.data["client_email"])
@@ -809,7 +809,7 @@ class TestsOfProperties(APITestCase):
 			format='json')
 		booking_object_after_update = Bookings.objects.get(
 			booked_property=resp_post.data["id"], id=resp_create_booking.data["id"])
-		booking_object_after_update_serialized = BookingsSerializer(booking_object_after_update)
+		booking_object_after_update_serialized = HourlyBookingsFromOwnerSerializer(booking_object_after_update)
 
 		self.assertEqual(booking_object_after_update.status, booking_object_resp_user_2.data["status"])
 		self.assertEqual(booking_object_after_update.number_of_clients,
@@ -830,7 +830,7 @@ class TestsOfProperties(APITestCase):
 			format='json')
 		booking_object_before_update = Bookings.objects.get(
 			booked_property=resp_post.data["id"], id=resp_create_booking.data["id"])
-		serialized_booking_object = BookingsSerializer(booking_object_before_update)
+		serialized_booking_object = HourlyBookingsFromOwnerSerializer(booking_object_before_update)
 		client_2 = APIClient()
 		client_3 = APIClient()
 

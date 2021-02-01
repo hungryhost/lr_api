@@ -4,6 +4,7 @@ from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet,
 	LockList, OwnersListCrete, OwnershipViewSet
 from register.views import CardList, KeyList
 from bookings.views import BookingsListCreateView, BookingsViewSet, BookingsAllList
+
 # from .views import LockDetail
 app_name = 'properties'
 
@@ -20,6 +21,7 @@ urlpatterns = [
 		'patch': 'partial_update',
 		'delete': 'destroy'
 	}), name='properties-owners-details'),
+
 	path('<int:pk>/owners/', OwnersListCrete.as_view(), name='properties-owners-list'),
 	path('<int:pk>/', properties_details, name='properties-details'),
 	path('<int:pk>/bookings/', BookingsListCreateView.as_view(), name='properties-bookings-list'),

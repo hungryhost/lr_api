@@ -12,11 +12,15 @@ class PermissionLevels(models.Model):
 	description = models.CharField(max_length=150, null=True, blank=True)
 
 
-class PropertyPermission(models.Model):
+class OwnershipPermission(models.Model):
+	r"""
+	Model for permissions available for owners.
+	Must be filled in manually on creation.
+	"""
 	codename = models.CharField(max_length=100, primary_key=True)
 	description = models.CharField(max_length=255, null=True, blank=True)
 
-	def __int__(self):
+	def __str__(self):
 		return self.codename
 
 
@@ -34,6 +38,9 @@ class PropertyTypes(models.Model):
 
 
 class Property(models.Model):
+	r"""
+	Main model for storing information about properties.
+	"""
 	VISIBILITY_CHOICES = [
 		(100, 'Publicly Visible'),
 		(200, 'Only within the organisation'),
@@ -78,6 +85,9 @@ class Property(models.Model):
 
 
 class Availability(models.Model):
+	r"""
+	This model is used for storing information about property's availability.
+	"""
 	premises = models.OneToOneField(Property, related_name='availability',
 		on_delete=models.CASCADE, null=False, blank=False)
 	open_days = models.CharField(max_length=7, default='1111111', null=False, blank=False)
@@ -103,6 +113,9 @@ class Availability(models.Model):
 
 
 class Ownership(models.Model):
+	r"""
+	This model is used to store information about property's owners.
+	"""
 	VISIBILITY_CHOICES = [
 		(100, 'Publicly Visible'),
 		(200, 'Not visible'),
@@ -124,9 +137,13 @@ class Ownership(models.Model):
 
 
 class OwnerPermission(models.Model):
-	permission_code = models.ForeignKey(PropertyPermission, to_field='codename',
+	r"""
+	This model is used to store information about owner's permissions
+	A "trough" model for Ownership and OwnershipPermission
+	"""
+	permission_code = models.ForeignKey(OwnershipPermission, to_field='codename',
 		on_delete=models.CASCADE, null=False, blank=False)
-	owner = models.ForeignKey(Ownership, related_name='granted_permissions',
+	owner = models.ForeignKey(Ownership, related_name='owner_permissions',
 		on_delete=models.CASCADE, null=False, blank=False)
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
@@ -180,8 +197,7 @@ class PremisesAddresses(models.Model):
 									null=False, blank=False)
 	country = models.CharField(max_length=100, blank=False, null=False)
 	city = models.CharField(max_length=100, blank=False, null=False)
-	street_1 = models.CharField(max_length=100, blank=False, null=False)
-	street_2 = models.CharField(max_length=100, blank=True, null=False)
+	street = models.CharField(max_length=255, blank=False, null=False)
 	building = models.CharField(max_length=20, blank=True, null=False)
 	floor = models.CharField(max_length=20, blank=True, null=False)
 	number = models.CharField(max_length=30, blank=True, null=False)
