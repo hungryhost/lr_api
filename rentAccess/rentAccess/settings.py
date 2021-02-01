@@ -186,6 +186,10 @@ INSTALLED_APPS = [
 	'rest_framework_swagger',
 	'rest_framework_simplejwt.token_blacklist',
 	'watchman',
+	'cities_light',
+	'django_filters',
+	'django_countries',
+	'phone_field',
 	'timezone_field',
 	'properties',
 	'bookings',
@@ -204,12 +208,13 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
+	'corsheaders.middleware.CorsMiddleware',
 	'django.middleware.common.CommonMiddleware',
 	'django.middleware.csrf.CsrfViewMiddleware',
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
-	'corsheaders.middleware.CorsMiddleware',
+
 
 ]
 AUTH_USER_MODEL = 'userAccount.CustomUser'
@@ -233,7 +238,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'rentAccess.wsgi.application'
-
+CITIES_LIGHT_TRANSLATION_LANGUAGES = ['ru', 'en']
+CITIES_LIGHT_INCLUDE_COUNTRIES = ['RU']
+CITIES_LIGHT_INCLUDE_CITY_TYPES = ['PPL', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPLC', 'PPLF', 'PPLG', 'PPLL', 'PPLR', 'PPLS', 'STLMT',]
 
 # Databases
 if not DEBUG:
