@@ -37,8 +37,10 @@ urlpatterns = [
     path('lock-api/v1/lock/', include('locks.urls')),
     path('lock-api/v1/access/', include('schedule.urls')),
 
+    #url(r'^cities_light/api/', include('cities_light.contrib.restframework3')),
     # ------------------- SERVICE API -------------------
     path('api/v1/properties/', include('properties.urls'), name='properties'),
+    path('api/v1/common/', include('common.urls'), name='common'),
     # path('auth/', include('rest_framework.urls')),
     path('api/v1/auth/', include('jwtauth.urls'), name='jwtauth'),
     path('api/v1/users/', include('userAccount.urls')),

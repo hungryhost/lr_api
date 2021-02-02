@@ -130,8 +130,18 @@ class PropertyListCreate(generics.ListCreateAPIView):
 	Version: 1.0
 	Last Update: 16.11.2020
 	"""
-	filter_backends = (dj_filters.DjangoFilterBackend,)
+	filter_backends = (dj_filters.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter,)
 	filterset_class = PropertyFilter
+	ordering_fields = [
+		'price',
+		'created_at'
+	]
+	ordering = ['-created_at']
+	search_fields = [
+		'title',
+		'body',
+		'property_address__city',
+		'property_address__street']
 
 	def perform_create(self, serializer):
 		obj = serializer.save()
@@ -180,7 +190,7 @@ class PropertyListCreate(generics.ListCreateAPIView):
 			queryset = queryset.filter(title__icontains=title)
 		# due to the complexity of the filtering
 		# it is better to handle dates here rather than in the filter backend
-		if d_end and d_start and booking_type == '100':
+		if d_end and d_start and booking_type == '100' and d_start < d_end:
 			query_1 = Q()
 			query_1.add(Q(bookings__booked_from__date__lte=d_start) & Q(bookings__booked_until__date__gte=d_start),
 			            query_1.connector)

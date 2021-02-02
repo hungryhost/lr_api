@@ -78,7 +78,7 @@ class PropertiesTests(APITestCase, APIClient):
 			{
 				"arrival_time_from": "11:00",
 				"departure_time_until": "14:00",
-				"available_days": [
+				"open_days": [
 					0, 1, 3
 				],
 				"maximum_number_of_clients": 12
@@ -87,7 +87,7 @@ class PropertiesTests(APITestCase, APIClient):
 			{
 				"available_from": "08:00",
 				"available_until": "18:00",
-				"available_days": [
+				"open_days": [
 					0, 1, 3
 				],
 				"maximum_number_of_clients": 12,

@@ -1,6 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
-
+from cities_light.models import City
 # this file contains common models for the whole project
 # additional models may be added and should be documented
 
@@ -34,4 +34,6 @@ class AccountTypes(models.Model):
 	acc_type = models.CharField(max_length=50, primary_key=True)
 
 
-
+class SupportedCities(models.Model):
+	city = models.ForeignKey(City, related_name='supported_cities',
+		on_delete=models.CASCADE, null=False, blank=False)

@@ -25,6 +25,7 @@ yarn-error.log*
 # idea settings
 ############### backend ##############
 /.idea/
+rentAccess/migrations/
 __pycache__/
 *.py[cod]
 *.log
