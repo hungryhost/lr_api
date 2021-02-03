@@ -2,7 +2,8 @@ import datetime
 
 import pytz
 
-from .availability_utils import available_days_from_db
+from .availability_utils import available_days_from_db, available_hours_from_time, available_hours_from_db, \
+	available_hours_to_db
 from bookings.models import Bookings
 from .property_permissions import IsPublicProperty, PropertyOwner300, PropertyOwner400
 from .logger_helpers import get_client_ip
@@ -323,13 +324,16 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	def retrieve(self, request, pk=None):
 		# obj = self.get_object(pk=pk)
-		obj = Property.objects.prefetch_related('availability').get(id=pk)
-		self.check_object_permissions(self.request, obj)
+		try:
+			obj = Property.objects.select_related('availability', 'property_type',
+								'property_address').get(id=pk)
+			self.check_object_permissions(self.request, obj)
+		except Property.DoesNotExist:
+			raise Http404
 		serializer = PropertySerializer(
 			obj,
 			context={
-				'request': request,
-				'availability': obj.availability,
+				'request': request
 			}
 		)
 		return Response(serializer.data, status=status.HTTP_200_OK)
@@ -385,6 +389,29 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 			return Response(status=status.HTTP_409_CONFLICT)
 		return Response(status=status.HTTP_200_OK)
 
+	@action(detail=True, methods=['get'])
+	def get_hourly_availability(self, request, pk=None):
+		prop = Property.objects.select_related('availability', 'property_address').get(pk=pk)
+		self.check_object_permissions(self.request, prop)
+		date = self.request.query_params.get('date', None)
+		bookings = Bookings.objects.all().filter(booked_property=prop,
+		                                         booked_from__date=date,
+		                                         booked_until__date=date)
+
+
+		if (date is None) or prop.booking_type == 100:
+			return Response(data={"No date provided or wrong booking_type of the property"},
+				status=status.HTTP_400_BAD_REQUEST)
+		slots = available_hours_from_db(prop, bookings)
+		data = {
+			"count": len(slots),
+			"property_timezone": prop.property_address.city.city.timezone,
+			"available_slots": slots,
+		}
+		# TODO: consider moving the query into the model's methods or manager
+
+		return Response(data=data, status=status.HTTP_200_OK)
+
 	@action(detail=True, methods=['put'])
 	def change_main_image(self, request, pk=None):
 		image_id = self.request.data.get("image_id", None)
@@ -414,7 +441,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	def get_object(self, pk=None, owner_id=None):
 		try:
-			obj = Property.objects.get(pk=pk)
+			obj = Property.objects.select_related('availability').get(pk=pk)
 			self.check_object_permissions(self.request, obj)
 			return obj
 		except Property.DoesNotExist:
