@@ -35,5 +35,6 @@ class AccountTypes(models.Model):
 
 
 class SupportedCities(models.Model):
+	name = models.CharField(max_length=255, blank=True, null=False, primary_key=True)
 	city = models.ForeignKey(City, related_name='supported_cities',
 		on_delete=models.CASCADE, null=False, blank=False)
