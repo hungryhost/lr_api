@@ -5,6 +5,7 @@ from django.db import models
 import datetime
 from register.models import Lock
 from django.conf import settings
+from common.models import SupportedCities
 
 
 class PermissionLevels(models.Model):
@@ -107,7 +108,7 @@ class Availability(models.Model):
 
 	available_from = models.TimeField(null=True, blank=True)
 	available_until = models.TimeField(null=True, blank=True)
-	available_hours = models.CharField(max_length=255, null=True, blank=True)
+	available_hours = models.CharField(max_length=255, null=True, blank=True, default='111111111111111111111111')
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 
@@ -196,7 +197,8 @@ class PremisesAddresses(models.Model):
 	premises = models.OneToOneField(Property, related_name='property_address', on_delete=models.CASCADE,
 									null=False, blank=False)
 	country = models.CharField(max_length=100, blank=False, null=False)
-	city = models.CharField(max_length=100, blank=False, null=False)
+	city = models.ForeignKey(SupportedCities, to_field='name', on_delete=models.CASCADE,
+	                         related_name='property_city', blank=False, null=False)
 	street = models.CharField(max_length=255, blank=False, null=False)
 	building = models.CharField(max_length=20, blank=True, null=False)
 	floor = models.CharField(max_length=20, blank=True, null=False)
