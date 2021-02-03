@@ -39,7 +39,8 @@ urlpatterns = [
 		}
 	), name='properties-bookings-detail'),
 	path('<int:pk>/available/', PropertiesViewSet.as_view({
-		'post': 'get_availability'
+		'post': 'get_availability',
+		'get': 'get_hourly_availability'
 	}), name='properties-availability-check'),
 	path('bookings/', BookingsAllList.as_view(), name='properties-bookings-list-all'),
 
