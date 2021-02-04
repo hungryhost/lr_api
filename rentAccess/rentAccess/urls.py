@@ -43,8 +43,7 @@ urlpatterns = [
     path('api/v1/common/', include('common.urls'), name='common'),
     # path('auth/', include('rest_framework.urls')),
     path('api/v1/auth/', include('jwtauth.urls'), name='jwtauth'),
-    path('api/v1/users/', include('userAccount.urls')),
-    path('api/v1/user/', include('userAccount.urls_v2'), name='userAccount'),
+    path('api/v1/user/', include('userAccount.urls'), name='userAccount'),
     # ------------------- DOCS -------------------
     re_path(r'^watchman/', include('watchman.urls')),
     path('api/v1/service-api-docs/', TemplateView.as_view(
