@@ -8,7 +8,7 @@ from common.models import SupportedCities
 import logging
 
 from .logger_helpers import get_client_ip
-from .models import Property, PremisesAddresses, PremisesImages, Ownership, Availability
+from .models import Property, PremisesAddress, PremisesImage, Ownership, Availability
 from .validators import validate_price, validate_city
 from .availability_utils import available_days_to_db, available_days_from_db, available_hours_to_db
 
@@ -213,7 +213,7 @@ class PropertyImagesSerializer(serializers.ModelSerializer):
 	is_main = serializers.BooleanField(required=False, read_only=False)
 
 	class Meta:
-		model = PremisesImages
+		model = PremisesImage
 		list_serializer_class = FilteringNotMainImagesListSerializer
 		fields = (
 			'id',
@@ -235,7 +235,7 @@ class PropertyAddressesSerializer(serializers.ModelSerializer):
 	directions_description = serializers.CharField(max_length=500, required=False)
 
 	class Meta:
-		model = PremisesAddresses
+		model = PremisesAddress
 		fields = (
 			'country',
 			'city',
@@ -255,7 +255,7 @@ class PropertyAddressesListSerializer(serializers.ModelSerializer):
 	city = serializers.CharField(max_length=100, read_only=True, source='city.name')
 
 	class Meta:
-		model = PremisesAddresses
+		model = PremisesAddress
 		fields = (
 			'country',
 			'city',
@@ -298,7 +298,7 @@ class PropertyListSerializer(serializers.ModelSerializer):
 
 	def get_main_image(self, obj):
 		try:
-			image_object = PremisesImages.objects.get(premises=obj, is_main=True)
+			image_object = PremisesImage.objects.get(premises=obj, is_main=True)
 			return self.context['request'].build_absolute_uri(image_object.image.url)
 		except Exception:
 			return ""
@@ -373,7 +373,7 @@ class PropertySerializer(serializers.ModelSerializer):
 
 	def get_main_image(self, obj):
 		try:
-			image_object = PremisesImages.objects.get(premises=obj, is_main=True)
+			image_object = PremisesImage.objects.get(premises=obj, is_main=True)
 			return self.context['request'].build_absolute_uri(image_object.image.url)
 		except Exception:
 			return ""
@@ -435,7 +435,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 
 	def get_main_image(self, obj):
 		try:
-			image_object = PremisesImages.objects.get(premises=obj, is_main=True)
+			image_object = PremisesImage.objects.get(premises=obj, is_main=True)
 			return self.context['request'].build_absolute_uri(image_object.image.url)
 		except Exception:
 			return ""
@@ -501,7 +501,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 			booking_type=booking_type,
 			visibility=visibility, requires_additional_confirmation=requires_additional_confirmation)
 
-		PremisesAddresses.objects.create(
+		PremisesAddress.objects.create(
 			premises=property_to_create,
 			country=property_addresses['country'],
 			city_id=property_addresses['city']['name'],
@@ -579,7 +579,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 
 	def get_main_image(self, obj):
 		try:
-			image_object = PremisesImages.objects.get(premises=obj, is_main=True)
+			image_object = PremisesImage.objects.get(premises=obj, is_main=True)
 			return self.context['request'].build_absolute_uri(image_object.image.url)
 		except Exception:
 			return ""
@@ -668,7 +668,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 					availability_to_update.available_until = available_until
 			availability_to_update.save()
 		if address_data:
-			address_to_update = PremisesAddresses.objects.get(premises_id=instance.id)
+			address_to_update = PremisesAddress.objects.get(premises_id=instance.id)
 			country = address_data.get('country', None)
 			paddr_city = address_data.get('city', None)
 			paddr_street = address_data.get('street', None)
@@ -704,7 +704,7 @@ class BulkFileUploadSerializer(serializers.ModelSerializer):
 	images = serializers.ListField(child=serializers.ImageField(allow_empty_file=True), max_length=6, required=True)
 
 	class Meta:
-		model = PremisesImages
+		model = PremisesImage
 		fields = (
 			'id',
 			'premises',
@@ -728,11 +728,11 @@ class BulkFileUploadSerializer(serializers.ModelSerializer):
 		images = validated_data.get('images', None)
 		if images:
 			premises_image_instance = [
-				PremisesImages(premises_id=self.context['premises_id'], image=image, is_main=False)
+				PremisesImage(premises_id=self.context['premises_id'], image=image, is_main=False)
 				for image in images]
 			premises_image_instance[0].is_main = True
-			PremisesImages.objects.bulk_create(premises_image_instance)
+			PremisesImage.objects.bulk_create(premises_image_instance)
 		images_logger.info(
 			f"object: image; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['premises_id']}; "
 			f"ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
-		return PremisesImages.objects.filter(premises_id=self.context['premises_id'])
+		return PremisesImage.objects.filter(premises_id=self.context['premises_id'])

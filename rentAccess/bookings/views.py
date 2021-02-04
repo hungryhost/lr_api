@@ -19,7 +19,7 @@ from register.models import Key
 from .permissions import IsOwnerLevel100, IsOwnerLevel200, IsOwnerLevel300, IsOwnerLevel400, \
 	IsClientOfBooking, BookingIsAdminOfPropertyOrSuperuser
 from rest_framework import generics
-from properties.models import LocksWithProperties, Property, Ownership
+from properties.models import LockWithProperty, Property, Ownership
 from .serializers import BookingsListSerializer, BookingUpdateAdminAndCreatorSerializer, \
 	BookingUpdateAdminNotCreatorSerializer, BookingUpdateClientSerializer, \
 	DailyBookingCreateFromClientSerializer, DailyBookingCreateFromOwnerSerializer, \
@@ -72,8 +72,8 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 			"email": obj.client_email,
 		}
 		try:
-			lwp = LocksWithProperties.objects.select_related('lock').get(property_id=self.kwargs['pk'])
-		except LocksWithProperties.DoesNotExist:
+			lwp = LockWithProperty.objects.select_related('lock').get(property_id=self.kwargs['pk'])
+		except LockWithProperty.DoesNotExist:
 			lwp = None
 		if lwp:
 			key = Key(lock_id=lwp.lock_id, access_start=obj.booked_from, access_stop=obj.booked_until)

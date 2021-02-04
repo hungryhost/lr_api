@@ -16,9 +16,9 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from properties.models import PermissionLevels
+from properties.models import PermissionLevel
 
-from properties.models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages
+from properties.models import PropertyType, Ownership, Property, PremisesAddress, PremisesImage
 from api_tests.user_tests.json_generator import UserRegistrationJSON
 
 User = get_user_model()
@@ -49,10 +49,10 @@ class BookingsTests(APITestCase):
 
 	def setUp(self) -> None:
 		# TODO: add booking-related bodies of resp/req
-		PropertyTypes.objects.create(property_type=100, description="Null")
-		PropertyTypes.objects.create(property_type=200, description="Null")
-		PermissionLevels.objects.create(p_level=400, description="Null")
-		PermissionLevels.objects.create(p_level=300, description="Null")
+		PropertyType.objects.create(property_type=100, description="Null")
+		PropertyType.objects.create(property_type=200, description="Null")
+		PermissionLevel.objects.create(p_level=400, description="Null")
+		PermissionLevel.objects.create(p_level=300, description="Null")
 
 		self.false_token = "adamantly"
 

@@ -16,9 +16,9 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from properties.models import PermissionLevels
+from properties.models import PermissionLevel
 from bookings.serializers import HourlyBookingsFromOwnerSerializer
-from .models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages
+from .models import PropertyType, Ownership, Property, PremisesAddress, PremisesImage
 from bookings.models import Bookings
 
 User = get_user_model()
@@ -37,9 +37,9 @@ class TestsOfProperties(APITestCase):
 
 	def setUp(self) -> None:
 		# TODO: add booking-related bodies of resp/req
-		PropertyTypes.objects.create(property_type=100, description="Null")
-		PermissionLevels.objects.create(p_level=400, description="Null")
-		PermissionLevels.objects.create(p_level=300, description="Null")
+		PropertyType.objects.create(property_type=100, description="Null")
+		PermissionLevel.objects.create(p_level=400, description="Null")
+		PermissionLevel.objects.create(p_level=300, description="Null")
 
 		self.false_token = "adamantly"
 
@@ -368,7 +368,7 @@ class TestsOfProperties(APITestCase):
 		self.assertEqual(created_property.active, resp.data["active"])
 		self.assertEqual(created_property.author.id, resp.data["creator_id"])
 
-		created_address = PremisesAddresses.objects.get(premises=resp.data["id"])
+		created_address = PremisesAddress.objects.get(premises=resp.data["id"])
 		p_address = resp.data['property_address']
 		self.assertEqual(created_address.country, p_address["country"])
 		self.assertEqual(created_address.city, p_address["city"])
@@ -488,7 +488,7 @@ class TestsOfProperties(APITestCase):
 		resp_auth.data.pop('updated_at')
 		self.assertEqual(resp_auth.status_code, status.HTTP_200_OK)
 
-		created_address = PremisesAddresses.objects.get(premises=resp_auth.data["id"])
+		created_address = PremisesAddress.objects.get(premises=resp_auth.data["id"])
 		p_address = resp_auth.data['property_address']
 		self.assertEqual(created_address.country, p_address["country"])
 		self.assertEqual(created_address.city, p_address["city"])
@@ -558,12 +558,12 @@ class TestsOfProperties(APITestCase):
 		self.assertIsNot(resp_get.data["property_images"], [])
 		iterator = 2
 		for item in resp_get.data["property_images"]:
-			self.assertEqual(len(resp_get.data["property_images"]), PremisesImages.objects.filter(
+			self.assertEqual(len(resp_get.data["property_images"]), PremisesImage.objects.filter(
 				premises_id=resp_post.data["id"]).count() - 1)
 			self.assertEqual(item["id"], iterator)
 			self.assertIsNot(item["image"], "")
 			iterator += 1
-		obj = PremisesImages.objects.get(premises_id=resp_post.data["id"], is_main=True)
+		obj = PremisesImage.objects.get(premises_id=resp_post.data["id"], is_main=True)
 		self.assertEqual(obj.pk, 1)
 
 	def test_change_main_image(self):
@@ -609,7 +609,7 @@ class TestsOfProperties(APITestCase):
 
 		for item in resp_get.data["property_images"]:
 			self.assertEqual(len(resp_get.data["property_images"]),
-							 PremisesImages.objects.filter(premises_id=resp_post.data["id"]).count() - 1)
+			                 PremisesImage.objects.filter(premises_id=resp_post.data["id"]).count() - 1)
 			self.assertIsNot(item["id"], 3)
 
 	def test_delete_images(self):
@@ -636,8 +636,8 @@ class TestsOfProperties(APITestCase):
 		resp_auth_1 = self.client.delete(reverse('properties:properties-images-list', args=(resp_post.data["id"],)),
 										 data={"images": [1, 2, 3]}, format='json')
 		self.assertEqual(resp_auth_1.status_code, status.HTTP_204_NO_CONTENT)
-		self.assertEqual(PremisesImages.objects.filter(premises_id=resp_post.data["id"], is_main=True).count(), 1)
-		self.assertEqual(PremisesImages.objects.filter(premises_id=resp_post.data["id"], is_main=False).count(), 2)
+		self.assertEqual(PremisesImage.objects.filter(premises_id=resp_post.data["id"], is_main=True).count(), 1)
+		self.assertEqual(PremisesImage.objects.filter(premises_id=resp_post.data["id"], is_main=False).count(), 2)
 
 	def test_add_booking_from_owner(self):
 		resp_post = self.client.post(self.properties_list_url, self.create_property_JSON,

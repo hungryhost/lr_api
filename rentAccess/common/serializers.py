@@ -1,12 +1,12 @@
 from rest_framework import serializers, status
 from cities_light.models import City
-from properties.models import PropertyTypes
+from properties.models import PropertyType
 from .models import SupportedCities
 
 
 class PropertyTypeListSerializer(serializers.ModelSerializer):
 	class Meta:
-		model = PropertyTypes
+		model = PropertyType
 		fields = '__all__'
 
 

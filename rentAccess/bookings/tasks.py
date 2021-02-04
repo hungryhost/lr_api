@@ -22,10 +22,10 @@ def send_booking_email_to_client(duration, data, has_key=False):
 	:param data: dictionary of data
 
 	"""
-	from properties.models import Property, PremisesAddresses
+	from properties.models import Property, PremisesAddress
 	User = get_user_model()
 	booked_property = Property.objects.get(id=data['p_id'])
-	address = PremisesAddresses.objects.get(premises_id=data['p_id'])
+	address = PremisesAddress.objects.get(premises_id=data['p_id'])
 
 	if User.objects.filter(email=data['email']).exists():
 		user = User.objects.get(email=data['email'])

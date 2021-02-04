@@ -16,9 +16,9 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from properties.models import PermissionLevels
+from properties.models import PermissionLevel
 from bookings.models import Bookings
-from properties.models import PropertyTypes, Ownership, Property, PremisesAddresses, PremisesImages
+from properties.models import PropertyType, Ownership, Property, PremisesAddress, PremisesImage
 from ..image_utils import generate_list_of_images
 from ..string_utils import (generate_random_string,
                             generate_random_list_of_strings,
@@ -49,12 +49,12 @@ class PropertiesTests(APITestCase, APIClient):
 
 	def setUp(self) -> None:
 		# TODO: add booking-related bodies of resp/req
-		PropertyTypes.objects.create(property_type=100, description="Null")
-		PropertyTypes.objects.create(property_type=200, description="Null")
-		PermissionLevels.objects.create(p_level=400, description="Null")
-		PermissionLevels.objects.create(p_level=300, description="Null")
-		PermissionLevels.objects.create(p_level=200, description="Null")
-		PermissionLevels.objects.create(p_level=100, description="Null")
+		PropertyType.objects.create(property_type=100, description="Null")
+		PropertyType.objects.create(property_type=200, description="Null")
+		PermissionLevel.objects.create(p_level=400, description="Null")
+		PermissionLevel.objects.create(p_level=300, description="Null")
+		PermissionLevel.objects.create(p_level=200, description="Null")
+		PermissionLevel.objects.create(p_level=100, description="Null")
 
 		self.false_token = "adamantly"
 
@@ -193,7 +193,7 @@ class PropertiesTests(APITestCase, APIClient):
 				user=user_id,
 				premises=resp.data["id"])
 			created_property = Property.objects.get(pk=resp.data["id"])
-			created_address = PremisesAddresses.objects.get(premises=resp.data["id"])
+			created_address = PremisesAddress.objects.get(premises=resp.data["id"])
 			self.assertEqual(created_property.pk, resp.data["id"])
 			resp.data.pop('created_at')
 			resp.data.pop('updated_at')
@@ -262,7 +262,7 @@ class PropertiesTests(APITestCase, APIClient):
 				user=user_id,
 				premises=resp.data["id"])
 			created_property = Property.objects.get(pk=resp.data["id"])
-			created_address = PremisesAddresses.objects.get(premises=resp.data["id"])
+			created_address = PremisesAddress.objects.get(premises=resp.data["id"])
 			self.assertEqual(created_property.pk, resp.data["id"])
 			resp.data.pop('created_at')
 			resp.data.pop('updated_at')
@@ -418,7 +418,7 @@ class PropertiesTests(APITestCase, APIClient):
 		resp_auth.data.pop('updated_at')
 		self.assertEqual(resp_auth.status_code, status.HTTP_200_OK)
 
-		created_address = PremisesAddresses.objects.get(premises=resp_auth.data["id"])
+		created_address = PremisesAddress.objects.get(premises=resp_auth.data["id"])
 		p_address = resp_auth.data['property_address']
 		self.assertEqual(created_address.country, p_address["country"])
 		self.assertEqual(created_address.city, p_address["city"])
@@ -489,12 +489,12 @@ class PropertiesTests(APITestCase, APIClient):
 		self.assertIsNot(resp_get.data["property_images"], [])
 		iterator = 1
 		for item in resp_get.data["property_images"]:
-			self.assertEqual(len(resp_get.data["property_images"]), PremisesImages.objects.filter(
+			self.assertEqual(len(resp_get.data["property_images"]), PremisesImage.objects.filter(
 				premises_id=resp_post.data["id"]).count())
 			self.assertEqual(item["id"], iterator)
 			self.assertIsNot(item["image"], "")
 			iterator += 1
-		obj = PremisesImages.objects.get(premises_id=resp_post.data["id"], is_main=True)
+		obj = PremisesImage.objects.get(premises_id=resp_post.data["id"], is_main=True)
 		self.assertEqual(obj.pk, 1)
 
 	def test_change_main_image(self):
@@ -540,7 +540,7 @@ class PropertiesTests(APITestCase, APIClient):
 
 		for item in resp_get.data["property_images"]:
 			self.assertEqual(len(resp_get.data["property_images"]),
-			                 PremisesImages.objects.filter(premises_id=resp_post.data["id"]).count())
+			                 PremisesImage.objects.filter(premises_id=resp_post.data["id"]).count())
 
 	def test_delete_images(self):
 		resp_post = self.client_1.post(
@@ -566,8 +566,8 @@ class PropertiesTests(APITestCase, APIClient):
 		resp_auth_1 = self.client_1.delete(reverse('properties:properties-images-list', args=(resp_post.data["id"],)),
 		                                   data={"images": [1, 2, 3]}, format='json')
 		self.assertEqual(resp_auth_1.status_code, status.HTTP_204_NO_CONTENT)
-		self.assertEqual(PremisesImages.objects.filter(premises_id=resp_post.data["id"], is_main=True).count(), 1)
-		self.assertEqual(PremisesImages.objects.filter(premises_id=resp_post.data["id"], is_main=False).count(), 2)
+		self.assertEqual(PremisesImage.objects.filter(premises_id=resp_post.data["id"], is_main=True).count(), 1)
+		self.assertEqual(PremisesImage.objects.filter(premises_id=resp_post.data["id"], is_main=False).count(), 2)
 
 	def test_availability_of_property(self):
 		resp_post = self.client_1.post(

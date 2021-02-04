@@ -1,12 +1,12 @@
 from rest_framework import generics, permissions
-from properties.models import PropertyTypes
+from properties.models import PropertyType
 from .serializers import PropertyTypeListSerializer, CitiesListSerializer
 from cities_light.models import City
 from .models import SupportedCities
 
 
 class PropertyTypesListView(generics.ListAPIView):
-    queryset = PropertyTypes.objects.all()
+    queryset = PropertyType.objects.all()
     serializer_class = PropertyTypeListSerializer
     permission_classes = [permissions.IsAuthenticated]
 

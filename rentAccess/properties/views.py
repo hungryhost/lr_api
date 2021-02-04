@@ -21,7 +21,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from register.models import Key
-from .models import Property, Ownership, PremisesImages, LocksWithProperties
+from .models import Property, Ownership, PremisesImage, LockWithProperty
 from .serializers import PropertySerializer, PropertyUpdateSerializer, \
 	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer, BulkFileUploadSerializer, \
 	PropertyOwnershipAddSerializer, PropertyOwnershipUpdateSerializer
@@ -57,7 +57,7 @@ class LockList(generics.ListCreateAPIView):
 		                                     user=self.request.user,
 		                                     permission_level_id=400).exists() and self.request.method == "GET":
 			raise exceptions.PermissionDenied
-		return LocksWithProperties.objects.filter(property_id=self.kwargs["pk"])
+		return LockWithProperty.objects.filter(property_id=self.kwargs["pk"])
 
 	def get_serializer_class(self):
 		return AddLockToPropertySerializer
@@ -416,8 +416,8 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 	def change_main_image(self, request, pk=None):
 		image_id = self.request.data.get("image_id", None)
 		if image_id:
-			obj_to_update = get_object_or_404(PremisesImages, pk=image_id)
-			obj = PremisesImages.objects.get(premises_id=pk, is_main=True)
+			obj_to_update = get_object_or_404(PremisesImage, pk=image_id)
+			obj = PremisesImage.objects.get(premises_id=pk, is_main=True)
 			obj.is_main = False
 			obj.save()
 			obj_to_update.set_main()
@@ -471,15 +471,15 @@ class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.Li
 			return Response(status=status.HTTP_400_BAD_REQUEST)
 		for item in image_ids_list:
 			try:
-				PremisesImages.objects.get(premises_id=pk, pk=item)
-			except PremisesImages.DoesNotExist:
+				PremisesImage.objects.get(premises_id=pk, pk=item)
+			except PremisesImage.DoesNotExist:
 				return Response(status=status.HTTP_400_BAD_REQUEST)
 		for item in image_ids_list:
-			image_obj = get_object_or_404(PremisesImages, pk=item, premises=pk)
+			image_obj = get_object_or_404(PremisesImage, pk=item, premises=pk)
 			image_obj.delete()
-		if not PremisesImages.objects.filter(premises_id=pk, is_main=True).exists() \
-				and PremisesImages.objects.filter(premises_id=pk, is_main=False).exists():
-			obj = PremisesImages.objects.latest('uploaded_at')
+		if not PremisesImage.objects.filter(premises_id=pk, is_main=True).exists() \
+				and PremisesImage.objects.filter(premises_id=pk, is_main=False).exists():
+			obj = PremisesImage.objects.latest('uploaded_at')
 			obj.is_main = True
 			obj.save()
 		return Response(status=status.HTTP_204_NO_CONTENT)

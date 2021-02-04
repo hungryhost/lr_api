@@ -8,7 +8,7 @@ from django.conf import settings
 from common.models import SupportedCities
 
 
-class PermissionLevels(models.Model):
+class PermissionLevel(models.Model):
 	p_level = models.PositiveIntegerField(primary_key=True)
 	description = models.CharField(max_length=150, null=True, blank=True)
 
@@ -25,7 +25,7 @@ class OwnershipPermission(models.Model):
 		return self.codename
 
 
-class PropertyTypes(models.Model):
+class PropertyType(models.Model):
 	r"""
 	Property types are defined by following codes:
 		- 100: Ordinary non-inhabitable property, like an office
@@ -64,7 +64,7 @@ class Property(models.Model):
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 	property_type = models.ForeignKey(
-		PropertyTypes,
+		PropertyType,
 		to_field='property_type',
 		related_name='property_types',
 		on_delete=models.CASCADE,
@@ -128,9 +128,9 @@ class Ownership(models.Model):
 	is_creator = models.BooleanField(default=False, null=False, blank=True)
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
-	permission_level = models.ForeignKey(PermissionLevels, to_field='p_level',
-										related_name='permission_levels',
-										on_delete=models.CASCADE)
+	permission_level = models.ForeignKey(PermissionLevel, to_field='p_level',
+	                                     related_name='permission_levels',
+	                                     on_delete=models.CASCADE)
 	#    initial_owner_object = InitialOwnershipManager()
 
 	def __str__(self):
@@ -182,7 +182,7 @@ def path_and_rename(instance, filename):
 	return os.path.join(path, filename)
 
 
-class PremisesImages(models.Model):
+class PremisesImage(models.Model):
 	premises = models.ForeignKey(Property, to_field='id',
 								related_name='property_images', on_delete=models.CASCADE)
 	image = models.ImageField(upload_to=path_and_rename, blank=True, null=True)
@@ -193,7 +193,7 @@ class PremisesImages(models.Model):
 		self.is_main = True
 
 
-class PremisesAddresses(models.Model):
+class PremisesAddress(models.Model):
 	premises = models.OneToOneField(Property, related_name='property_address', on_delete=models.CASCADE,
 									null=False, blank=False)
 	country = models.CharField(max_length=100, blank=False, null=False)
@@ -209,7 +209,7 @@ class PremisesAddresses(models.Model):
 	updated_at = models.DateTimeField(auto_now_add=True)
 
 
-class LocksWithProperties(models.Model):
+class LockWithProperty(models.Model):
 	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
 								related_name="property_with_lock")
 	lock = models.ForeignKey(Lock, to_field='uuid', on_delete=models.CASCADE,
