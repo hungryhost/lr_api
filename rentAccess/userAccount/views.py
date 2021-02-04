@@ -7,7 +7,7 @@ from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 
 from .documents_serializers import DocumentsSerializer
 from .permissions import IsOwnerOrSuperuser
-from .models import Documents, UserImages
+from .models import Document, UserImage
 from .serializers import (ChangePasswordSerializer,
 						  FileUploadSerializer,
 						  ProfileUpdateSerializer, ProfileDetailSerializer)
@@ -34,11 +34,11 @@ class BillingAddressesListCreate(generics.ListCreateAPIView):
 
 class DocumentsListCreate(generics.ListCreateAPIView):
 	permission_classes = (IsOwnerOrSuperuser,)
-	queryset = Documents.objects.all()
+	queryset = Document.objects.all()
 	serializer_class = DocumentsSerializer
 
 	def get_queryset(self):
-		return Documents.objects.all().filter(
+		return Document.objects.all().filter(
 			account=self.request.user)
 
 

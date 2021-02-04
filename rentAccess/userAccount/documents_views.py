@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status, mixins
 from rest_framework.response import Response
 
-from .models import Documents
+from .models import Document
 from .permissions import IsOwnerOrSuperuser
 from .documents_serializers import DocumentsSerializer
 
@@ -10,10 +10,10 @@ from .documents_serializers import DocumentsSerializer
 class ProfileDocumentsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
 
 	def get_queryset(self):
-		return Documents.objects.all()
+		return Document.objects.all()
 
 	def list(self, request, *args, **kwargs):
-		queryset = Documents.objects.all().filter(account=self.request.user)
+		queryset = Document.objects.all().filter(account=self.request.user)
 		page = self.paginate_queryset(queryset)
 		if page is not None:
 			serializer = DocumentsSerializer(page, many=True)
@@ -32,7 +32,7 @@ class ProfileDocumentsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.
 		return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 	def partial_update(self, request, pk=None):
-		instance = get_object_or_404(Documents, account=self.request.user, pk=pk)
+		instance = get_object_or_404(Document, account=self.request.user, pk=pk)
 		serializer = DocumentsSerializer(
 			instance,
 			data=self.request.data,
@@ -47,7 +47,7 @@ class ProfileDocumentsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.
 		return DocumentsSerializer
 
 	def get_object(self):
-		return get_object_or_404(Documents, account=self.request.user)
+		return get_object_or_404(Document, account=self.request.user)
 
 	def get_permissions(self):
 		permission_classes = [IsOwnerOrSuperuser, ]

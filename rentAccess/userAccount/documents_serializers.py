@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-from .models import Documents, DocumentTypes
+from .models import Document, DocumentType
 
 
 class DocumentsSerializer(serializers.ModelSerializer):
@@ -17,7 +17,7 @@ class DocumentsSerializer(serializers.ModelSerializer):
 	doc_is_confirmed = serializers.BooleanField(read_only=True)
 
 	class Meta:
-		model = Documents
+		model = Document
 		fields = [
 			'id',
 			'account',
@@ -32,8 +32,8 @@ class DocumentsSerializer(serializers.ModelSerializer):
 
 	def create(self, validated_data):
 		# TODO: separate update mechanisms
-		doc_type = DocumentTypes.objects.get(doc_type="passport_rus")
-		obj = Documents.objects.create(
+		doc_type = DocumentType.objects.get(doc_type="passport_rus")
+		obj = Document.objects.create(
 			account=self.context['request'].user,
 			doc_type=doc_type,
 			doc_serial=validated_data["doc_serial"],

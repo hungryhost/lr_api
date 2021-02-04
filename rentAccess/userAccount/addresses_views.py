@@ -4,15 +4,15 @@ from rest_framework.response import Response
 
 from .permissions import IsOwnerOrSuperuser
 from .addresses_serializers import BillingAddressSerializer
-from .models import BillingAddresses
+from .models import BillingAddress
 
 
 class ProfileAddressesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
 	def get_queryset(self):
-		return BillingAddresses.objects.all()
+		return BillingAddress.objects.all()
 
 	def list(self, request, *args, **kwargs):
-		queryset = BillingAddresses.objects.all().filter(account=self.request.user)
+		queryset = BillingAddress.objects.all().filter(account=self.request.user)
 		page = self.paginate_queryset(queryset)
 		if page is not None:
 			serializer = BillingAddressSerializer(page, many=True)
@@ -31,7 +31,7 @@ class ProfileAddressesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.
 		return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 	def partial_update(self, request, pk=None):
-		instance = BillingAddresses.objects.get(account=self.request.user, pk=pk)
+		instance = BillingAddress.objects.get(account=self.request.user, pk=pk)
 		serializer = BillingAddressSerializer(
 			instance,
 			data=self.request.data,
@@ -46,7 +46,7 @@ class ProfileAddressesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.
 		return BillingAddressSerializer
 
 	def get_object(self):
-		return get_object_or_404(BillingAddresses, account=self.request.user)
+		return get_object_or_404(BillingAddress, account=self.request.user)
 
 	def get_permissions(self):
 		permission_classes = [IsOwnerOrSuperuser, ]

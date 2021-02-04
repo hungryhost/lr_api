@@ -163,7 +163,7 @@ def path_and_rename(instance, filename):
 	return os.path.join(path, filename)
 
 
-class UserImages(models.Model):
+class UserImage(models.Model):
 	class Meta:
 		app_label = 'userAccount'
 
@@ -174,7 +174,7 @@ class UserImages(models.Model):
 	uploaded_at = models.DateTimeField(auto_now_add=True)
 
 
-class PhoneTypes(models.Model):
+class PhoneType(models.Model):
 	class Meta:
 		app_label = 'userAccount'
 
@@ -185,18 +185,18 @@ class PhoneTypes(models.Model):
 		return self.phone_type
 
 
-class Phones(models.Model):
+class Phone(models.Model):
 	class Meta:
 		app_label = 'userAccount'
 
 	account = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='account_phones',
 	                            on_delete=models.CASCADE)
 	phone_number = models.CharField(max_length=13, null=False, blank=False)
-	phone_type = models.ForeignKey(PhoneTypes, on_delete=models.RESTRICT)
+	phone_type = models.ForeignKey(PhoneType, on_delete=models.RESTRICT)
 	is_deleted = models.BooleanField(default=False)
 
 
-class DocumentTypes(models.Model):
+class DocumentType(models.Model):
 	class Meta:
 		app_label = 'userAccount'
 
@@ -207,7 +207,7 @@ class DocumentTypes(models.Model):
 		return self.doc_type
 
 
-class AddressTypes(models.Model):
+class AddressType(models.Model):
 	class Meta:
 		app_label = 'userAccount'
 
@@ -218,9 +218,9 @@ class AddressTypes(models.Model):
 		return self.addr_type
 
 
-class Documents(models.Model):
+class Document(models.Model):
 	account = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='documents', on_delete=models.CASCADE)
-	doc_type = models.ForeignKey(DocumentTypes, to_field='doc_type', on_delete=models.CASCADE)
+	doc_type = models.ForeignKey(DocumentType, to_field='doc_type', on_delete=models.CASCADE)
 	doc_serial = models.PositiveIntegerField(null=True, blank=True, unique=True)
 	doc_number = models.PositiveIntegerField(null=True, blank=True, unique=True)
 	doc_issued_at = models.DateField(null=True, blank=True)
@@ -228,12 +228,12 @@ class Documents(models.Model):
 	doc_is_confirmed = models.BooleanField(default=False)
 
 
-class BillingAddresses(models.Model):
+class BillingAddress(models.Model):
 	class Meta:
 		app_label = 'userAccount'
 
 	account = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='billing_addresses', on_delete=models.CASCADE)
-	addr_type = models.ForeignKey(AddressTypes, on_delete=models.RESTRICT)
+	addr_type = models.ForeignKey(AddressType, on_delete=models.RESTRICT)
 	addr_country = models.CharField(max_length=100, blank=True, null=True)
 	addr_city = models.CharField(max_length=100, blank=True, null=True)
 	addr_street_1 = models.CharField(max_length=100, blank=True, null=True)

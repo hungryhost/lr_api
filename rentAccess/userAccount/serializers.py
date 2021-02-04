@@ -9,8 +9,8 @@ from rest_framework import serializers
 from timezone_field.rest_framework import TimeZoneSerializerField
 
 from .models import (
-	UserImages,
-	BillingAddresses, Documents
+	UserImage,
+	BillingAddress, Document
 )
 
 User = get_user_model()
@@ -30,7 +30,7 @@ class UserImagesSerializer(serializers.ModelSerializer):
 	uploaded_at = serializers.DateTimeField(required=False)
 
 	class Meta:
-		model = UserImages
+		model = UserImage
 		fields = [
 			'filepath',
 			'uploaded_at',
@@ -57,7 +57,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
 	def get_userpic(self, obj):
 		try:
-			image_object = UserImages.objects.get(account=self.context['request'].user, is_deleted=False)
+			image_object = UserImage.objects.get(account=self.context['request'].user, is_deleted=False)
 			return self.context['request'].build_absolute_uri(image_object.image.url)
 		except Exception as e:
 			return ""
@@ -165,7 +165,7 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 
 	def get_userpic(self, obj):
 		try:
-			image_object = UserImages.objects.get(account=self.context['request'].user, is_deleted=False)
+			image_object = UserImage.objects.get(account=self.context['request'].user, is_deleted=False)
 			return self.context['request'].build_absolute_uri(image_object.image.url)
 		except Exception as e:
 			return ""
@@ -282,23 +282,23 @@ class FileUploadSerializer(serializers.ModelSerializer):
 	image = serializers.ImageField(required=True)
 
 	class Meta:
-		model = UserImages
+		model = UserImage
 		fields = ('account', 'image', 'is_deleted', 'uploaded_at')
 		read_only_fields = ['account']
 
 	def create(self, validated_data):
 		# TODO: separate update mechanisms
 		image = validated_data.get('image', None)
-		if not UserImages.objects.filter(account=self.context['request'].user).exists():
-			user_image_object = UserImages.objects.create(
+		if not UserImage.objects.filter(account=self.context['request'].user).exists():
+			user_image_object = UserImage.objects.create(
 				account=self.context['request'].user,
 				image=image)
 			return user_image_object
 		else:
-			UserImages.objects.filter(account=self.context['request'].user).delete()
-			UserImages.objects.create(
+			UserImage.objects.filter(account=self.context['request'].user).delete()
+			UserImage.objects.create(
 				account=self.context['request'].user,
 				image=image,
 				uploaded_at=datetime.datetime.now()
 			)
-			return UserImages.objects.get(account=self.context['request'].user)
+			return UserImage.objects.get(account=self.context['request'].user)

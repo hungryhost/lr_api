@@ -10,7 +10,7 @@ from properties.models import Property
 from bookings.serializers import BookingsListSerializer
 from properties.serializers import PropertyListSerializer
 from .permissions import IsOwnerOrSuperuser
-from .models import Documents, UserImages, BillingAddresses
+from .models import Document, UserImage, BillingAddress
 from .serializers import (ChangePasswordSerializer,
 						  FileUploadSerializer,
 						  ProfileUpdateSerializer, ProfileDetailSerializer)
@@ -99,7 +99,7 @@ class ProfileImageViewSet(viewsets.ViewSet):
 
 	@action(detail=True, methods=['delete'])
 	def delete_user_picture(self, request):
-		UserImages.objects.get(account=self.request.user).delete()
+		UserImage.objects.get(account=self.request.user).delete()
 		return Response(status=status.HTTP_204_NO_CONTENT)
 
 	def get_permissions(self):

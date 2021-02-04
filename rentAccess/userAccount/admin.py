@@ -4,20 +4,20 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.core.exceptions import ValidationError
-from .models import (CustomUser, UserImages,
-                     Documents, DocumentTypes, AddressTypes,
-                     BillingAddresses)
-from .models import Phones, PhoneTypes
+from .models import (CustomUser, UserImage,
+                     Document, DocumentType, AddressType,
+                     BillingAddress)
+from .models import Phone, PhoneType
 
 # Register your models here.
-admin.site.register(UserImages)
+admin.site.register(UserImage)
 
-admin.site.register(PhoneTypes)
-admin.site.register(Phones)
-admin.site.register(DocumentTypes)
-admin.site.register(Documents)
-admin.site.register(AddressTypes)
-admin.site.register(BillingAddresses)
+admin.site.register(PhoneType)
+admin.site.register(Phone)
+admin.site.register(DocumentType)
+admin.site.register(Document)
+admin.site.register(AddressType)
+admin.site.register(BillingAddress)
 
 
 class UserCreationForm(forms.ModelForm):
