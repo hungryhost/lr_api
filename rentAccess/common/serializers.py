@@ -1,7 +1,7 @@
 from rest_framework import serializers, status
 from cities_light.models import City
 from properties.models import PropertyType
-from .models import SupportedCities
+from .models import SupportedCity
 
 
 class PropertyTypeListSerializer(serializers.ModelSerializer):
@@ -17,7 +17,7 @@ class CitiesListSerializer(serializers.ModelSerializer):
 	timezone = serializers.CharField(source='city.timezone')
 
 	class Meta:
-		model = SupportedCities
+		model = SupportedCity
 		fields = [
 			'name',
 			'display_name',

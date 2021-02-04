@@ -2,7 +2,7 @@ from django.db import models
 from register.models import Lock, Key, Card
 
 
-class Logs(models.Model):
+class AccessLog(models.Model):
     """Model, representing access attempts.
     Fields:
         lock (Lock): Locks uuid that was attempted to access.

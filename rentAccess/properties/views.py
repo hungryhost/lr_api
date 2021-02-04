@@ -4,7 +4,7 @@ import pytz
 
 from .availability_utils import available_days_from_db, available_hours_from_time, available_hours_from_db, \
 	available_hours_to_db
-from bookings.models import Bookings
+from bookings.models import Booking
 from .property_permissions import IsPublicProperty, PropertyOwner300, PropertyOwner400
 from .logger_helpers import get_client_ip
 from register.models import Key, Lock
@@ -384,7 +384,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		query_1.add(Q(booked_property_id=pk), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from=datetime_stop) | Q(booked_until=datetime_start), query_2.connector)
-		queryset = Bookings.objects.filter(query_1).exclude(query_2)
+		queryset = Booking.objects.filter(query_1).exclude(query_2)
 		if queryset.exists():
 			return Response(status=status.HTTP_409_CONFLICT)
 		return Response(status=status.HTTP_200_OK)
@@ -394,9 +394,9 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		prop = Property.objects.select_related('availability', 'property_address').get(pk=pk)
 		self.check_object_permissions(self.request, prop)
 		date = self.request.query_params.get('date', None)
-		bookings = Bookings.objects.all().filter(booked_property=prop,
-		                                         booked_from__date=date,
-		                                         booked_until__date=date)
+		bookings = Booking.objects.all().filter(booked_property=prop,
+		                                        booked_from__date=date,
+		                                        booked_until__date=date)
 
 
 		if (date is None) or prop.booking_type == 100:

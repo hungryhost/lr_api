@@ -4,7 +4,7 @@ import datetime
 from django.conf import settings
 
 
-class Bookings(models.Model):
+class Booking(models.Model):
 	booked_from = models.DateTimeField(null=False, blank=False)
 	booked_until = models.DateTimeField(null=False, blank=False)
 	booked_property = models.ForeignKey(Property, related_name="bookings",

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from common.models import SupportedCities
+from common.models import SupportedCity
 
 
 def validate_price(price: float):
@@ -21,8 +21,8 @@ def validate_price(price: float):
 
 def validate_city(city: str):
 	try:
-		city = SupportedCities.objects.get(name=city)
-	except SupportedCities.DoesNotExist:
+		city = SupportedCity.objects.get(name=city)
+	except SupportedCity.DoesNotExist:
 		raise serializers.ValidationError(
 			"City with given name is not supported."
 		)

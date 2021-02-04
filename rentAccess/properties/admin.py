@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (Property, PropertyLog, Ownership, PremisesImage, PremisesAddress, PropertyType,
                      LockWithProperty, PermissionLevel, OwnershipPermission, OwnerPermission, Availability)
-from bookings.models import Bookings
+from bookings.models import Booking
 # Register your models here.
 app = 'properties'
 
@@ -24,6 +24,6 @@ admin.site.register(PropertyLog, PropertiesMainAdmin)
 admin.site.register(Ownership)
 admin.site.register(PremisesImage)
 admin.site.register(PropertyType)
-admin.site.register(Bookings)
+admin.site.register(Booking)
 admin.site.register(LockWithProperty)
 

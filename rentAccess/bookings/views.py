@@ -6,7 +6,7 @@ import datetime
 from rest_framework.generics import GenericAPIView
 from rest_framework.settings import api_settings
 
-from bookings.models import Bookings
+from bookings.models import Booking
 from django.db.models import Q, Prefetch
 from django.http import Http404
 from rest_framework import generics, permissions, status, response, serializers, viewsets, mixins, exceptions, \
@@ -93,7 +93,7 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 		ownerships = [owner.user for owner in property_owners.owners.all()]
 		if not (self.request.user in ownerships) and self.request.method == "GET":
 			raise exceptions.PermissionDenied
-		return Bookings.objects.all().filter(booked_property=self.kwargs['pk'], is_deleted=False)
+		return Booking.objects.all().filter(booked_property=self.kwargs['pk'], is_deleted=False)
 
 	def _get_serializer(self, _property, _owner=None, *args, **kwargs):
 		"""
@@ -135,7 +135,7 @@ class BookingsAllList(generics.ListAPIView):
 	def get_queryset(self, *args, **kwargs):
 		query = Q()
 		query.add(Q(booked_property__owners__user=self.request.user) & Q(is_deleted=False), query.connector)
-		return Bookings.objects.filter(
+		return Booking.objects.filter(
 			query
 		)
 
@@ -188,7 +188,7 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 		return Response(status=status.HTTP_204_NO_CONTENT)
 
 	def get_queryset(self):
-		return Bookings.objects.all()
+		return Booking.objects.all()
 
 	def get_permissions(self):
 		if self.action == 'retrieve':
@@ -207,10 +207,10 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 
 	def get_object(self, booked_property=None, booking_id=None):
 		try:
-			obj = Bookings.objects.get(booked_property=booked_property, id=booking_id, is_deleted=False)
+			obj = Booking.objects.get(booked_property=booked_property, id=booking_id, is_deleted=False)
 			self.check_object_permissions(self.request, obj)
 			return obj
-		except Bookings.DoesNotExist:
+		except Booking.DoesNotExist:
 			raise Http404
 
 	def get_serializer_class(self):

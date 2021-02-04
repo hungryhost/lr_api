@@ -1,7 +1,7 @@
-from .models import ActionTypes, ResultTypes, SupportedCities
+from .models import ActionType, ResultType, SupportedCity
 from django.contrib import admin
 
 
-admin.site.register(ActionTypes)
-admin.site.register(ResultTypes)
-admin.site.register(SupportedCities)
+admin.site.register(ActionType)
+admin.site.register(ResultType)
+admin.site.register(SupportedCity)

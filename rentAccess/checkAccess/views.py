@@ -5,7 +5,7 @@ from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
 from register.models import Card, Lock, Key
-from .models import Logs
+from .models import AccessLog
 
 char_accept = '#'
 """str: character that returns in response on accepted access attempt.
@@ -73,11 +73,11 @@ def check_access_by_code(request):
     try:
         key = Key.get_instance_by_hash_id(hash_code.lower())
     except ObjectDoesNotExist as exc:
-        Logs.objects.create(result=False, is_failed=True, lock=lock.id, try_time=now, hash_code=hash_code)
+        AccessLog.objects.create(result=False, is_failed=True, lock=lock.id, try_time=now, hash_code=hash_code)
         return Response(char_denied, headers={'Error': str(exc)}, status=403)
     result = Key.objects.filter(lock=lock, hash_code=hash_code, access_start__lte=now, access_stop__gte=now).exists()
     result_char = char_accept if result else char_denied
     lock.echo(save=True)
-    Logs.objects.create(result=result, lock=lock.id, try_time=now, hash_code=hash_code)
+    AccessLog.objects.create(result=result, lock=lock.id, try_time=now, hash_code=hash_code)
     return Response(result_char, status=200)
 

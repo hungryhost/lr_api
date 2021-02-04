@@ -5,7 +5,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from bookings.models import Bookings
+from bookings.models import Booking
 from properties.models import Property
 from bookings.serializers import BookingsListSerializer
 from properties.serializers import PropertyListSerializer
@@ -24,7 +24,7 @@ class UserBookingsList(generics.ListAPIView):
 
 	def get_queryset(self, *args, **kwargs):
 		author = get_object_or_404(User, id=self.request.user.id)
-		return Bookings.objects.all().filter(client_email=author.email)
+		return Booking.objects.all().filter(client_email=author.email)
 
 	def get_permissions(self):
 		permission_classes = [IsAuthenticated]

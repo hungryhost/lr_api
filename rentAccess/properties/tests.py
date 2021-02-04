@@ -19,7 +19,7 @@ from rest_framework.test import APIClient, APITestCase
 from properties.models import PermissionLevel
 from bookings.serializers import HourlyBookingsFromOwnerSerializer
 from .models import PropertyType, Ownership, Property, PremisesAddress, PremisesImage
-from bookings.models import Bookings
+from bookings.models import Booking
 
 User = get_user_model()
 
@@ -651,7 +651,7 @@ class TestsOfProperties(APITestCase):
 			data=self.create_booking_wrong_dates_1_JSON, format='json')
 		self.assertEqual(resp_create_booking_wrong_dates.status_code, status.HTTP_400_BAD_REQUEST)
 
-		self.assertEqual(Bookings.objects.all().filter(booked_property=resp_post.data["id"]).count(), 1)
+		self.assertEqual(Booking.objects.all().filter(booked_property=resp_post.data["id"]).count(), 1)
 
 		resp_retrieve_booking = self.client.get(
 			reverse('properties:properties-bookings-detail',
@@ -670,7 +670,7 @@ class TestsOfProperties(APITestCase):
 		resp_retrieve_booking.data.pop('created_at')
 		resp_retrieve_booking.data.pop('updated_at')
 		self.assertEqual(resp_retrieve_booking.data, self.correct_response_for_creation_booking_JSON)
-		booking_object = Bookings.objects.get(
+		booking_object = Booking.objects.get(
 			booked_property=resp_post.data["id"],
 			booked_from=resp_retrieve_booking.data["booked_from"],
 			booked_until=resp_retrieve_booking.data["booked_until"])
@@ -717,7 +717,7 @@ class TestsOfProperties(APITestCase):
 			reverse('properties:properties-bookings-list',
 			args=(resp_post.data["id"],)),
 			data=self.create_booking_JSON, format='json')
-		booking_object = Bookings.objects.get(
+		booking_object = Booking.objects.get(
 			booked_property=resp_post.data["id"], id=resp_create_booking.data["id"])
 		property_object = Property.objects.get(id=resp_post.data["id"])
 
@@ -790,10 +790,10 @@ class TestsOfProperties(APITestCase):
 			kwargs={"pk": resp_post.data["id"], 'booking_id': resp_create_booking.data["id"]}),
 			data={"status": "DECLINED"},
 			format='json')
-		booking_object_after_update = Bookings.objects.get(
+		booking_object_after_update = Booking.objects.get(
 			booked_property=resp_post.data["id"], id=resp_create_booking.data["id"])
 
-		self.assertEqual(Bookings.objects.get(
+		self.assertEqual(Booking.objects.get(
 			booked_property=resp_post.data["id"], id=resp_create_booking.data["id"]).status, "DECLINED")
 		self.assertEqual(booking_object_after_update.status, booking_object_resp_user_2.data["status"])
 
@@ -807,7 +807,7 @@ class TestsOfProperties(APITestCase):
 				"number_of_clients": 4
 			},
 			format='json')
-		booking_object_after_update = Bookings.objects.get(
+		booking_object_after_update = Booking.objects.get(
 			booked_property=resp_post.data["id"], id=resp_create_booking.data["id"])
 		booking_object_after_update_serialized = HourlyBookingsFromOwnerSerializer(booking_object_after_update)
 
@@ -828,7 +828,7 @@ class TestsOfProperties(APITestCase):
 			path=reverse('properties:properties-bookings-list', args=(resp_post.data["id"],)),
 			data=self.create_booking_JSON,
 			format='json')
-		booking_object_before_update = Bookings.objects.get(
+		booking_object_before_update = Booking.objects.get(
 			booked_property=resp_post.data["id"], id=resp_create_booking.data["id"])
 		serialized_booking_object = HourlyBookingsFromOwnerSerializer(booking_object_before_update)
 		client_2 = APIClient()

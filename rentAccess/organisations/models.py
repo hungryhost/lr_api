@@ -5,7 +5,7 @@ from django_countries.fields import CountryField
 from cities_light.models import City
 
 
-class OrganisationPermissions(models.Model):
+class OrganisationPermission(models.Model):
 	r"""
 	Model for permissions available for members of an organisation.
 	Must be filled in manually on creation.
@@ -21,7 +21,7 @@ class OrganisationPermissions(models.Model):
 
 	def save(self, *args, **kwargs):
 		self.updated_at = timezone.now()
-		super(OrganisationPermissions, self).save(*args, **kwargs)
+		super(OrganisationPermission, self).save(*args, **kwargs)
 
 
 class Organisation(models.Model):

@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.urls import reverse
 from rest_framework import serializers, status
-from common.models import SupportedCities
+from common.models import SupportedCity
 import logging
 
 from .logger_helpers import get_client_ip

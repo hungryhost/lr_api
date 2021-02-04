@@ -2,7 +2,7 @@ from django.db import models
 from phone_field import PhoneField
 from django.conf import settings
 # Create your models here.
-from common.models import SupportedCities
+from common.models import SupportedCity
 
 
 class SupportMessage(models.Model):
@@ -28,8 +28,8 @@ class ShippingAddress(models.Model):
 	shipping_ticket = models.OneToOneField(LockMessage, related_name='shipping_address', on_delete=models.CASCADE,
 									null=True, blank=True)
 	country = models.CharField(max_length=100, blank=False, null=False)
-	city = models.ForeignKey(SupportedCities, to_field='name', on_delete=models.CASCADE,
-		related_name='shipping_city', blank=False, null=False)
+	city = models.ForeignKey(SupportedCity, to_field='name', on_delete=models.CASCADE,
+	                         related_name='shipping_city', blank=False, null=False)
 	street = models.CharField(max_length=255, blank=False, null=False)
 	building = models.CharField(max_length=20, blank=True, null=False)
 	floor = models.CharField(max_length=20, blank=True, null=False)

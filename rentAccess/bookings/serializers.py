@@ -11,7 +11,7 @@ import logging
 from properties.logger_helpers import get_client_ip
 from properties.models import Property, Ownership
 from properties.serializers import PropertyListSerializer
-from .models import Bookings
+from .models import Booking
 User = get_user_model()
 crud_logger_info = logging.getLogger('rentAccess.properties.crud.info')
 owners_logger = logging.getLogger('rentAccess.properties.owners.info')
@@ -27,7 +27,7 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 	client_email = serializers.EmailField(required=True)
 
 	class Meta:
-		model = Bookings
+		model = Booking
 		fields = (
 			'id',
 			'booked_property',
@@ -81,7 +81,7 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
-		queryset = Bookings.objects.filter(query_1).exclude(query_2)
+		queryset = Booking.objects.filter(query_1).exclude(query_2)
 		if queryset.exists():
 			raise serializers.ValidationError({
 				"dates": "Cannot book with these dates",
@@ -106,7 +106,7 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 		else:
 			price = None
 
-		created_booking = Bookings(
+		created_booking = Booking(
 			number_of_clients=number_of_clients,
 			booked_from=booked_from_with_time,
 			booked_until=booked_until_with_tile,
@@ -127,7 +127,7 @@ class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 	booked_until = serializers.DateTimeField(format="%Y-%m-%d", required=True)
 
 	class Meta:
-		model = Bookings
+		model = Booking
 		fields = (
 			'id',
 			'booked_property',
@@ -177,7 +177,7 @@ class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
-		queryset = Bookings.objects.filter(query_1).exclude(query_2)
+		queryset = Booking.objects.filter(query_1).exclude(query_2)
 
 		if queryset.exists():
 			raise serializers.ValidationError({
@@ -199,7 +199,7 @@ class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 			price = self.context['property'].price * delta.days
 		else:
 			price = None
-		created_booking = Bookings(
+		created_booking = Booking(
 			number_of_clients=number_of_clients,
 			booked_from=booked_from_with_time,
 			booked_until=booked_until_with_tile,
@@ -222,7 +222,7 @@ class HourlyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 	client_email = serializers.EmailField(required=True)
 
 	class Meta:
-		model = Bookings
+		model = Booking
 		fields = (
 			'id',
 			'booked_property',
@@ -262,7 +262,7 @@ class HourlyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
-		queryset = Bookings.objects.filter(query_1).exclude(query_2)
+		queryset = Booking.objects.filter(query_1).exclude(query_2)
 		if queryset.exists():
 			raise serializers.ValidationError({
 				"dates": "Cannot book with these dates",
@@ -286,7 +286,7 @@ class HourlyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 			price = self.context['property'].price * delta
 		else:
 			price = None
-		created_booking = Bookings(
+		created_booking = Booking(
 			number_of_clients=number_of_clients,
 			booked_from=booked_from,
 			booked_until=booked_until,
@@ -317,7 +317,7 @@ class HourlyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=True)
 
 	class Meta:
-		model = Bookings
+		model = Booking
 		fields = (
 			'id',
 			'booked_property',
@@ -354,7 +354,7 @@ class HourlyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
-		queryset = Bookings.objects.filter(query_1).exclude(query_2)
+		queryset = Booking.objects.filter(query_1).exclude(query_2)
 
 		if queryset.exists():
 			raise serializers.ValidationError({
@@ -375,7 +375,7 @@ class HourlyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 			price = self.context['property'].price * delta
 		else:
 			price = None
-		created_booking = Bookings(
+		created_booking = Booking(
 			number_of_clients=number_of_clients,
 			booked_from=booked_from,
 			booked_until=booked_until,
@@ -402,7 +402,7 @@ class BookingsListSerializer(serializers.ModelSerializer):
 	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
 
 	class Meta:
-		model = Bookings
+		model = Booking
 		fields = (
 			'id',
 			'booked_property',
@@ -425,7 +425,7 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
 
 	class Meta:
-		model = Bookings
+		model = Booking
 		fields = (
 			'id',
 			'booked_property',
@@ -472,7 +472,7 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
-		queryset = Bookings.objects.filter(query_1).exclude(query_2)
+		queryset = Booking.objects.filter(query_1).exclude(query_2)
 
 		if queryset.exists():
 			raise serializers.ValidationError({
@@ -515,7 +515,7 @@ class BookingUpdateAdminNotCreatorSerializer(serializers.ModelSerializer):
 	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", read_only=True)
 
 	class Meta:
-		model = Bookings
+		model = Booking
 		fields = (
 			'id',
 			'booked_property',
@@ -558,7 +558,7 @@ class BookingUpdateClientSerializer(serializers.ModelSerializer):
 	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
 
 	class Meta:
-		model = Bookings
+		model = Booking
 		fields = (
 			'id',
 			'booked_property',
@@ -600,7 +600,7 @@ class BookingUpdateClientSerializer(serializers.ModelSerializer):
 			query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 			query_2 = Q()
 			query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
-			queryset = Bookings.objects.filter(query_1).exclude(query_2)
+			queryset = Booking.objects.filter(query_1).exclude(query_2)
 
 			if queryset.exists():
 				raise serializers.ValidationError({

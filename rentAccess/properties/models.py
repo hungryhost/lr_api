@@ -5,7 +5,7 @@ from django.db import models
 import datetime
 from register.models import Lock
 from django.conf import settings
-from common.models import SupportedCities
+from common.models import SupportedCity
 
 
 class PermissionLevel(models.Model):
@@ -197,7 +197,7 @@ class PremisesAddress(models.Model):
 	premises = models.OneToOneField(Property, related_name='property_address', on_delete=models.CASCADE,
 									null=False, blank=False)
 	country = models.CharField(max_length=100, blank=False, null=False)
-	city = models.ForeignKey(SupportedCities, to_field='name', on_delete=models.CASCADE,
+	city = models.ForeignKey(SupportedCity, to_field='name', on_delete=models.CASCADE,
 	                         related_name='property_city', blank=False, null=False)
 	street = models.CharField(max_length=255, blank=False, null=False)
 	building = models.CharField(max_length=20, blank=True, null=False)
