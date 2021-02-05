@@ -391,18 +391,33 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	@action(detail=True, methods=['get'])
 	def get_hourly_availability(self, request, pk=None):
-		prop = Property.objects.select_related('availability', 'property_address').get(pk=pk)
+		try:
+			prop = Property.objects.select_related('availability', 'property_type',
+								'property_address').get(id=pk)
+			self.check_object_permissions(self.request, prop)
+		except Property.DoesNotExist:
+			raise Http404
+
 		self.check_object_permissions(self.request, prop)
+
 		date = self.request.query_params.get('date', None)
+		if (date is None) or prop.booking_type == 100:
+			return Response(data={"No date provided or wrong booking_type of the property"},
+				status=status.HTTP_400_BAD_REQUEST)
+		try:
+			date_dt = datetime.datetime.strptime(date, '%Y-%m-%d')
+		except Exception as e:
+			return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 		bookings = Booking.objects.all().filter(booked_property=prop,
 		                                        booked_from__date=date,
 		                                        booked_until__date=date)
 
-
-		if (date is None) or prop.booking_type == 100:
-			return Response(data={"No date provided or wrong booking_type of the property"},
-				status=status.HTTP_400_BAD_REQUEST)
-		slots = available_hours_from_db(prop, bookings)
+		days = available_days_from_db(prop.availability.open_days)
+		if date_dt.weekday() not in days:
+			return Response(data={"date": "Property is not available at that day."},
+			                status=status.HTTP_400_BAD_REQUEST)
+		slots = available_hours_from_db(prop, bookings, b_date=date_dt)
 		data = {
 			"count": len(slots),
 			"property_timezone": prop.property_address.city.city.timezone,
@@ -431,7 +446,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	def get_permissions(self):
 		permission_classes = []
-		if self.action in ['retrieve', 'get_availability']:
+		if self.action in ['retrieve', 'get_availability', 'get_hourly_availability']:
 			permission_classes = [IsPublicProperty | IsOwner | IsSuperUser]
 		if self.action in ['partial_update', 'change_main_image']:
 			permission_classes = [PropertyOwner300 | PropertyOwner400 | IsSuperUser]
