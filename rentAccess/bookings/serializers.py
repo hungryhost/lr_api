@@ -1,6 +1,6 @@
 from datetime import date
 from datetime import datetime
-
+from .timezone_utils import utc_to_aware
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.urls import reverse
@@ -8,10 +8,13 @@ from rest_framework import serializers, status
 
 import logging
 
+from properties.availability_utils import available_days_from_db, available_hours_from_db, get_slots_from_bookings, \
+	decompose_incoming_booking
 from properties.logger_helpers import get_client_ip
 from properties.models import Property, Ownership
 from properties.serializers import PropertyListSerializer
 from .models import Booking
+
 User = get_user_model()
 crud_logger_info = logging.getLogger('rentAccess.properties.crud.info')
 owners_logger = logging.getLogger('rentAccess.properties.owners.info')
@@ -22,9 +25,10 @@ images_logger = logging.getLogger('rentAccess.properties.images.info')
 class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 	booked_property = PropertyListSerializer(many=False, read_only=True)
 	number_of_clients = serializers.IntegerField(required=True, max_value=100, min_value=1)
-	booked_from = serializers.DateField(format="%Y-%m-%d", required=True)
-	booked_until = serializers.DateField(format="%Y-%m-%d", required=True)
+	booked_from = serializers.DateTimeField(input_formats=["%Y-%m-%d"], format="%Y-%m-%d", required=True)
+	booked_until = serializers.DateTimeField(input_formats=["%Y-%m-%d"], format="%Y-%m-%d", required=True)
 	client_email = serializers.EmailField(required=True)
+	timezone = serializers.SerializerMethodField('get_timezone', required=False)
 
 	class Meta:
 		model = Booking
@@ -37,11 +41,13 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 			'price',
 			'booked_from',
 			'booked_until',
+			'timezone',
 			'booked_by',
 			'created_at',
 			'updated_at'
 		)
 		read_only_fields = [
+			'timezone',
 			'booked_by',
 			'created_at',
 			'updated_at',
@@ -51,12 +57,17 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 		]
 
 	def to_representation(self, instance):
-		instance.booked_from = instance.booked_from.date()
-		instance.booked_until = instance.booked_until.date()
 		representation = super().to_representation(instance)
 		property_to_book = self.context['property']
-		booked_from_with_time = datetime.combine(instance.booked_from, property_to_book.availability.available_from)
-		booked_until_with_tile = datetime.combine(instance. booked_until, property_to_book.availability.available_until)
+		timezone = property_to_book.property_address.city.city.timezone
+		booked_from_with_time = utc_to_aware(datetime.combine(
+				instance.booked_from,
+				property_to_book.availability.available_from),
+			timezone)
+		booked_until_with_tile = utc_to_aware(datetime.combine(
+				instance.booked_until, property_to_book.availability.available_until),
+			timezone)
+
 		representation["booked_from"] = booked_from_with_time.strftime("%Y-%m-%dT%H:%M%z")
 		representation["booked_until"] = booked_until_with_tile.strftime("%Y-%m-%dT%H:%M%z")
 		return representation
@@ -74,13 +85,16 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
 		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
-		query_1.add(Q(booked_from__lte=attrs["booked_from"]) & Q(booked_until__gte=attrs["booked_from"]),
-			query_1.connector)
-		query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
-		query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
+		query_1.add(Q(booked_from__date__lte=attrs["booked_from"]) & Q(booked_until__date__gte=attrs["booked_from"]),
+		            query_1.connector)
+		query_1.add(Q(booked_from__date__lt=attrs["booked_until"]) & Q(booked_until__date__gte=attrs["booked_until"]),
+		            Q.OR)
+		query_1.add(Q(booked_from__date__gte=attrs["booked_from"]) & Q(booked_from__date__lte=attrs["booked_until"]),
+		            Q.OR)
 		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 		query_2 = Q()
-		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
+		query_2.add(Q(booked_from__date=attrs["booked_until"]) | Q(booked_until__date=attrs["booked_from"]),
+		            query_2.connector)
 		queryset = Booking.objects.filter(query_1).exclude(query_2)
 		if queryset.exists():
 			raise serializers.ValidationError({
@@ -88,6 +102,9 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 			}, code=status.HTTP_409_CONFLICT)
 
 		return super(DailyBookingCreateFromOwnerSerializer, self).validate(attrs)
+
+	def get_timezone(self, obj):
+		return self.context['property'].property_address.city.city.timezone
 
 	def create(self, validated_data):
 
@@ -97,8 +114,15 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 		client_email = validated_data.get("client_email")
 
 		property_to_book = self.context['property']
-		booked_from_with_time = datetime.combine(booked_from, property_to_book.availability.available_from)
-		booked_until_with_tile = datetime.combine(booked_until, property_to_book.availability.available_until)
+		timezone = property_to_book.property_address.city.city.timezone
+		booked_from_with_time = utc_to_aware(
+			datetime.combine(booked_from, property_to_book.availability.available_from),
+			timezone
+		)
+		booked_until_with_tile = utc_to_aware(
+			datetime.combine(booked_until, property_to_book.availability.available_until),
+			timezone
+		)
 
 		if property_to_book.price:
 			delta = booked_until - booked_from
@@ -123,8 +147,9 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 	booked_property = PropertyListSerializer(many=False, read_only=True)
 	number_of_clients = serializers.IntegerField(required=True, max_value=100)
-	booked_from = serializers.DateTimeField(format="%Y-%m-%d", required=True)
-	booked_until = serializers.DateTimeField(format="%Y-%m-%d", required=True)
+	booked_from = serializers.DateTimeField(input_formats=["%Y-%m-%d"], format="%Y-%m-%d", required=True)
+	booked_until = serializers.DateTimeField(input_formats=["%Y-%m-%d"], format="%Y-%m-%d", required=True)
+	timezone = serializers.SerializerMethodField('get_timezone', required=False)
 
 	class Meta:
 		model = Booking
@@ -136,12 +161,14 @@ class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 			'status',
 			'booked_from',
 			'booked_until',
+			'timezone',
 			'booked_by',
 			'price',
 			'created_at',
 			'updated_at'
 		)
 		read_only_fields = [
+			'timezone',
 			'booked_by',
 			'created_at',
 			'updated_at',
@@ -150,13 +177,25 @@ class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 			'price'
 		]
 
+	def get_timezone(self, obj):
+		return self.context['property'].property_address.city.city.timezone
+
 	def to_representation(self, instance):
-		instance.booked_from = instance.booked_from.date()
-		instance.booked_until = instance.booked_until.date()
 		representation = super().to_representation(instance)
 		property_to_book = self.context['property']
-		booked_from_with_time = datetime.combine(instance.booked_from, property_to_book.availability.available_from)
-		booked_until_with_tile = datetime.combine(instance.booked_until, property_to_book.availability.available_until)
+		timezone = property_to_book.property_address.city.city.timezone
+		booked_from_with_time = utc_to_aware(
+			datetime.combine(
+				instance.booked_from,
+				property_to_book.availability.available_from),
+			timezone
+		)
+		booked_until_with_tile = utc_to_aware(
+			datetime.combine(
+				instance.booked_until, property_to_book.availability.available_until),
+			timezone
+		)
+
 		representation["booked_from"] = booked_from_with_time.strftime("%Y-%m-%dT%H:%M%z")
 		representation["booked_until"] = booked_until_with_tile.strftime("%Y-%m-%dT%H:%M%z")
 		return representation
@@ -170,19 +209,22 @@ class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
 		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
-		query_1.add(Q(booked_from__lte=attrs["booked_from"]) & Q(booked_until__gte=attrs["booked_from"]),
-					query_1.connector)
-		query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
-		query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
+		query_1.add(Q(booked_from__date__lte=attrs["booked_from"]) & Q(booked_until__date__gte=attrs["booked_from"]),
+		            query_1.connector)
+		query_1.add(Q(booked_from__date__lt=attrs["booked_until"]) & Q(booked_until__date__gte=attrs["booked_until"]),
+		            Q.OR)
+		query_1.add(Q(booked_from__date__gte=attrs["booked_from"]) & Q(booked_from__date__lte=attrs["booked_until"]),
+		            Q.OR)
 		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 		query_2 = Q()
-		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
+		query_2.add(Q(booked_from__date=attrs["booked_until"]) | Q(booked_until__date=attrs["booked_from"]),
+		            query_2.connector)
 		queryset = Booking.objects.filter(query_1).exclude(query_2)
-
 		if queryset.exists():
 			raise serializers.ValidationError({
 				"dates": "Cannot book with these dates",
 			}, code=status.HTTP_409_CONFLICT)
+
 		return super(DailyBookingCreateFromClientSerializer, self).validate(attrs)
 
 	def create(self, validated_data):
@@ -191,9 +233,15 @@ class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 		booked_until = validated_data.get("booked_until")
 
 		property_to_book = self.context['property']
-		booked_from_with_time = datetime.combine(booked_from, property_to_book.availability.available_from)
-		booked_until_with_tile = datetime.combine(booked_until, property_to_book.availability.available_until)
-
+		timezone = property_to_book.property_address.city.city.timezone
+		booked_from_with_time = utc_to_aware(
+			datetime.combine(booked_from, property_to_book.availability.available_from),
+			timezone
+		)
+		booked_until_with_tile = utc_to_aware(
+			datetime.combine(booked_until, property_to_book.availability.available_until),
+			timezone
+		)
 		if property_to_book.price:
 			delta = booked_until.date() - booked_from.date()
 			price = self.context['property'].price * delta.days
@@ -220,6 +268,7 @@ class HourlyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=True)
 	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=True)
 	client_email = serializers.EmailField(required=True)
+	timezone = serializers.SerializerMethodField('get_timezone', required=False)
 
 	class Meta:
 		model = Booking
@@ -231,17 +280,22 @@ class HourlyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 			'status',
 			'booked_from',
 			'booked_until',
+			'timezone',
 			'booked_by',
 			'created_at',
 			'updated_at'
 		)
 		read_only_fields = [
+			'timezone',
 			'booked_by',
 			'created_at',
 			'updated_at',
 			'id',
 			'status'
 		]
+
+	def get_timezone(self, obj):
+		return self.context['property'].property_address.city.city.timezone
 
 	def validate(self, attrs):
 		if attrs["booked_from"] >= attrs["booked_until"]:
@@ -253,6 +307,40 @@ class HourlyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 			raise serializers.ValidationError({
 				"Error": "Cannot book property you own for yourself.",
 			})
+		# we retrieve the property from context in order to reduce sql queries
+		property_to_book = self.context['property']
+
+		# dates are retrieved as datetime.datetime
+		booked_from_dt = attrs["booked_from"]
+		booked_until_dt = attrs["booked_until"]
+
+		# we need to get available days from bd in order to check whether
+		# we're booking on an available day
+		days = available_days_from_db(property_to_book.availability.open_days)
+		# here we check that
+		if (booked_from_dt.weekday() not in days) or (booked_until_dt.weekday() not in days):
+			raise serializers.ValidationError({
+				"Error": "Property is not available at that day.",
+			})
+
+		bookings = Booking.objects.all().filter(
+			booked_property=property_to_book,
+			booked_from__date=booked_from_dt.date(),
+			booked_until__date=booked_until_dt.date()
+		)
+
+		timezone = property_to_book.property_address.city.city.timezone
+		# we get available slots from db in order to compare them later
+		slots = available_hours_from_db(property_to_book, bookings, b_date=booked_from_dt.date())
+
+		decomposed_booking = decompose_incoming_booking(booked_from_dt, booked_until_dt, timezone)
+
+		intersection = [x for x in slots if x in decomposed_booking]
+		if len(intersection) == 0:
+			raise serializers.ValidationError({
+				"dates": "Not suitable for available slots.",
+			}, code=status.HTTP_409_CONFLICT)
+		"""
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
 		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
@@ -267,7 +355,7 @@ class HourlyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 			raise serializers.ValidationError({
 				"dates": "Cannot book with these dates",
 			}, code=status.HTTP_409_CONFLICT)
-
+		"""
 		return super(HourlyBookingCreateFromOwnerSerializer, self).validate(attrs)
 
 	def create(self, validated_data):
@@ -297,8 +385,8 @@ class HourlyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 		)
 
 		if Ownership.objects.filter(premises_id=self.context["property_id"],
-									user=self.context["request"].user).exists() or (not
-				Property.objects.get(id=self.context["property_id"]).requires_additional_confirmation
+		                            user=self.context["request"].user).exists() or (not
+		Property.objects.get(id=self.context["property_id"]).requires_additional_confirmation
 		):
 			created_booking.status = "ACCEPTED"
 		created_booking.save()
@@ -315,6 +403,7 @@ class HourlyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 	number_of_clients = serializers.IntegerField(required=True, max_value=100)
 	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=True)
 	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=True)
+	timezone = serializers.SerializerMethodField('get_timezone', required=False)
 
 	class Meta:
 		model = Booking
@@ -326,11 +415,13 @@ class HourlyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 			'status',
 			'booked_from',
 			'booked_until',
+			'timezone',
 			'booked_by',
 			'created_at',
 			'updated_at'
 		)
 		read_only_fields = [
+			'timezone',
 			'booked_by',
 			'created_at',
 			'updated_at',
@@ -338,28 +429,63 @@ class HourlyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 			'status'
 		]
 
+	def get_timezone(self, obj):
+		return self.context['property'].property_address.city.city.timezone
+
 	def validate(self, attrs):
 		if attrs["booked_from"] >= attrs["booked_until"]:
 			raise serializers.ValidationError({
 				"dates": "Dates are not valid",
 			})
 
+		property_to_book = self.context['property']
+
+		# dates are retrieved as datetime.datetime
+		booked_from_dt = attrs["booked_from"]
+		booked_until_dt = attrs["booked_until"]
+
+		# we need to get available days from bd in order to check whether
+		# we're booking on an available day
+		days = available_days_from_db(property_to_book.availability.open_days)
+		# here we check that
+		if (booked_from_dt.weekday() not in days) or (booked_until_dt.weekday() not in days):
+			raise serializers.ValidationError({
+				"Error": "Property is not available at that day.",
+			})
+
+		bookings = Booking.objects.all().filter(
+			booked_property=property_to_book,
+			booked_from__date=booked_from_dt.date(),
+			booked_until__date=booked_until_dt.date()
+		)
+
+		timezone = property_to_book.property_address.city.city.timezone
+		# we get available slots from db in order to compare them later
+		slots = available_hours_from_db(property_to_book, bookings, b_date=booked_from_dt.date())
+
+		decomposed_booking = decompose_incoming_booking(booked_from_dt, booked_until_dt, timezone)
+
+		intersection = [x for x in slots if x in decomposed_booking]
+		if len(intersection) == 0:
+			raise serializers.ValidationError({
+				"dates": "Not suitable for available slots.",
+			}, code=status.HTTP_409_CONFLICT)
+		"""
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
 		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
-		query_1.add(Q(booked_from__lte=attrs["booked_from"]) & Q(booked_until__gte=attrs["booked_from"]),
-					query_1.connector)
+		query_1.add(Q(booked_from__lte=attrs["booked_from"]) & Q(booked_until__gte=attrs["booked_from"]), query_1.connector)
 		query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
 		query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
 		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from=attrs["booked_until"]) | Q(booked_until=attrs["booked_from"]), query_2.connector)
 		queryset = Booking.objects.filter(query_1).exclude(query_2)
-
 		if queryset.exists():
 			raise serializers.ValidationError({
 				"dates": "Cannot book with these dates",
 			}, code=status.HTTP_409_CONFLICT)
+		"""
 		return super(HourlyBookingCreateFromClientSerializer, self).validate(attrs)
 
 	def create(self, validated_data):
@@ -400,6 +526,7 @@ class BookingsListSerializer(serializers.ModelSerializer):
 	booked_property = PropertyListSerializer(many=False)
 	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
 	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
+	timezone = serializers.CharField(source='booked_property.property_address.city.city.timezone', required=False)
 
 	class Meta:
 		model = Booking
@@ -410,6 +537,7 @@ class BookingsListSerializer(serializers.ModelSerializer):
 			'client_email',
 			'status',
 			'price',
+			'timezone',
 			'booked_from',
 			'booked_until',
 			'booked_by',
@@ -423,6 +551,7 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 	number_of_clients = serializers.IntegerField(required=False, max_value=100)
 	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
 	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
+	timezone = serializers.CharField(source='booked_property.property_address.city.city.timezone', required=False)
 
 	class Meta:
 		model = Booking
@@ -434,11 +563,13 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 			'status',
 			'booked_from',
 			'booked_until',
+			'timezone',
 			'booked_by',
 			'created_at',
 			'updated_at'
 		)
 		read_only_fields = [
+			'timezone',
 			'id',
 			'booked_property',
 			'client_email',
@@ -466,7 +597,7 @@ class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
 		# query_1.add(Q(booked_property_id=1), Q.AND)
 		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
 		query_1.add(Q(booked_from__lte=attrs["booked_from"]) & Q(booked_until__gte=attrs["booked_from"]),
-					query_1.connector)
+		            query_1.connector)
 		query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
 		query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
 		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
@@ -513,6 +644,7 @@ class BookingUpdateAdminNotCreatorSerializer(serializers.ModelSerializer):
 	status = serializers.CharField(required=True)
 	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", read_only=True)
 	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", read_only=True)
+	timezone = serializers.CharField(source='booked_property.property_address.city.city.timezone', required=False)
 
 	class Meta:
 		model = Booking
@@ -524,11 +656,13 @@ class BookingUpdateAdminNotCreatorSerializer(serializers.ModelSerializer):
 			'status',
 			'booked_from',
 			'booked_until',
+			'timezone',
 			'booked_by',
 			'created_at',
 			'updated_at'
 		)
 		read_only_fields = [
+			'timezone',
 			'id',
 			'booked_property',
 			'number_of_clients',
@@ -556,6 +690,7 @@ class BookingUpdateClientSerializer(serializers.ModelSerializer):
 	number_of_clients = serializers.IntegerField(required=False, max_value=100)
 	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
 	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
+	timezone = serializers.CharField(source='booked_property.property_address.city.city.timezone', required=False)
 
 	class Meta:
 		model = Booking
@@ -567,11 +702,13 @@ class BookingUpdateClientSerializer(serializers.ModelSerializer):
 			'status',
 			'booked_from',
 			'booked_until',
+			'timezone',
 			'booked_by',
 			'created_at',
 			'updated_at'
 		)
 		read_only_fields = [
+			'timezone',
 			'id',
 			'booked_property',
 			'number_of_clients',
@@ -594,7 +731,7 @@ class BookingUpdateClientSerializer(serializers.ModelSerializer):
 			# query_1.add(Q(booked_property_id=1), Q.AND)
 			# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
 			query_1.add(Q(booked_from__lte=attrs["booked_from"]) & Q(booked_until__gte=attrs["booked_from"]),
-						query_1.connector)
+			            query_1.connector)
 			query_1.add(Q(booked_from__lt=attrs["booked_until"]) & Q(booked_until__gte=attrs["booked_until"]), Q.OR)
 			query_1.add(Q(booked_from__gte=attrs["booked_from"]) & Q(booked_from__lte=attrs["booked_until"]), Q.OR)
 			query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
@@ -632,4 +769,3 @@ class BookingUpdateClientSerializer(serializers.ModelSerializer):
 			f"ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 
 		return instance
-
