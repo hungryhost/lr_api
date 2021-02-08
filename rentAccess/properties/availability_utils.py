@@ -97,21 +97,6 @@ def available_hours_from_db(_property, booking, b_date=None):
 	return final_slots
 
 
-def available_hours_from_time(time_from, time_until):
-	hours_between = time_until.hour - time_from.hour
-	slots = []
-	for i in range(hours_between):
-
-		slot_from = time(time_from.hour + i).strftime("%H:%M")
-		slot_until = time(time_from.hour + i + 1).strftime("%H:%M")
-		slot_dict = {
-			"start": slot_from,
-			"end": slot_until
-		}
-		slots.append(slot_dict)
-	return slots, hours_between
-
-
 def decompose_incoming_booking(datetime_from, datetime_until, timezone):
 	time_from_unaware = datetime_from.time()
 	time_until_unaware = datetime_until.time()
