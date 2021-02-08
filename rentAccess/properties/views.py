@@ -2,7 +2,7 @@ import datetime
 
 import pytz
 
-from .availability_utils import available_days_from_db, available_hours_from_time, available_hours_from_db, \
+from .availability_utils import available_days_from_db, available_hours_from_db, \
 	available_hours_to_db
 from bookings.models import Booking
 from .property_permissions import IsPublicProperty, PropertyOwner300, PropertyOwner400
@@ -141,7 +141,7 @@ class PropertyListCreate(generics.ListCreateAPIView):
 	search_fields = [
 		'title',
 		'body',
-		'property_address__city',
+		'property_address__city__name',
 		'property_address__street']
 
 	def perform_create(self, serializer):
@@ -164,7 +164,7 @@ class PropertyListCreate(generics.ListCreateAPIView):
 			f"ip_addr: {get_client_ip(self.request)}; status: OK;")
 
 	def get_queryset(self, *args, **kwargs):
-		properties = Property.objects.all().select_related('availability')
+		properties = Property.objects.all().select_related('availability', 'property_address', 'property_address__city')
 		queryset = properties.filter(~Q(owners__user=self.request.user) & Q(visibility=100))
 		title = self.request.query_params.get('title', None)
 		d_start = self.request.query_params.get('d_start', None)
