@@ -35,7 +35,8 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 		user = self.request.user
 		try:
 			related_property = Property.objects.prefetch_related(
-				Prefetch('owners', queryset=Ownership.objects.prefetch_related('user').all())).get(pk=self.kwargs['pk'])
+				Prefetch('owners', queryset=Ownership.objects.prefetch_related('user').all())
+			).get(pk=self.kwargs['pk'])
 		except Property.DoesNotExist:
 			raise Http404
 		permitted_owners = []
@@ -45,7 +46,11 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 				permitted_owners.append(owner)
 
 		owners = [owner.user for owner in ownerships]
-
+		related_property = Property.objects.select_related(
+			'availability',
+			'property_address',
+			'property_address__city',
+			'property_address__city__city').get(pk=self.kwargs['pk'])
 		if related_property.visibility != 100 and (not (user in permitted_owners)):
 			# if the property is not publicly visible
 			# we must check whether the user is an owner and has appropriate permission
