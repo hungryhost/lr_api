@@ -14,6 +14,10 @@ from .models import Document, UserImage, BillingAddress
 from .serializers import (ChangePasswordSerializer,
 						  FileUploadSerializer,
 						  ProfileUpdateSerializer, ProfileDetailSerializer)
+from .property_filters import UserPropertyFilter
+from .booking_filters import UserBookingsFilter
+from django_filters import rest_framework as dj_filters
+from rest_framework import filters
 from django.db.models import Q
 
 User = get_user_model()
@@ -21,6 +25,25 @@ User = get_user_model()
 
 class UserBookingsList(generics.ListAPIView):
 	serializer_class = BookingsListSerializer
+
+	filter_backends = (
+		dj_filters.DjangoFilterBackend,
+		filters.SearchFilter,
+		filters.OrderingFilter,)
+
+	filterset_class = UserBookingsFilter
+
+	ordering_fields = [
+		'price',
+		'created_at',
+		'updated_at',
+		'status'
+	]
+	ordering = ['-created_at']
+	search_fields = [
+		'booked_property__property_address__city__name',
+		'booked_property__property_address__street',
+		'booked_property__title']
 
 	def get_queryset(self, *args, **kwargs):
 		author = get_object_or_404(User, id=self.request.user.id)
@@ -33,7 +56,22 @@ class UserBookingsList(generics.ListAPIView):
 
 class UserPropertiesList(generics.ListAPIView):
 	serializer_class = PropertyListSerializer
-	lookup_field = "user_id"
+	filter_backends = (
+		dj_filters.DjangoFilterBackend,
+		filters.SearchFilter,
+		filters.OrderingFilter,)
+	filterset_class = UserPropertyFilter
+	ordering_fields = [
+		'price',
+		'created_at'
+	]
+	ordering = ['-created_at']
+
+	search_fields = [
+		'title',
+		'body',
+		'property_address__city__name',
+		'property_address__street']
 
 	def get_queryset(self, *args, **kwargs):
 		query = Q()
