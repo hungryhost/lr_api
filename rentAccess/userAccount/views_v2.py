@@ -46,8 +46,12 @@ class UserBookingsList(generics.ListAPIView):
 		'booked_property__title']
 
 	def get_queryset(self, *args, **kwargs):
-		author = get_object_or_404(User, id=self.request.user.id)
-		return Booking.objects.all().filter(client_email=author.email)
+		queryset = Booking.objects.prefetch_related(
+			'booked_property', 'booked_property__property_address',
+			'booked_property__property_address__city',
+			'booked_property__property_images'
+		).all().filter(client_email=self.request.user.email)
+		return queryset
 
 	def get_permissions(self):
 		permission_classes = [IsAuthenticated]
@@ -76,7 +80,12 @@ class UserPropertiesList(generics.ListAPIView):
 	def get_queryset(self, *args, **kwargs):
 		query = Q()
 		query.add(Q(owners__user=self.request.user), query.connector)
-		return Property.objects.all().filter(query)
+		properties = Property.objects.all().select_related(
+			'availability', 'property_address', 'property_address__city', 'property_type')
+		queryset = properties.filter(
+			query
+		).prefetch_related('property_images')
+		return queryset
 
 	def get_permissions(self):
 		permission_classes = [IsAuthenticated]
