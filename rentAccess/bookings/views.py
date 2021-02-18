@@ -17,7 +17,7 @@ from rest_framework.response import Response
 
 from register.models import Key
 from .permissions import IsOwnerLevel100, IsOwnerLevel200, IsOwnerLevel300, IsOwnerLevel400, \
-	IsClientOfBooking, BookingIsAdminOfPropertyOrSuperuser
+	IsClientOfBooking, BookingIsAdminOfPropertyOrSuperuser, CanRetrieve
 from rest_framework import generics
 from properties.models import LockWithProperty, Property, Ownership
 from .serializers import BookingsListSerializer, BookingUpdateAdminAndCreatorSerializer, \
@@ -89,16 +89,22 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 			pass
 		# send_booking_email_to_client(has_key=False, data=data, duration=0)
 
-	def get_queryset(self, *args, **kwargs):
+	def get(self, request, *args, **kwargs):
 		try:
 			property_owners = Property.objects.prefetch_related(
-				Prefetch('owners', queryset=Ownership.objects.prefetch_related('user').all())).get(pk=self.kwargs['pk'])
+				Prefetch('owners', queryset=Ownership.objects.select_related('user').all())).get(pk=self.kwargs['pk'])
+			#property_owners = Property.objects.prefetch_related('owners__user', 'owners').get(pk=self.kwargs['pk'])
 		except Property.DoesNotExist:
 			raise Http404
 		ownerships = [owner.user for owner in property_owners.owners.all()]
 		if not (self.request.user in ownerships) and self.request.method == "GET":
 			raise exceptions.PermissionDenied
-		return Booking.objects.all().filter(booked_property=self.kwargs['pk'], is_deleted=False)
+		return super(self.__class__, self).get(self, request, *args, **kwargs)
+
+	def get_queryset(self, *args, **kwargs):
+		return Booking.objects.prefetch_related(
+			'booked_property', 'booked_property__property_images', 'booked_property__property_address'
+		).all().filter(booked_property=self.kwargs['pk'], is_deleted=False)
 
 	def _get_serializer(self, _property, _owner=None, *args, **kwargs):
 		"""
@@ -196,23 +202,25 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 		return Booking.objects.all()
 
 	def get_permissions(self):
+		permission_classes = []
 		if self.action == 'retrieve':
 			permission_classes = [
-				IsOwnerLevel100 | IsOwnerLevel200 | IsOwnerLevel300 |
-				IsOwnerLevel400 | IsClientOfBooking
+				CanRetrieve
 			]
-		elif self.action == 'partial_update':
+		if self.action == 'partial_update':
 			permission_classes = [
 				IsOwnerLevel100 | IsOwnerLevel200 | IsOwnerLevel300 |
 				IsOwnerLevel400 | IsClientOfBooking
 			]
-		else:
+		if self.action == 'archive_booking':
 			permission_classes = [BookingIsAdminOfPropertyOrSuperuser]
 		return [permission() for permission in permission_classes]
 
 	def get_object(self, booked_property=None, booking_id=None):
 		try:
-			obj = Booking.objects.get(booked_property=booked_property, id=booking_id, is_deleted=False)
+			obj = Booking.objects.prefetch_related(
+				'booked_property', 'booked_property__property_images', 'booked_property__property_address'
+			).get(booked_property=booked_property, id=booking_id, is_deleted=False)
 			self.check_object_permissions(self.request, obj)
 			return obj
 		except Booking.DoesNotExist:
