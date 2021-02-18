@@ -19,7 +19,7 @@ from register.models import Key
 from .permissions import IsOwnerLevel100, IsOwnerLevel200, IsOwnerLevel300, IsOwnerLevel400, \
 	IsClientOfBooking, BookingIsAdminOfPropertyOrSuperuser, CanRetrieve
 from rest_framework import generics
-from properties.models import LockWithProperty, Property, Ownership
+from properties.models import LockWithProperty, Property, Ownership, PremisesImage
 from .serializers import BookingsListSerializer, BookingUpdateAdminAndCreatorSerializer, \
 	BookingUpdateAdminNotCreatorSerializer, BookingUpdateClientSerializer, \
 	DailyBookingCreateFromClientSerializer, DailyBookingCreateFromOwnerSerializer, \
@@ -93,7 +93,6 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 		try:
 			property_owners = Property.objects.prefetch_related(
 				Prefetch('owners', queryset=Ownership.objects.select_related('user').all())).get(pk=self.kwargs['pk'])
-			#property_owners = Property.objects.prefetch_related('owners__user', 'owners').get(pk=self.kwargs['pk'])
 		except Property.DoesNotExist:
 			raise Http404
 		ownerships = [owner.user for owner in property_owners.owners.all()]
@@ -102,9 +101,12 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 		return super(self.__class__, self).get(self, request, *args, **kwargs)
 
 	def get_queryset(self, *args, **kwargs):
-		return Booking.objects.prefetch_related(
-			'booked_property', 'booked_property__property_images', 'booked_property__property_address'
+		queryset = Booking.objects.prefetch_related(
+			'booked_property', 'booked_property__property_address',
+			'booked_property__property_address__city',
+			'booked_property__property_images'
 		).all().filter(booked_property=self.kwargs['pk'], is_deleted=False)
+		return queryset
 
 	def _get_serializer(self, _property, _owner=None, *args, **kwargs):
 		"""
@@ -146,9 +148,14 @@ class BookingsAllList(generics.ListAPIView):
 	def get_queryset(self, *args, **kwargs):
 		query = Q()
 		query.add(Q(booked_property__owners__user=self.request.user) & Q(is_deleted=False), query.connector)
-		return Booking.objects.filter(
+		queryset = Booking.objects.prefetch_related(
+			'booked_property', 'booked_property__property_address',
+			'booked_property__property_address__city',
+			'booked_property__property_images'
+		).all().filter(
 			query
 		)
+		return queryset
 
 	def get_permissions(self):
 		permission_classes = [IsAuthenticated]
