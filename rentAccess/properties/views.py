@@ -5,10 +5,10 @@ import pytz
 from .availability_utils import available_days_from_db, available_hours_from_db, \
 	available_hours_to_db
 from bookings.models import Booking
-from .property_permissions import IsPublicProperty, PropertyOwner300, PropertyOwner400
+from .property_permissions import IsPublicProperty, PropertyOwner300, PropertyOwner400, CanBeRetrieved
 from .logger_helpers import get_client_ip
 from register.models import Key, Lock
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.http import Http404
 import logging
 from django_filters import rest_framework as dj_filters
@@ -164,8 +164,11 @@ class PropertyListCreate(generics.ListCreateAPIView):
 			f"ip_addr: {get_client_ip(self.request)}; status: OK;")
 
 	def get_queryset(self, *args, **kwargs):
-		properties = Property.objects.all().select_related('availability', 'property_address', 'property_address__city')
-		queryset = properties.filter(~Q(owners__user=self.request.user) & Q(visibility=100))
+		properties = Property.objects.all().select_related(
+			'availability', 'property_address', 'property_address__city', 'property_type')
+		queryset = properties.filter(
+			~Q(owners__user=self.request.user) & Q(visibility=100)
+		).prefetch_related('property_images')
 		title = self.request.query_params.get('title', None)
 		d_start = self.request.query_params.get('d_start', None)
 		d_end = self.request.query_params.get('d_end', None)
@@ -447,7 +450,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 	def get_permissions(self):
 		permission_classes = []
 		if self.action in ['retrieve', 'get_availability', 'get_hourly_availability']:
-			permission_classes = [IsPublicProperty | IsOwner | IsSuperUser]
+			permission_classes = [CanBeRetrieved]
 		if self.action in ['partial_update', 'change_main_image']:
 			permission_classes = [PropertyOwner300 | PropertyOwner400 | IsSuperUser]
 		if self.action == 'delete_property':
