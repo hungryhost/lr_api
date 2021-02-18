@@ -298,8 +298,13 @@ class PropertyListSerializer(serializers.ModelSerializer):
 
 	def get_main_image(self, obj):
 		try:
-			image_object = PremisesImage.objects.get(premises=obj, is_main=True)
-			return self.context['request'].build_absolute_uri(image_object.image.url)
+			images = obj.property_images.all()
+			main = None
+			for image in images:
+				if image.is_main is True:
+					main = image
+			return self.context.get('request').build_absolute_uri(
+				main.image.url)
 		except Exception:
 			return ""
 
@@ -373,8 +378,13 @@ class PropertySerializer(serializers.ModelSerializer):
 
 	def get_main_image(self, obj):
 		try:
-			image_object = PremisesImage.objects.get(premises=obj, is_main=True)
-			return self.context['request'].build_absolute_uri(image_object.image.url)
+			images = obj.property_images.all()
+			main = None
+			for image in images:
+				if image.is_main is True:
+					main = image
+			return self.context.get('request').build_absolute_uri(
+				main.image.url)
 		except Exception:
 			return ""
 
@@ -435,8 +445,13 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 
 	def get_main_image(self, obj):
 		try:
-			image_object = PremisesImage.objects.get(premises=obj, is_main=True)
-			return self.context['request'].build_absolute_uri(image_object.image.url)
+			images = obj.property_images.all()
+			main = None
+			for image in images:
+				if image.is_main is True:
+					main = image
+			return self.context.get('request').build_absolute_uri(
+				main.image.url)
 		except Exception:
 			return ""
 
@@ -579,8 +594,13 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 
 	def get_main_image(self, obj):
 		try:
-			image_object = PremisesImage.objects.get(premises=obj, is_main=True)
-			return self.context['request'].build_absolute_uri(image_object.image.url)
+			images = obj.property_images.all()
+			main = None
+			for image in images:
+				if image.is_main is True:
+					main = image
+			return self.context.get('request').build_absolute_uri(
+				main.image.url)
 		except Exception:
 			return ""
 
