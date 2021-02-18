@@ -59,3 +59,14 @@ class IsPublicProperty(permissions.BasePermission):
 		if obj.visibility == 100:
 			return True
 		return False
+
+
+class CanBeRetrieved(permissions.BasePermission):
+	def has_permission(self, request, view):
+		return request.user and request.user.is_authenticated
+
+	# for object level permissions
+	def has_object_permission(self, request, view, obj):
+		if obj.visibility == 100 or (obj.owners.filter(user=request.user).exists() or request.user.is_superuser):
+			return True
+		return False
