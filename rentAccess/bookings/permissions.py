@@ -93,3 +93,14 @@ class BookingIsAdminOfPropertyOrSuperuser(permissions.BasePermission):
 			return True
 		return False
 
+
+class CanRetrieve(permissions.BasePermission):
+	def has_permission(self, request, view):
+		return request.user and request.user.is_authenticated
+
+	def has_object_permission(self, request, view, obj):
+		if request.user.is_superuser or \
+				obj.booked_property.owners.filter(user=request.user).exists() or \
+				obj.client_email == request.user.email:
+			return True
+		return False
