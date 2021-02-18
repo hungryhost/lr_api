@@ -174,7 +174,30 @@ LOGGING = {
 		}
 	}
 }
+USE_REDIS_CACHE = env.bool('USE_REDIS_CACHE', default=False)
+if USE_REDIS_CACHE:
+	CACHE_TTL = 60 * 1
 
+	CACHES = {
+		"default": {
+			"BACKEND": "django_redis.cache.RedisCache",
+			"LOCATION": env('CACHE_URL_1'),
+			"OPTIONS": {
+				"CLIENT_CLASS": "django_redis.client.DefaultClient",
+			},
+			"KEY_PREFIX": "lr_cache"
+		}
+	}
+	SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+	SESSION_CACHE_ALIAS = "default"
+else:
+	CACHE_TTL = 60 * 1
+	CACHES = {
+		'default': {
+			'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+		}
+	}
+	SESSION_CACHE_ALIAS = "default"
 INSTALLED_APPS = [
 	'django.contrib.admin',
 	'django.contrib.auth',
@@ -183,12 +206,14 @@ INSTALLED_APPS = [
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
 	'rest_framework',
+	'debug_toolbar',
 	'rest_framework_swagger',
 	'rest_framework_simplejwt.token_blacklist',
 	'watchman',
 	'cities_light',
 	'django_filters',
 	'django_countries',
+	'storages',
 	'phone_field',
 	'timezone_field',
 	'properties',
@@ -217,6 +242,7 @@ MIDDLEWARE = [
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
+	'debug_toolbar.middleware.DebugToolbarMiddleware',
 
 
 ]
@@ -304,35 +330,35 @@ if DEBUG:
 	DEFAULT_RENDERER_CLASSES = DEFAULT_RENDERER_CLASSES + (
 		'rest_framework.renderers.BrowsableAPIRenderer',
 	)
+	REST_FRAMEWORK = {
+		'DEFAULT_PERMISSION_CLASSES': [
+			'rest_framework.permissions.IsAuthenticated',
+		],
+		"DEFAULT_PARSER_CLASSES": [
+			"rest_framework.parsers.JSONParser",
+			'rest_framework.parsers.FormParser',
+			'rest_framework.parsers.MultiPartParser',
+		],
+		'DEFAULT_THROTTLE_CLASSES': [
+			'rest_framework.throttling.AnonRateThrottle',
+			'rest_framework.throttling.UserRateThrottle'
+		],
+		'DEFAULT_THROTTLE_RATES': {
+			'anon': '10000/day',
+			'user': '10000/day'
+		},
+		'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%S%z",
+		'DEFAULT_AUTHENTICATION_CLASSES': [
+			'rest_framework_simplejwt.authentication.JWTAuthentication',
+			'rest_framework.authentication.SessionAuthentication',
+		],
 
-REST_FRAMEWORK = {
-	'DEFAULT_PERMISSION_CLASSES': [
-		'rest_framework.permissions.IsAuthenticated',
-	],
-	"DEFAULT_PARSER_CLASSES": [
-		"rest_framework.parsers.JSONParser",
-	],
-	'DEFAULT_THROTTLE_CLASSES': [
-		'rest_framework.throttling.AnonRateThrottle',
-		'rest_framework.throttling.UserRateThrottle'
-	],
-	'DEFAULT_THROTTLE_RATES': {
-		'anon': '10000/day',
-		'user': '10000/day'
-	},
-	'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%S%z",
-	'DEFAULT_AUTHENTICATION_CLASSES': [
-		'rest_framework_simplejwt.authentication.JWTAuthentication',
-		'rest_framework.authentication.SessionAuthentication',
-	],
+		'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+		'PAGE_SIZE': 50,
 
-	'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-	'PAGE_SIZE': 50,
-
-	'EXCEPTION_HANDLER': 'rentAccess.error_handler.custom_exception_handler',
-	'DEFAULT_RENDERER_CLASSES': DEFAULT_RENDERER_CLASSES
-}
-if DEBUG:
+		'EXCEPTION_HANDLER': 'rentAccess.error_handler.custom_exception_handler',
+		'DEFAULT_RENDERER_CLASSES': DEFAULT_RENDERER_CLASSES
+	}
 	################################################
 
 	SIMPLE_JWT = {
@@ -391,16 +417,62 @@ else:
 		'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 	}
 
-# CELERY CONFIG
-MEDIA_ROOT = os.path.join('media')
-MEDIA_URL = '/media/'
+	REST_FRAMEWORK = {
+		'DEFAULT_PERMISSION_CLASSES': [
+			'rest_framework.permissions.IsAuthenticated',
+		],
+		"DEFAULT_PARSER_CLASSES": [
+			"rest_framework.parsers.JSONParser",
+		],
+		'DEFAULT_THROTTLE_CLASSES': [
+			'rest_framework.throttling.AnonRateThrottle',
+			'rest_framework.throttling.UserRateThrottle'
+		],
+		'DEFAULT_THROTTLE_RATES': {
+			'anon': '10000/day',
+			'user': '10000/day'
+		},
+		'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%S%z",
+		'DEFAULT_AUTHENTICATION_CLASSES': [
+			'rest_framework_simplejwt.authentication.JWTAuthentication',
+			'rest_framework.authentication.SessionAuthentication',
+		],
+
+		'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+		'PAGE_SIZE': 50,
+
+		'EXCEPTION_HANDLER': 'rentAccess.error_handler.custom_exception_handler',
+		'DEFAULT_RENDERER_CLASSES': DEFAULT_RENDERER_CLASSES
+}
+USE_S3 = env.bool('USE_S3', default=False)
+if USE_S3:
+	AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+	AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+	AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+	AWS_DEFAULT_ACL = None
+	AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+	AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+	# s3 static settings
+	AWS_LOCATION = 'static'
+	STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+	STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+	# s3 public media settings
+	PUBLIC_MEDIA_LOCATION = 'media'
+	MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
+	DEFAULT_FILE_STORAGE = 'rentAccess.storage_backends.PublicMediaStorage'
+	# s3 private media settings
+	PRIVATE_MEDIA_LOCATION = 'private'
+	PRIVATE_FILE_STORAGE = 'rentAccess.storage_backends.PrivateMediaStorage'
+else:
+	STATIC_URL = '/static/'
+	STATIC_ROOT = 'C:/web-294/web-294/rentAccess/static/'
+	MEDIA_ROOT = os.path.join('media')
+	MEDIA_URL = '/media/'
 
 # Static root and file definitions
-STATICFILES_DIRS = [
-	root("static"),
-]
-STATIC_URL = '/static/'
-STATIC_ROOT = '/static/'
+
+
+
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", default='redis://127.0.0.1:6379')
 CELERY_RESULT_BACKEND = env.str('CELERY_RESULT_BACKEND', default='redis://127.0.0.1:6379')
 CELERY_ACCEPT_CONTENT = ['application/json']
