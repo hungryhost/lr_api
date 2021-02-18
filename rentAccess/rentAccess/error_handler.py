@@ -34,7 +34,20 @@ def custom_exception_handler(exc, context):
 		errors = 'Forbidden : You do not have necessary permissions'
 		response.data['errors'] = errors
 		response.data['status_code'] = 403
+	if isinstance(exc, exceptions.ValidationError):
+		if hasattr(exc.detail, 'items'):
+			# remove the initial value
+			response.data = {}
+			errors = []
+			for key, value in exc.detail.items():
+				# append errors into the list
+				errors.append("{} : {}".format(key, "".join(value)))
 
+			# add property errors to the response
+			response.data['errors'] = errors
+
+		# serve status code in the response
+		response.data['status_code'] = response.status_code
 	"""
 	if response is not None:
 		# check if exception has dict items
