@@ -13,6 +13,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import debug_toolbar
+
 from django.conf.urls import url
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -21,10 +23,16 @@ from django.urls import path, include, re_path
 from django.views.generic import TemplateView
 from rest_framework import permissions
 from rest_framework_simplejwt import views as jwt_views
+from rest_framework import permissions
 from rest_framework_simplejwt.views import TokenVerifyView
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from django.conf import settings
+
+api_info = openapi.Info(
+   title="Snippets API",
+    default_version='v1',
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -36,7 +44,7 @@ urlpatterns = [
     path('lock-api/v1/key/', include('keys.urls')),
     path('lock-api/v1/lock/', include('locks.urls')),
     path('lock-api/v1/access/', include('schedule.urls')),
-
+    path('__debug__/', include(debug_toolbar.urls)),
     #url(r'^cities_light/api/', include('cities_light.contrib.restframework3')),
     # ------------------- SERVICE API -------------------
     path('api/v1/properties/', include('properties.urls'), name='properties'),

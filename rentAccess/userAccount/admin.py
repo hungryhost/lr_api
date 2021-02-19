@@ -75,7 +75,7 @@ class UserChangeForm(forms.ModelForm):
 			'dob',
 			'gender',
 			'is_active',
-			'is_admin',
+			#'is_admin',
 			'is_staff',
 			'is_superuser'
 		)
@@ -96,12 +96,12 @@ class UserAdmin(BaseUserAdmin):
 	# These override the definitions on the base UserAdmin
 	# that reference specific fields on auth.User.
 	list_display = ('email', 'first_name', 'is_admin')
-	list_filter = ('is_admin',)
+	# list_filter = ('is_admin',)
 	fieldsets = (
 		(None, {'fields': ('email', 'password')}),
 		('Personal info', {'fields': ('first_name', 'last_name')}),
 		('Permissions', {
-			'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+			'fields': ('is_active', 'is_staff', 'is_superuser', 'groups'),
 		}),
 	)
 	# add_fieldsets is not a standard ModelAdmin attribute. UserAdmin
@@ -114,7 +114,7 @@ class UserAdmin(BaseUserAdmin):
 	)
 	search_fields = ('email',)
 	ordering = ('email',)
-	filter_horizontal = ('groups', 'user_permissions',)
+	#filter_horizontal = ('groups', 'user_permissions',)
 
 
 admin.site.register(CustomUser, UserAdmin)

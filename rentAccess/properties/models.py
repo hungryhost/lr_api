@@ -32,7 +32,8 @@ class PropertyType(models.Model):
 		- 200: Inhabitable property, a flat or a house
 	"""
 	property_type = models.IntegerField(primary_key=True, null=False, blank=False)
-	description = models.CharField(max_length=150, null=False, blank=False)
+	title = models.CharField(max_length=150, null=False, blank=False)
+	description = models.CharField(max_length=255, null=False, blank=True)
 
 	def __int__(self):
 		return self.property_type
@@ -182,6 +183,11 @@ def path_and_rename(instance, filename):
 	return os.path.join(path, filename)
 
 
+class MainImageManager(models.Manager):
+	def get_queryset(self):
+		return super().get_queryset().filter(is_main=True)
+
+
 class PremisesImage(models.Model):
 	premises = models.ForeignKey(Property, to_field='id',
 								related_name='property_images', on_delete=models.CASCADE)
@@ -191,6 +197,7 @@ class PremisesImage(models.Model):
 
 	def set_main(self):
 		self.is_main = True
+
 
 
 class PremisesAddress(models.Model):
