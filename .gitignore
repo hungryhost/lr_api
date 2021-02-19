@@ -26,8 +26,6 @@ yarn-error.log*
 ############### backend ##############
 /.idea/
 __pycache__/
-**/migrations/**
-**/**/migrations
 *.py[cod]
 *.log
 .log
