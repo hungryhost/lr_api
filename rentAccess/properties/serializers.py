@@ -257,14 +257,14 @@ class PropertyAddressesListSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = PremisesAddress
 		fields = (
-			'country',
-			'city',
-			'street',
-			'building',
-			'floor',
-			'number',
-			'zip_code',
-			'directions_description',
+			"country",
+			"city",
+			"street",
+			"building",
+			"floor",
+			"number",
+			"zip_code",
+			"directions_description",
 		)
 
 
@@ -293,8 +293,12 @@ class PropertyListSerializer(serializers.ModelSerializer):
 			'created_at',
 			'updated_at',
 		)
-
-		read_only_fields = ['id']
+		read_only_fields = [
+			'id',
+			'created_at',
+			'updated_at',
+			'main_image'
+		]
 
 	def get_main_image(self, obj):
 		try:
@@ -429,7 +433,12 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 			'created_at',
 			'updated_at',
 		]
-		read_only_fields = ['creator', 'id']
+		read_only_fields = [
+			'id',
+			'created_at',
+			'updated_at',
+			'main_image'
+		]
 
 	def to_internal_value(self, data):
 		return super().to_internal_value(data)
@@ -590,7 +599,12 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'updated_at',
 
 		)
-		read_only_fields = ['id']
+		read_only_fields = [
+			'id',
+			'created_at',
+			'updated_at',
+			'main_image'
+		]
 
 	def get_main_image(self, obj):
 		try:
