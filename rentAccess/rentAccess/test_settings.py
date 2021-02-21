@@ -183,14 +183,23 @@ INSTALLED_APPS = [
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
 	'rest_framework',
+	'debug_toolbar',
 	'rest_framework_swagger',
 	'rest_framework_simplejwt.token_blacklist',
 	'watchman',
+	'cities_light',
+	'django_filters',
+	'django_countries',
+	'storages',
+	'phone_field',
 	'timezone_field',
 	'properties',
 	'bookings',
 	'organisations',
 	'jwtauth',
+	'comms',
+	'groups',
+	'store',
 	'userAccount',
 	'corsheaders',
 	'common',
@@ -211,6 +220,9 @@ MIDDLEWARE = [
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'corsheaders.middleware.CorsMiddleware',
 
+]
+FIXTURE_DIRS = [
+	root('api_tests/fixtures')
 ]
 AUTH_USER_MODEL = 'userAccount.CustomUser'
 
@@ -234,8 +246,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rentAccess.wsgi.application'
 
-if env.bool('SQL_DEBUG', False):
-	MIDDLEWARE += ('sql_middleware.SqlPrintingMiddleware',)
 # Databases
 DATABASES = {
 	'default': {
