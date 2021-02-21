@@ -30,14 +30,14 @@ class AvailabilityCreateSerializer(serializers.Serializer):
 	departure_time_until = serializers.TimeField(required=False)
 	arrival_time_from = serializers.TimeField(required=False)
 	maximum_number_of_clients = serializers.IntegerField(min_value=1, required=True)
-	available_until = serializers.TimeField(required=False)
-	available_from = serializers.TimeField(required=False)
+	available_until = serializers.TimeField(format='%H:%M', required=False)
+	available_from = serializers.TimeField(format='%H:%M', required=False)
 	booking_interval = serializers.IntegerField(required=False)
 
 
 class AvailabilityDailySerializer(serializers.ModelSerializer):
-	departure_time_until = serializers.TimeField(required=False, source='available_until')
-	arrival_time_from = serializers.TimeField(required=False, source='available_from')
+	departure_time_until = serializers.TimeField(format='%H:%M', required=False, source='available_until')
+	arrival_time_from = serializers.TimeField(format='%H:%M', required=False, source='available_from')
 	maximum_number_of_clients = serializers.IntegerField(min_value=1, required=True)
 
 	class Meta:
@@ -232,7 +232,7 @@ class PropertyAddressesSerializer(serializers.ModelSerializer):
 	floor = serializers.CharField(max_length=20, required=True)
 	number = serializers.CharField(max_length=30, required=True)
 	zip_code = serializers.CharField(max_length=10, required=True)
-	directions_description = serializers.CharField(max_length=500, required=False)
+	directions_description = serializers.CharField(max_length=500, required=False, allow_blank=True)
 
 	class Meta:
 		model = PremisesAddress
@@ -403,7 +403,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 	price = serializers.IntegerField(allow_null=True, required=False, validators=[validate_price])
 	active = serializers.BooleanField(required=False)
 	property_address = PropertyAddressesSerializer(many=False, required=True)
-	client_greeting_message = serializers.CharField(required=False, max_length=500)
+	client_greeting_message = serializers.CharField(required=False, max_length=500, allow_blank=True)
 	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
 	visibility = serializers.IntegerField(required=True)
 	requires_additional_confirmation = serializers.BooleanField(required=False)
@@ -605,6 +605,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			return ""
 
 	def to_representation(self, instance):
+		instance.refresh_from_db()
 		if instance.booking_type == 100:
 			serializer = AvailabilityDailySerializer(instance.availability)
 		if instance.booking_type == 200:
@@ -691,11 +692,15 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			address_to_update = PremisesAddress.objects.get(premises_id=instance.id)
 			country = address_data.get('country', None)
 			paddr_city = address_data.get('city', None)
+			paddr_city = paddr_city.get('Name')
 			paddr_street = address_data.get('street', None)
 			paddr_building = address_data.get('building', None)
 			paddr_floor = address_data.get('floor', None)
 			paddr_number = address_data.get('number', None)
 			pzip_code = address_data.get('zip_code', None)
+			directions_description = address_data.get('directions_description', None)
+			if directions_description or directions_description == "":
+				address_to_update.directions_description = directions_description
 			if country:
 				address_to_update.country = country
 			if paddr_city:
