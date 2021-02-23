@@ -68,6 +68,17 @@ class PropertyAvailabilityFactory(factory.django.DjangoModelFactory):
 
 	available_hours = available_hours_to_db(available_from, available_until)
 
+	maximum_number_of_clients = factory.Faker(
+		'random_int',
+		min=1,
+		max=100
+	)
+
+
+class OwnershipFactory(factory.django.DjangoModelFactory):
+	class Meta:
+		model = p_models.Ownership
+
 
 class PropertyFactory(factory.django.DjangoModelFactory):
 	class Meta:
@@ -77,6 +88,10 @@ class PropertyFactory(factory.django.DjangoModelFactory):
 		'paragraph',
 		nb_sentences=4
 		)
+	price = factory.Faker(
+		'numerify',
+		text='%%%!!'
+	)
 	property_type = factory.Iterator(p_models.PropertyType.objects.all())
 	availability = factory.RelatedFactory(
 		PropertyAvailabilityFactory,
