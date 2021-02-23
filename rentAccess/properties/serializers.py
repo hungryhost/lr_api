@@ -9,7 +9,7 @@ import logging
 
 from .logger_helpers import get_client_ip
 from .models import Property, PremisesAddress, PremisesImage, Ownership, Availability
-from .validators import validate_price, validate_city
+from .validators import validate_price, validate_city, validate_available_time
 from .availability_utils import available_days_to_db, available_days_from_db, available_hours_to_db
 
 #
@@ -27,11 +27,19 @@ class DaysListField(serializers.ListField):
 
 class AvailabilityCreateSerializer(serializers.Serializer):
 	open_days = DaysListField(required=True, allow_empty=True, max_length=7)
-	departure_time_until = serializers.TimeField(required=False)
-	arrival_time_from = serializers.TimeField(required=False)
+	departure_time_until = serializers.TimeField(format='%H:%M', required=False)
+	arrival_time_from = serializers.TimeField(format='%H:%M', required=False)
 	maximum_number_of_clients = serializers.IntegerField(min_value=1, required=True)
-	available_until = serializers.TimeField(format='%H:%M', required=False)
-	available_from = serializers.TimeField(format='%H:%M', required=False)
+	available_until = serializers.TimeField(
+		format='%H:%M',
+		required=False,
+		validators=[validate_available_time]
+	)
+	available_from = serializers.TimeField(
+		format='%H:%M',
+		required=False,
+		validators=[validate_available_time]
+	)
 	booking_interval = serializers.IntegerField(required=False)
 
 
@@ -362,8 +370,15 @@ class PropertySerializer(serializers.ModelSerializer):
 		read_only_fields = ['id']
 
 	def get_contacts(self, obj):
-		serializer = FilteringContactsListSerializer(obj.owners,
-			child=PropertyOwnershipListSerializer())
+		queryset = obj.owners.all()
+		contacts = []
+		for owner in queryset:
+			if owner.visibility == 100:
+				contacts.append(owner)
+		serializer = PropertyOwnershipListSerializer(
+			contacts,
+			many=True
+		)
 		return serializer.data
 
 	def get_availability(self, obj):
@@ -375,10 +390,11 @@ class PropertySerializer(serializers.ModelSerializer):
 			return serializer.data
 
 	def get_can_edit(self, obj):
-		if obj.owners.filter(user=self.context["request"].user).exists():
-			return True
-		else:
-			return False
+		owners = obj.owners.all()
+		for owner in owners:
+			if self.context["request"].user == owner.user:
+				return True
+		return False
 
 	def get_main_image(self, obj):
 		try:
@@ -409,7 +425,6 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 	property_address = PropertyAddressesSerializer(many=False, required=True)
 	client_greeting_message = serializers.CharField(required=False, max_length=500, allow_blank=True)
 	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
-	visibility = serializers.IntegerField(required=True)
 	requires_additional_confirmation = serializers.BooleanField(required=False)
 	booking_type = serializers.IntegerField(required=True)
 
@@ -516,7 +531,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 			price = None
 		if active is None:
 			active = True
-		if (visibility is None) or (visibility not in [100, 200, 300]):
+		if (visibility is None) or (visibility not in [100, 150, 200]):
 			visibility = 100
 		if not requires_additional_confirmation:
 			requires_additional_confirmation = False
@@ -569,11 +584,10 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 	availability = AvailabilityCreateSerializer(many=False, required=False)
 	property_address = PropertyAddressesSerializer(many=False, required=False)
 	property_images = PropertyImagesSerializer(many=True, required=False)
-	contacts = FilteringContactsListSerializer(
-		child=PropertyOwnershipListSerializer(), source='owners')
+	contacts = serializers.SerializerMethodField('get_contacts')
+	can_edit = serializers.SerializerMethodField('get_can_edit')
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField(read_only=True)
-	visibility = serializers.IntegerField(required=False)
 	client_greeting_message = serializers.CharField(required=False, allow_blank=True)
 	requires_additional_confirmation = serializers.BooleanField(required=False)
 
@@ -585,6 +599,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'body',
 			'price',
 			'active',
+			'can_edit',
 			'property_type',
 			'availability',
 			'main_image',
@@ -606,6 +621,25 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'main_image'
 		]
 
+	def get_contacts(self, obj):
+		queryset = obj.owners.all()
+		contacts = []
+		for owner in queryset:
+			if owner.visibility == 100:
+				contacts.append(owner)
+		serializer = PropertyOwnershipListSerializer(
+			contacts,
+			many=True
+		)
+		return serializer.data
+
+	def get_can_edit(self, obj):
+		owners = obj.owners.all()
+		for owner in owners:
+			if self.context["request"].user == owner.user:
+				return True
+		return False
+
 	def get_main_image(self, obj):
 		try:
 			images = obj.property_images.all()
@@ -619,14 +653,51 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			return ""
 
 	def to_representation(self, instance):
-		instance.refresh_from_db()
+		instance.property_address.refresh_from_db()
+		representation = super().to_representation(instance)
+		instance.availability.refresh_from_db()
 		if instance.booking_type == 100:
 			serializer = AvailabilityDailySerializer(instance.availability)
 		if instance.booking_type == 200:
 			serializer = AvailabilityHourlySerializer(instance.availability)
-		representation = super().to_representation(instance)
 		representation['availability'] = serializer.data
 		return representation
+
+	def validate(self, attrs):
+		booking_type = attrs.get('booking_type', None)
+		if booking_type:
+			if attrs['booking_type'] == 100:
+				necessary_keys = [
+					'arrival_time_from',
+					'departure_time_until',
+					'open_days'
+				]
+				availability = attrs['availability']
+				keys = list(availability.keys())
+				for key in necessary_keys:
+					if key not in keys:
+						raise serializers.ValidationError({
+							"availability": "Not all attributed of daily availability are provided",
+						})
+			elif attrs['booking_type'] == 200:
+				necessary_keys = [
+					'available_from',
+					'available_until',
+					'open_days'
+				]
+				availability = attrs['availability']
+				keys = list(availability.keys())
+
+				for key in necessary_keys:
+					if key not in keys:
+						raise serializers.ValidationError({
+							"availability": "Not all attributed of daily availability are provided",
+						})
+			else:
+				raise serializers.ValidationError({
+					"booking_type": "Invalid booking type.",
+				})
+		return super(PropertyUpdateSerializer, self).validate(attrs)
 
 	def is_valid(self, raise_exception=False):
 		ret = super(PropertyUpdateSerializer, self).is_valid(False)
@@ -650,29 +721,35 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 		availability_data = validated_data.pop("availability", None)
 		title = validated_data.get("title", None)
 		body = validated_data.get("body", None)
-		price = validated_data.get("price", None)
+		price = validated_data.get("price", -1)
 		active = validated_data.get("active", None)
 		visibility = validated_data.get("visibility", None)
-		property_type_id = validated_data.get("property_type_id", None)
+		property_type_id = validated_data.get("property_type", None)
 		requires_additional_confirmation = validated_data.get("requires_additional_confirmation", None)
-		greeting_message = validated_data.get("client_greeting_message")
+		greeting_message = validated_data.get("client_greeting_message", None)
+		booking_type = validated_data.get("booking_type", None)
+
 		if greeting_message or greeting_message == "":
 			instance.client_greeting_message = greeting_message
 		if title:
 			instance.title = title
 		if body:
 			instance.body = body
-		if price:
+		if price != -1:
 			instance.price = price
-		if active:
+		if price is None:
+			instance.price = None
+		if active is not None:
 			instance.active = active
 		if visibility:
 			instance.visibility = visibility
 		if property_type_id:
 			instance.property_type_id = property_type_id
-		if requires_additional_confirmation:
+		if requires_additional_confirmation is not None:
 			instance.requires_additional_confirmation = requires_additional_confirmation
 		if availability_data:
+			if booking_type and booking_type != instance.booking_type:
+				instance.booking_type = booking_type
 			availability_to_update = Availability.objects.get(premises_id=instance.id)
 			available_days_from_request = availability_data.get("open_days", None)
 			if available_days_from_request:
@@ -706,7 +783,8 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			address_to_update = PremisesAddress.objects.get(premises_id=instance.id)
 			country = address_data.get('country', None)
 			paddr_city = address_data.get('city', None)
-			paddr_city = paddr_city.get('Name')
+			if paddr_city:
+				paddr_city = paddr_city.get('name', None)
 			paddr_street = address_data.get('street', None)
 			paddr_building = address_data.get('building', None)
 			paddr_floor = address_data.get('floor', None)
@@ -719,7 +797,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 				address_to_update.country = country
 			if paddr_city:
 				validate_city(paddr_city)
-				address_to_update.city = paddr_city
+				address_to_update.city_id = paddr_city
 			if paddr_street:
 				address_to_update.street = paddr_street
 			if paddr_building:
