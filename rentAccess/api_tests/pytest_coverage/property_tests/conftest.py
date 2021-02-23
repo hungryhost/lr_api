@@ -5,7 +5,9 @@ from django.core.management import call_command
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 from api_tests.pytest_coverage.user_tests.factories import UserFactory
-
+from .factories import PropertyFactory, OwnershipFactory
+from datetime import datetime
+import logging
 r"""
 Here we define common fixtures for all (or most) tests, like api_client that
 is used in E2E tests.
@@ -46,3 +48,46 @@ def authenticated_clients():
 			client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
 			return client
 	return ClientFactory()
+
+
+@pytest.fixture(scope='function')
+def property_daily(
+		db
+):
+	prop_obj = PropertyFactory(
+		booking_type=100,
+		price=None
+	)
+	client = APIClient()
+	owner = UserFactory()
+	refresh = RefreshToken.for_user(owner)
+	client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
+	OwnershipFactory(
+		premises=prop_obj,
+		permission_level_id=400,
+		user=owner,
+		is_creator=True
+	)
+	return prop_obj, owner, client
+
+
+@pytest.fixture(scope='function')
+def property_hourly(
+		db
+):
+	prop_obj = PropertyFactory(
+		booking_type=200,
+		price=None
+	)
+	client = APIClient()
+	owner = UserFactory()
+	refresh = RefreshToken.for_user(owner)
+	client.credentials(HTTP_AUTHORIZATION=f'Bearer {str(refresh.access_token)}')
+	OwnershipFactory(
+		premises=prop_obj,
+		permission_level_id=400,
+		user=owner,
+		is_creator=True
+	)
+	return prop_obj, owner, client
+
