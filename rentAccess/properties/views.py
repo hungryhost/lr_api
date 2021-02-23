@@ -328,8 +328,13 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 	def retrieve(self, request, pk=None):
 		# obj = self.get_object(pk=pk)
 		try:
-			obj = Property.objects.select_related('availability', 'property_type',
-								'property_address').get(id=pk)
+			obj = Property.objects.prefetch_related(
+				"property_images", "property_address__city", "owners",
+				"owners__user"
+			).select_related('availability', 'property_type',
+								'property_address'
+			).get(id=pk)
+
 			self.check_object_permissions(self.request, obj)
 		except Property.DoesNotExist:
 			raise Http404
@@ -343,7 +348,16 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	@action(detail=True, methods=['patch'])
 	def partial_update(self, request, pk=None):
-		instance = self.get_object(pk=pk)
+		try:
+			instance = Property.objects.prefetch_related(
+				"property_images", "property_address__city", "owners",
+				"owners__user"
+			).select_related('availability', 'property_type',
+								'property_address'
+			).get(id=pk)
+			self.check_object_permissions(self.request, instance)
+		except Property.DoesNotExist:
+			raise Http404
 		serializer = PropertyUpdateSerializer(
 			instance,
 			data=self.request.data,
@@ -452,9 +466,9 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		if self.action in ['retrieve', 'get_availability', 'get_hourly_availability']:
 			permission_classes = [CanBeRetrieved]
 		if self.action in ['partial_update', 'change_main_image']:
-			permission_classes = [PropertyOwner300 | PropertyOwner400 | IsSuperUser]
+			permission_classes = [CanBeRetrieved]
 		if self.action == 'delete_property':
-			permission_classes = [PropertyOwner400 | IsSuperUser]
+			permission_classes = [CanBeRetrieved]
 		return [permission() for permission in permission_classes]
 
 	def get_object(self, pk=None, owner_id=None):
