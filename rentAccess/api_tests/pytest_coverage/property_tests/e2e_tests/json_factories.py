@@ -24,12 +24,14 @@ class PropertyJsonFactory:
 			"title": self._property.title,
 			"body": self._property.body,
 			"price": self._property.price,
+			"active": self._property.active,
 			"booking_type": self._property.booking_type,
 			"visibility": self._property.visibility,
 			"property_type": self._property.property_type.pk,
 			"client_greeting_message": self._property.client_greeting_message,
 			"requires_additional_confirmation": self._property.requires_additional_confirmation,
 		}
+
 		return json
 
 	def availability_to_json(self):
@@ -50,8 +52,35 @@ class PropertyJsonFactory:
 			}
 		return json
 
-	def dump_json(self):
+	def dump_json(self, exclude=None):
 		json = self.property_to_json()
 		json['availability'] = self.availability_to_json()
 		json['property_address'] = self.address_to_json()
+		if exclude:
+			for field in exclude:
+				json.pop(field)
+		return json
+
+
+class AvailabilityJsonFactory:
+	def __init__(self, availability, booking_type):
+		self.availability = availability
+		self.booking_type = booking_type
+
+	def dump_json(self):
+		if self.booking_type == 200:
+
+			json = {
+				"open_days": available_days_from_db(self.availability.open_days),
+				"available_until": self.availability.available_until.strftime("%H:%M"),
+				"available_from": self.availability.available_from.strftime("%H:%M"),
+				"maximum_number_of_clients": self.availability.maximum_number_of_clients
+			}
+		else:
+			json = {
+				"open_days": available_days_from_db(self.availability.open_days),
+				"arrival_time_from": self.availability.available_from.strftime("%H:%M"),
+				"departure_time_until": self.availability.available_until.strftime("%H:%M"),
+				"maximum_number_of_clients": self.availability.maximum_number_of_clients
+			}
 		return json
