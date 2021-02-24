@@ -298,12 +298,14 @@ REST_FRAMEWORK = {
 		"rest_framework.parsers.JSONParser",
 	],
 	'DEFAULT_THROTTLE_CLASSES': [
-		'rest_framework.throttling.AnonRateThrottle',
-		'rest_framework.throttling.UserRateThrottle'
-	],
+			'rest_framework.throttling.AnonRateThrottle',
+			'rest_framework.throttling.UserRateThrottle',
+			'rest_framework.throttling.ScopedRateThrottle'
+		],
 	'DEFAULT_THROTTLE_RATES': {
 		'anon': '10000/day',
-		'user': '10000/day'
+		'user': '30000/day',
+		'login_throttle': '5/day'
 	},
 	'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%S%z",
 	'DEFAULT_AUTHENTICATION_CLASSES': [

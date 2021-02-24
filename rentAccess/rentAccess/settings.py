@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
 from kombu import Exchange, Queue
-
+import _locale
 # finding a root directory of the project
 root = environ.Path(__file__) - 2
 
@@ -233,6 +233,7 @@ INSTALLED_APPS = [
 	'checkAccess',
 ]
 
+_locale._getdefaultlocale = (lambda *args: ['en_US', 'utf8'])
 MIDDLEWARE = [
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
@@ -272,7 +273,8 @@ CITIES_LIGHT_INCLUDE_COUNTRIES = ['RU']
 CITIES_LIGHT_INCLUDE_CITY_TYPES = ['PPL', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPLC', 'PPLF', 'PPLG', 'PPLL', 'PPLR', 'PPLS', 'STLMT',]
 
 # Databases
-if not DEBUG:
+USE_POSTGRES = env.bool("USE_POSTGRES", False)
+if USE_POSTGRES:
 	DATABASES = {
 		'default': {
 			'ENGINE': 'django.db.backends.postgresql',
@@ -341,11 +343,14 @@ if DEBUG:
 		],
 		'DEFAULT_THROTTLE_CLASSES': [
 			'rest_framework.throttling.AnonRateThrottle',
-			'rest_framework.throttling.UserRateThrottle'
+			'rest_framework.throttling.UserRateThrottle',
+			'rest_framework.throttling.ScopedRateThrottle',
 		],
 		'DEFAULT_THROTTLE_RATES': {
 			'anon': '10000/day',
-			'user': '10000/day'
+			'user': '10000/day',
+			'login_throttle': '5/day'
+
 		},
 		'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%S%z",
 		'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -426,11 +431,13 @@ else:
 		],
 		'DEFAULT_THROTTLE_CLASSES': [
 			'rest_framework.throttling.AnonRateThrottle',
-			'rest_framework.throttling.UserRateThrottle'
+			'rest_framework.throttling.UserRateThrottle',
+			'rest_framework.throttling.ScopedRateThrottle'
 		],
 		'DEFAULT_THROTTLE_RATES': {
 			'anon': '10000/day',
-			'user': '10000/day'
+			'user': '30000/day',
+			'login_throttle': '5/day'
 		},
 		'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%S%z",
 		'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -465,8 +472,8 @@ if USE_S3:
 	PRIVATE_FILE_STORAGE = 'rentAccess.storage_backends.PrivateMediaStorage'
 else:
 	STATIC_URL = '/static/'
-	STATIC_ROOT = 'C:/web-294/web-294/rentAccess/static/'
-	MEDIA_ROOT = os.path.join('media')
+	STATIC_ROOT = root('static')
+	MEDIA_ROOT = root('media')
 	MEDIA_URL = '/media/'
 
 # Static root and file definitions
@@ -494,7 +501,7 @@ CELERY_TIMEZONE = 'Europe/Moscow'
 # CELERY_DEFAULT_QUEUE = 'default'
 # CELERY_DEFAULT_EXCHANGE = 'default'
 # CELERY_DEFAULT_ROUTING_KEY = 'default'
-
+INTERNAL_IPS = ['127.0.0.1',]
 # EMAIL SETTINGS
 SERVER_EMAIL = 'server@lockandrent.ru'
 EMAIL_USE_TLS = True
