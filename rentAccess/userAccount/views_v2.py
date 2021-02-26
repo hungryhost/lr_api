@@ -146,7 +146,10 @@ class ProfileImageViewSet(viewsets.ViewSet):
 
 	@action(detail=True, methods=['delete'])
 	def delete_user_picture(self, request):
-		UserImage.objects.get(account=self.request.user).delete()
+		try:
+			UserImage.objects.get(account=self.request.user).delete()
+		except UserImage.DoesNotExist:
+			return Response(status=status.HTTP_404_NOT_FOUND)
 		return Response(status=status.HTTP_204_NO_CONTENT)
 
 	def get_permissions(self):
