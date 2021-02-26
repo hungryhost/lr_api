@@ -1,18 +1,92 @@
-# End-to-end tests of endpoints
-## This directory contains end-to-end tests of endpoints for properties
+[[__TOC__]]
+# QA для области помещений
 
-### Tests cover following scenarios
-#### GET requests
-    - User retrieves a list of properties
-    - User retrieves a single property
-    - User retrieves a list of properties with filters
-    - User searches for properties with keywords
+# End-to-end (e2e) тесты
+E2E тесты предполагают тесты API Endpoints в следующем виде:
 
-#### POST requests
-    - User creates a property for daily bookings
-    - User creates a property for hourly bookings
+    - Отправка запроса 
+    - Проверка структуры ответа на соответствие JSON схеме для данного ресурса
+    - Проверка данных в ответе 
+## Область помещений: properties scope
 
-#### PATCH requests
-    - User updates the general info about a property
-    - User updates the availability info
-    - User updates the property's address
+### GET requests
+    - Получение списка помещений
+    - Получение одного помещения
+    - Использование фильтров
+    - Использование поиска
+
+### POST requests
+    - Создание помещения
+
+### PATCH requests
+    - Изменение параметров помещения, в том числе адреса и параметров доступности
+
+## Область помещений: images scope
+
+### GET requests
+    - Получение списка помещений
+    - Получение одного помещения
+    - Использование фильтров
+    - Использование поиска
+
+### POST requests
+    - Создание помещения
+
+### PATCH requests
+    - Изменение параметров помещения, в том числе адреса и параметров доступности
+
+## Область помещений: ownership scope
+
+### GET requests
+    - Получение списка помещений
+    - Получение одного помещения
+    - Использование фильтров
+    - Использование поиска
+
+### POST requests
+    - Создание помещения
+
+### PATCH requests
+    - Изменение параметров помещения, в том числе адреса и параметров доступности
+
+## Область помещений: locks scope
+
+### GET requests
+    - Получение списка помещений
+    - Получение одного помещения
+    - Использование фильтров
+    - Использование поиска
+
+### POST requests
+    - Создание помещения
+
+### PATCH requests
+    - Изменение параметров помещения, в том числе адреса и параметров доступности
+
+## Область помещений: groups scope
+
+### GET requests
+    - Получение списка помещений
+    - Получение одного помещения
+    - Использование фильтров
+    - Использование поиска
+
+### POST requests
+    - Создание помещения
+
+### PATCH requests
+    - Изменение параметров помещения, в том числе адреса и параметров доступности
+
+## Область помещений: organisations scope
+
+### GET requests
+    - Получение списка помещений
+    - Получение одного помещения
+    - Использование фильтров
+    - Использование поиска
+
+### POST requests
+    - Создание помещения
+
+### PATCH requests
+    - Изменение параметров помещения, в том числе адреса и параметров доступности
