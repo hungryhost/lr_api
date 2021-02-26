@@ -570,8 +570,9 @@ class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.Li
 		except Property.DoesNotExist:
 			return Http404
 		ownerships = [owner.user for owner in premises.owners.all()]
-		if not (self.request.user in ownerships) and self.request.method == "GET":
-			raise exceptions.PermissionDenied
+		if premises.visibility != 100:
+			if not (self.request.user in ownerships) and self.request.method == "GET":
+				raise exceptions.PermissionDenied
 
 		return super(self.__class__, self).list(self, request, *args, **kwargs)
 
