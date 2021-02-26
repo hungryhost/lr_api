@@ -18,7 +18,7 @@ urlpatterns = [
 	path('', PropertyListCreate.as_view(), name='properties-list'),
 	path('<int:pk>/owners/<int:owner_id>/', OwnershipViewSet.as_view({
 		'get': 'retrieve',
-		'patch': 'partial_update',
+		'put': 'update',
 		'delete': 'destroy'
 	}), name='properties-owners-details'),
 
@@ -27,6 +27,7 @@ urlpatterns = [
 	path('<int:pk>/bookings/', BookingsListCreateView.as_view(), name='properties-bookings-list'),
 	path('<int:pk>/images/', PropertyImagesViewSet.as_view(
 		{
+			'get': 'list',
 			'put': 'update_property_pictures',
 			'delete': 'delete_images',
 		}
