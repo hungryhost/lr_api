@@ -100,43 +100,112 @@ class PropertyOwnershipListSerializer(serializers.ModelSerializer):
 	last_name = serializers.CharField(source='user.last_name', read_only=True)
 	middle_name = serializers.CharField(max_length=50, source='user.middle_name',
 	                                   read_only=True)
+	user_id = serializers.IntegerField(source='user.id', read_only=True)
+	owner_id = serializers.IntegerField(source='id', read_only=True)
 
 	class Meta:
 		model = Ownership
 		fields = (
-			'user',
+			'owner_id',
+			'user_id',
+			'can_edit',
+			'can_delete',
+			'can_add_images',
+			'can_delete_images',
+			'can_add_bookings',
+			'can_manage_bookings',
+			'can_add_owners',
+			'can_manage_owners',
+			'can_delete_owners',
+			'can_add_locks',
+			'can_manage_locks',
+			'can_delete_locks',
+			'can_add_to_group',
+			'can_add_to_organisation',
+			'visibility',
 			'email',
 			'first_name',
 			'last_name',
 			'middle_name',
 			'is_creator',
-			'permission_level',
+			'created_at',
+			'updated_at'
+		)
+
+
+class PropertyContactsListSerializer(serializers.ModelSerializer):
+	email = serializers.CharField(read_only=True, source='user.email')
+	first_name = serializers.CharField(source='user.first_name', read_only=True)
+	last_name = serializers.CharField(source='user.last_name', read_only=True)
+	middle_name = serializers.CharField(max_length=50, source='user.middle_name',
+	                                   read_only=True)
+	user_id = serializers.IntegerField(source='user.id', read_only=True)
+
+	class Meta:
+		model = Ownership
+		fields = (
+			'user_id',
+			'email',
+			'first_name',
+			'last_name',
+			'middle_name',
+			'is_creator',
 			'created_at',
 			'updated_at'
 		)
 
 
 class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
-	email = serializers.CharField(read_only=False, source='user.email', required=True)
-	permission_level = serializers.IntegerField(required=True)
+	email = serializers.EmailField(read_only=False, source='user.email', required=True)
+
+	can_edit = serializers.BooleanField(required=True)
+	can_delete = serializers.BooleanField(required=True)
+	can_add_images = serializers.BooleanField(required=True)
+	can_delete_images = serializers.BooleanField(required=True)
+	can_add_bookings = serializers.BooleanField(required=True)
+	can_manage_bookings = serializers.BooleanField(required=True)
+	can_add_owners = serializers.BooleanField(required=True)
+	can_manage_owners = serializers.BooleanField(required=True)
+	can_delete_owners = serializers.BooleanField(required=True)
+	can_add_locks = serializers.BooleanField(required=True)
+	can_manage_locks = serializers.BooleanField(required=True)
+	can_delete_locks = serializers.BooleanField(required=True)
+	can_add_to_group = serializers.BooleanField(required=True)
+	can_add_to_organisation = serializers.BooleanField(required=True)
+
 	visibility = serializers.IntegerField(required=False)
 	first_name = serializers.CharField(source='user.first_name', read_only=True)
 	last_name = serializers.CharField(source='user.last_name', read_only=True)
-
-	patronymic = serializers.CharField(max_length=50, source='user.profile.patronymic',
+	middle_name = serializers.CharField(max_length=50, source='user.profile.middle_name',
 	                                   read_only=True)
+	user_id = serializers.IntegerField(source='user.id', read_only=True)
+	owner_id = serializers.IntegerField(source='id', read_only=True)
 
 	class Meta:
 		model = Ownership
 		fields = (
-			'user',
+			'owner_id',
+			'user_id',
+			'can_edit',
+			'can_delete',
+			'can_add_images',
+			'can_delete_images',
+			'can_add_bookings',
+			'can_manage_bookings',
+			'can_add_owners',
+			'can_manage_owners',
+			'can_delete_owners',
+			'can_add_locks',
+			'can_manage_locks',
+			'can_delete_locks',
+			'can_add_to_group',
+			'can_add_to_organisation',
 			'visibility',
 			'email',
 			'first_name',
 			'last_name',
-			'patronymic',
+			'middle_name',
 			'is_creator',
-			'permission_level',
 			'created_at',
 			'updated_at'
 		)
@@ -144,23 +213,44 @@ class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
 			'user',
 			'first_name',
 			'last_name',
-			'patronymic',
+			'middle_name',
 			'is_creator',
 			'created_at',
 			'updated_at'
 		]
 
 	def create(self, validated_data):
-		email = validated_data.get("email", None)
-		permission_level = validated_data.get("email", None)
+		print(validated_data)
+		user_data = validated_data.get("user", None)
+		email = user_data.get("email")
 		visibility = validated_data.get("visibility", None)
+
+		can_edit = validated_data.get("can_edit")
+		can_delete = validated_data.get("can_delete")
+
+		can_add_images = validated_data.get("can_add_images")
+		can_delete_images = validated_data.get("can_delete_images")
+
+		can_add_bookings = validated_data.get("can_add_bookings")
+		can_manage_bookings = validated_data.get("can_manage_bookings")
+
+		can_add_owners = validated_data.get("can_add_owners")
+		can_manage_owners = validated_data.get("can_manage_owners")
+		can_delete_owners = validated_data.get("can_delete_owners")
+
+		can_add_locks = validated_data.get("can_add_locks")
+		can_manage_locks = validated_data.get("can_manage_locks")
+		can_delete_locks = validated_data.get("can_delete_locks")
+
+		can_add_to_group = validated_data.get("can_add_to_group")
+		can_add_to_organisation = validated_data.get("can_add_to_organisation")
+
 		try:
 			user = User.objects.get(email=email)
 		except User.DoesNotExist:
 			raise serializers.ValidationError({
 				"user: user with given email does not exist."
 			})
-
 		if not visibility:
 			visibility = 250
 		obj = Ownership.objects.create(
@@ -168,7 +258,22 @@ class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
 			user=user,
 			is_creator=False,
 			visibility=visibility,
-			permission_level_id=permission_level
+			permission_level_id=400,
+			can_edit=can_edit,
+			can_delete=can_delete,
+			can_add_images=can_add_images,
+			can_delete_images=can_delete_images,
+			can_add_bookings=can_add_bookings,
+			can_manage_bookings=can_manage_bookings,
+			can_add_owners=can_add_owners,
+			can_manage_owners=can_manage_owners,
+			can_delete_owners=can_delete_owners,
+			can_add_locks=can_add_locks,
+			can_manage_locks=can_manage_locks,
+			can_delete_locks=can_delete_locks,
+			can_add_to_group=can_add_to_group,
+			can_add_to_organisation=can_add_to_organisation,
+			is_super_owner=False
 		)
 		owners_logger.info(
 			f"object: owner; stage: serializer; action_type: create; user_id: {self.context['request'].user.id}; "
@@ -178,42 +283,67 @@ class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
 
 
 class PropertyOwnershipUpdateSerializer(serializers.ModelSerializer):
-	email = serializers.CharField(read_only=True, source='user.email')
-	permission_level = serializers.IntegerField(required=False)
-	visibility = serializers.IntegerField(required=False)
+	email = serializers.CharField(read_only=True, source='user.email', required=False)
+
+	can_edit = serializers.BooleanField(required=True)
+	can_delete = serializers.BooleanField(required=True)
+	can_add_images = serializers.BooleanField(required=True)
+	can_delete_images = serializers.BooleanField(required=True)
+	can_add_bookings = serializers.BooleanField(required=True)
+	can_manage_bookings = serializers.BooleanField(required=True)
+	can_add_owners = serializers.BooleanField(required=True)
+	can_manage_owners = serializers.BooleanField(required=True)
+	can_delete_owners = serializers.BooleanField(required=True)
+	can_add_locks = serializers.BooleanField(required=True)
+	can_manage_locks = serializers.BooleanField(required=True)
+	can_delete_locks = serializers.BooleanField(required=True)
+	can_add_to_group = serializers.BooleanField(required=True)
+	can_add_to_organisation = serializers.BooleanField(required=True)
+
+	visibility = serializers.IntegerField(required=True)
 	first_name = serializers.CharField(source='user.first_name', read_only=True)
 	last_name = serializers.CharField(source='user.last_name', read_only=True)
-
-	patronymic = serializers.CharField(max_length=50, source='user.profile.patronymic', read_only=True)
+	middle_name = serializers.CharField(source='user.profile.middle_name', read_only=True)
+	user_id = serializers.IntegerField(source='user.id', read_only=True)
+	owner_id = serializers.IntegerField(source='id', read_only=True)
 
 	class Meta:
 		model = Ownership
 		fields = (
-			'user',
+			'owner_id',
+			'user_id',
+			'can_edit',
+			'can_delete',
+			'can_add_images',
+			'can_delete_images',
+			'can_add_bookings',
+			'can_manage_bookings',
+			'can_add_owners',
+			'can_manage_owners',
+			'can_delete_owners',
+			'can_add_locks',
+			'can_manage_locks',
+			'can_delete_locks',
+			'can_add_to_group',
+			'can_add_to_organisation',
+			'visibility',
 			'email',
 			'first_name',
 			'last_name',
-			'patronymic',
+			'middle_name',
 			'is_creator',
-			'permission_level',
 			'created_at',
 			'updated_at'
 		)
-
-	def update(self, instance, validated_data):
-		permission_level = validated_data.get("email", None)
-		visibility = validated_data.get("visibility", None)
-
-		if permission_level:
-			instance.permission_level = permission_level
-		if visibility:
-			instance.visibility = visibility
-		instance.save()
-		owners_logger.info(
-			f"object: owner; stage: serializer; action_type: update; user_id: {self.context['request'].user.id}; "
-			f"property_id: {self.context['property_id']}; "
-			f"owner_id: {instance.id}; ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
-		return instance
+		read_only_fields = [
+			'user',
+			'first_name',
+			'last_name',
+			'middle_name',
+			'is_creator',
+			'created_at',
+			'updated_at'
+		]
 
 
 class PropertyImagesSerializer(serializers.ModelSerializer):
@@ -375,7 +505,7 @@ class PropertySerializer(serializers.ModelSerializer):
 		for owner in queryset:
 			if owner.visibility == 100:
 				contacts.append(owner)
-		serializer = PropertyOwnershipListSerializer(
+		serializer = PropertyContactsListSerializer(
 			contacts,
 			many=True
 		)
