@@ -5,7 +5,8 @@ import pytz
 from .availability_utils import available_days_from_db, available_hours_from_db, \
 	available_hours_to_db
 from bookings.models import Booking
-from .property_permissions import IsPublicProperty, PropertyOwner300, PropertyOwner400, CanBeRetrieved
+from .property_permissions import IsPublicProperty, CanBeRetrieved, CanUpdateInfo, CanAddImages, CanDeleteProperty, \
+	CanDeleteImages, CanAddOwners, CanManageOwners, CanDeleteOwners, InOwnership
 from .logger_helpers import get_client_ip
 from register.models import Key, Lock
 from django.db.models import Q, Prefetch
@@ -24,7 +25,7 @@ from register.models import Key
 from .models import Property, Ownership, PremisesImage, LockWithProperty
 from .serializers import PropertySerializer, PropertyUpdateSerializer, \
 	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer, BulkFileUploadSerializer, \
-	PropertyOwnershipAddSerializer, PropertyOwnershipUpdateSerializer
+	PropertyOwnershipAddSerializer, PropertyOwnershipUpdateSerializer, PropertyImagesSerializer
 from .permissions import IsOwner, IsInitialOwner, IsSuperUser
 from .models import PropertyLog
 from locks.serializers import AddLockToPropertySerializer, LockSerializer, LockAndPropertySerializer
@@ -34,16 +35,16 @@ owners_logger = logging.getLogger('rentAccess.properties.owners.info')
 images_logger = logging.getLogger('rentAccess.properties.images.info')
 
 
-# TODO: owed refactoring: move bookings into their own app
-# TODO: FIX NAMING OF SOME VARIABLES OR ELSE ITS CHAOS
-
 class LockList(generics.ListCreateAPIView):
-	queryset = Lock.objects.all()
 
 	def create(self, request, *args, **kwargs):
 		property_owners = self.get_property_object()
-		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
-		                                     user=self.request.user, permission_level_id=400).exists():
+		if not property_owners.owners.filter(
+				premises_id=self.kwargs["pk"],
+				user=self.request.user,
+				permission_level_id=400,
+				can_add_locks=True
+		).exists():
 			raise exceptions.PermissionDenied
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
@@ -51,22 +52,34 @@ class LockList(generics.ListCreateAPIView):
 		headers = self.get_success_headers(serializer.data)
 		return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-	def get_queryset(self):
-		property_owners = self.get_property_object()
-		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
-		                                     user=self.request.user,
-		                                     permission_level_id=400).exists() and self.request.method == "GET":
+	def get(self, request, *args, **kwargs):
+		try:
+			property_owners = Property.objects.prefetch_related(
+				Prefetch(
+					'owners',
+					queryset=Ownership.objects.select_related('user').all().filter(
+						can_manage_locks=True
+					))).get(
+				pk=self.kwargs['pk'])
+		except Property.DoesNotExist:
+			raise Http404
+		ownerships = [owner.user for owner in property_owners.owners.all()]
+		if not (self.request.user in ownerships) and self.request.method == "GET":
 			raise exceptions.PermissionDenied
-		return LockWithProperty.objects.filter(property_id=self.kwargs["pk"])
+		return super(self.__class__, self).get(self, request, *args, **kwargs)
+
+	def get_queryset(self):
+		return LockWithProperty.objects.filter(
+			property_id=self.kwargs["pk"])
 
 	def get_serializer_class(self):
 		return AddLockToPropertySerializer
 
 	def get_serializer_context(self):
 		return {
-			'request': self.request,
-			'format': self.format_kwarg,
-			'view': self,
+			'request'    : self.request,
+			'format'     : self.format_kwarg,
+			'view'       : self,
 			'property_id': self.kwargs["pk"]
 		}
 
@@ -81,8 +94,11 @@ class LockList(generics.ListCreateAPIView):
 class OwnersListCrete(generics.ListCreateAPIView):
 	def create(self, request, *args, **kwargs):
 		property_owners = self.get_property_object()
-		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
-		                                     user=self.request.user, permission_level_id=400).exists():
+		if not property_owners.owners.filter(
+				premises_id=self.kwargs["pk"],
+				user=self.request.user,
+				permission_level_id=400
+		).exists():
 			raise exceptions.PermissionDenied
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
@@ -96,18 +112,30 @@ class OwnersListCrete(generics.ListCreateAPIView):
 			f"object: owner; stage: view; action_type: create; user_id: {self.request.user.id}; "
 			f"owner_id: {obj.id}; property_id: {self.kwargs['pk']} ip_addr: {get_client_ip(self.request)}; status: OK;")
 
-	def get_queryset(self, *args, **kwargs):
-		property_owners = self.get_property_object()
-		if not property_owners.owners.filter(premises_id=self.kwargs["pk"],
-		                                     user=self.request.user).exists() and self.request.method == "GET":
+	def get(self, request, *args, **kwargs):
+		try:
+			property_owners = Property.objects.prefetch_related(
+				Prefetch(
+					'owners',
+					queryset=Ownership.objects.select_related('user').all().filter(
+						can_manage_owners=True
+					))).get(
+				pk=self.kwargs['pk'])
+		except Property.DoesNotExist:
+			raise Http404
+		ownerships = [owner.user for owner in property_owners.owners.all()]
+		if not (self.request.user in ownerships) and self.request.method == "GET":
 			raise exceptions.PermissionDenied
+		return super(self.__class__, self).get(self, request, *args, **kwargs)
+
+	def get_queryset(self, *args, **kwargs):
 		return Ownership.objects.all().filter(premises_id=self.kwargs["pk"])
 
 	def get_serializer_context(self):
 		return {
-			'request': self.request,
-			'format': self.format_kwarg,
-			'view': self,
+			'request'    : self.request,
+			'format'     : self.format_kwarg,
+			'view'       : self,
 			'property_id': self.kwargs["pk"]
 		}
 
@@ -126,10 +154,7 @@ class OwnersListCrete(generics.ListCreateAPIView):
 
 class PropertyListCreate(generics.ListCreateAPIView):
 	"""
-	Generic API View class. Lists all objects.
-	Author: Y. Borodin (gitlab: yuiborodin)
-	Version: 1.0
-	Last Update: 16.11.2020
+	List and create properties.
 	"""
 	filter_backends = (dj_filters.DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter,)
 	filterset_class = PropertyFilter
@@ -146,19 +171,27 @@ class PropertyListCreate(generics.ListCreateAPIView):
 
 	def perform_create(self, serializer):
 		obj = serializer.save()
-		PropertyLog.objects.create(
-			listed_prop=obj,
-			user=self.request.user,
-			action='POST',
-			act_time=datetime.datetime.now(),
-			result=True
-		)
 		Ownership.objects.create(
 			premises=obj,
 			user=self.request.user,
 			is_creator=True,
-			permission_level_id=400
-		)
+			permission_level_id=400,
+			can_edit=True,
+			can_delete=True,
+			can_add_images=True,
+			can_delete_images=True,
+			can_add_bookings=True,
+			can_manage_bookings=True,
+			can_add_owners=True,
+			can_manage_owners=True,
+			can_delete_owners=True,
+			can_add_locks=True,
+			can_manage_locks=True,
+			can_delete_locks=True,
+			can_add_to_group=True,
+			can_add_to_organisation=True,
+			is_super_owner=True
+		),
 		crud_logger_info.info(
 			f"object: property; stage: view; action_type: create; user_id: {self.request.user.id}; property_id: {obj.id}; "
 			f"ip_addr: {get_client_ip(self.request)}; status: OK;")
@@ -196,12 +229,20 @@ class PropertyListCreate(generics.ListCreateAPIView):
 		# it is better to handle dates here rather than in the filter backend
 		if d_end and d_start and booking_type == '100' and d_start < d_end:
 			query_1 = Q()
-			query_1.add(Q(bookings__booked_from__date__lte=d_start) & Q(bookings__booked_until__date__gte=d_start),
-			            query_1.connector)
-			query_1.add(Q(bookings__booked_from__date__lt=d_end) & Q(bookings__booked_until__date__gte=d_end), Q.OR)
-			query_1.add(Q(bookings__booked_from__date__gte=d_start) & Q(bookings__booked_from__date__lte=d_end), Q.OR)
+			query_1.add(
+				Q(bookings__booked_from__date__lte=d_start)
+				& Q(bookings__booked_until__date__gte=d_start),
+				query_1.connector)
+			query_1.add(
+				Q(bookings__booked_from__date__lt=d_end)
+				& Q(bookings__booked_until__date__gte=d_end), Q.OR)
+			query_1.add(
+				Q(bookings__booked_from__date__gte=d_start)
+				& Q(bookings__booked_from__date__lte=d_end), Q.OR)
 			query_2 = Q()
-			query_2.add(Q(bookings__booked_from__date=d_end) | Q(bookings__booked_until__date=d_start), Q.AND)
+			query_2.add(
+				Q(bookings__booked_from__date=d_end)
+				| Q(bookings__booked_until__date=d_start), Q.AND)
 
 			bad_ids = []
 			if queryset.exists():
@@ -215,15 +256,24 @@ class PropertyListCreate(generics.ListCreateAPIView):
 
 		if h_start and h_end and booking_type == '200':
 			query_1 = Q()
-			query_1.add(Q(bookings__booked_from__lte=h_start) & Q(bookings__booked_until__gte=h_start),
-			            query_1.connector)
-			query_1.add(Q(bookings__booked_from__lt=h_end) & Q(bookings__booked_until__gte=h_end), Q.OR)
-			query_1.add(Q(bookings__booked_from__gte=h_start) & Q(bookings__booked_from__lte=h_end), Q.OR)
+			query_1.add(
+				Q(bookings__booked_from__lte=h_start)
+				& Q(bookings__booked_until__gte=h_start),
+				query_1.connector)
+			query_1.add(
+				Q(bookings__booked_from__lt=h_end)
+				& Q(bookings__booked_until__gte=h_end), Q.OR)
+			query_1.add(
+				Q(bookings__booked_from__gte=h_start)
+				& Q(bookings__booked_from__lte=h_end), Q.OR)
 			query_2 = Q()
-			query_2.add(Q(bookings__booked_from=h_end) | Q(bookings__booked_until=h_start), query_2.connector)
+			query_2.add(
+				Q(bookings__booked_from=h_end)
+				| Q(bookings__booked_until=h_start), query_2.connector)
 			query_3 = Q()
 			query_3.add(
-				Q(availability__available_from__gt=h_start.time()) | Q(availability__available_until__lt=h_end.time()),
+				Q(availability__available_from__gt=h_start.time())
+				| Q(availability__available_until__lt=h_end.time()),
 				query_3.connector)
 
 			bad_ids = []
@@ -252,23 +302,24 @@ class OwnershipViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generic
 	r"""
 	ViewSet class for CRUD operations with owners of a property.
 	"""
+	parser_classes = [JSONParser, ]
 
 	@action(detail=True, methods=['get'])
 	def retrieve(self, request, pk=None, owner_id=None):
 		obj = self.get_object(pk=pk, owner_id=owner_id)
 		serializer = self.get_serializer(
-			data=self.request.data,
+			obj,
 			context={'request': request, 'property_id': pk}
 		)
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
-	@action(detail=True, methods=['patch'])
-	def partial_update(self, request, pk=None, owner_id=None):
+	@action(detail=True, methods=['put'])
+	def update(self, request, pk=None, owner_id=None):
 		instance = self.get_object(pk=pk, owner_id=owner_id)
 		serializer = PropertyOwnershipUpdateSerializer(
 			instance,
 			data=self.request.data,
-			partial=True,
+			partial=False,
 			context={'request': request, 'property_id': pk, 'owner_id': owner_id}
 		)
 		serializer.is_valid(raise_exception=True)
@@ -291,12 +342,18 @@ class OwnershipViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generic
 		return Ownership.objects.all()
 
 	def get_permissions(self):
-		permission_classes = [IsInitialOwner]
+		permission_classes = []
+		if self.action == 'retrieve':
+			permission_classes = [InOwnership]
+		if self.action == 'update':
+			permission_classes = [CanManageOwners]
+		if self.action == 'destroy':
+			permission_classes = [CanDeleteOwners]
 		return [permission() for permission in permission_classes]
 
 	def get_object(self, pk=None, owner_id=None):
 		try:
-			obj = Ownership.objects.get(premises=pk, user_id=owner_id)
+			obj = Ownership.objects.get(premises=pk, pk=owner_id)
 			self.check_object_permissions(self.request, obj)
 			return obj
 		except Ownership.DoesNotExist:
@@ -332,8 +389,8 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 				"property_images", "property_address__city", "owners",
 				"owners__user"
 			).select_related('availability', 'property_type',
-								'property_address'
-			).get(id=pk)
+			                 'property_address'
+			                 ).get(id=pk)
 
 			self.check_object_permissions(self.request, obj)
 		except Property.DoesNotExist:
@@ -353,8 +410,8 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 				"property_images", "property_address__city", "owners",
 				"owners__user"
 			).select_related('availability', 'property_type',
-								'property_address'
-			).get(id=pk)
+			                 'property_address'
+			                 ).get(id=pk)
 			self.check_object_permissions(self.request, instance)
 		except Property.DoesNotExist:
 			raise Http404
@@ -395,12 +452,25 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
 		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
-		query_1.add(Q(booked_from__lte=datetime_start) & Q(booked_until__gte=datetime_start), query_1.connector)
-		query_1.add(Q(booked_from__lt=datetime_stop) & Q(booked_until__gte=datetime_stop), Q.OR)
-		query_1.add(Q(booked_from__gte=datetime_start) & Q(booked_from__lte=datetime_stop), Q.OR)
-		query_1.add(Q(booked_property_id=pk), Q.AND)
+		query_1.add(
+			Q(booked_from__lte=datetime_start)
+			& Q(booked_until__gte=datetime_start), query_1.connector
+		)
+		query_1.add(
+			Q(booked_from__lt=datetime_stop)
+			& Q(booked_until__gte=datetime_stop), Q.OR
+		)
+		query_1.add(
+			Q(booked_from__gte=datetime_start)
+			& Q(booked_from__lte=datetime_stop), Q.OR
+		)
+		query_1.add(
+			Q(booked_property_id=pk), Q.AND)
 		query_2 = Q()
-		query_2.add(Q(booked_from=datetime_stop) | Q(booked_until=datetime_start), query_2.connector)
+		query_2.add(
+			Q(booked_from=datetime_stop)
+			| Q(booked_until=datetime_start), query_2.connector
+		)
 		queryset = Booking.objects.filter(query_1).exclude(query_2)
 		if queryset.exists():
 			return Response(status=status.HTTP_409_CONFLICT)
@@ -410,7 +480,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 	def get_hourly_availability(self, request, pk=None):
 		try:
 			prop = Property.objects.select_related('availability', 'property_type',
-								'property_address').get(id=pk)
+			                                       'property_address').get(id=pk)
 			self.check_object_permissions(self.request, prop)
 		except Property.DoesNotExist:
 			raise Http404
@@ -420,25 +490,28 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		date = self.request.query_params.get('date', None)
 		if (date is None) or prop.booking_type == 100:
 			return Response(data={"No date provided or wrong booking_type of the property"},
-				status=status.HTTP_400_BAD_REQUEST)
+			                status=status.HTTP_400_BAD_REQUEST)
 		try:
 			date_dt = datetime.datetime.strptime(date, '%Y-%m-%d')
 		except Exception as e:
 			return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-		bookings = Booking.objects.all().filter(booked_property=prop,
-		                                        booked_from__date=date,
-		                                        booked_until__date=date)
+		bookings = Booking.objects.all().filter(
+			booked_property=prop,
+			booked_from__date=date,
+			booked_until__date=date
+		)
 
 		days = available_days_from_db(prop.availability.open_days)
 		if date_dt.weekday() not in days:
-			return Response(data={"date": "Property is not available at that day."},
-			                status=status.HTTP_400_BAD_REQUEST)
+			return Response(
+				data={"date": "Property is not available at that day."},
+				status=status.HTTP_400_BAD_REQUEST)
 		slots = available_hours_from_db(prop, bookings, b_date=date_dt)
 		data = {
-			"count": len(slots),
+			"count"            : len(slots),
 			"property_timezone": prop.property_address.city.city.timezone,
-			"available_slots": slots,
+			"available_slots"  : slots,
 		}
 		# TODO: consider moving the query into the model's methods or manager
 
@@ -465,10 +538,12 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		permission_classes = []
 		if self.action in ['retrieve', 'get_availability', 'get_hourly_availability']:
 			permission_classes = [CanBeRetrieved]
-		if self.action in ['partial_update', 'change_main_image']:
-			permission_classes = [CanBeRetrieved]
+		if self.action == 'partial_update':
+			permission_classes = [CanUpdateInfo]
+		if self.action == 'change_main_image':
+			permission_classes = [CanAddImages]
 		if self.action == 'delete_property':
-			permission_classes = [CanBeRetrieved]
+			permission_classes = [CanDeleteProperty]
 		return [permission() for permission in permission_classes]
 
 	def get_object(self, pk=None, owner_id=None):
@@ -484,6 +559,21 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 
 class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.ListModelMixin):
+
+	def list(self, request, *args, **kwargs):
+		try:
+			premises = Property.objects.prefetch_related(
+				"owners",
+				"owners__user").get(
+				pk=self.kwargs["pk"]
+			)
+		except Property.DoesNotExist:
+			return Http404
+		ownerships = [owner.user for owner in premises.owners.all()]
+		if not (self.request.user in ownerships) and self.request.method == "GET":
+			raise exceptions.PermissionDenied
+
+		return super(self.__class__, self).list(self, request, *args, **kwargs)
 
 	@action(detail=True, methods=['put'])
 	def update_property_pictures(self, request, pk=None):
@@ -510,7 +600,7 @@ class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.Li
 			image_obj = get_object_or_404(PremisesImage, pk=item, premises=pk)
 			image_obj.delete()
 		if not PremisesImage.objects.filter(premises_id=pk, is_main=True).exists() \
-				and PremisesImage.objects.filter(premises_id=pk, is_main=False).exists():
+			and PremisesImage.objects.filter(premises_id=pk, is_main=False).exists():
 			obj = PremisesImage.objects.latest('uploaded_at')
 			obj.is_main = True
 			obj.save()
@@ -519,14 +609,26 @@ class PropertyImagesViewSet(viewsets.ViewSet, viewsets.GenericViewSet, mixins.Li
 	def get_serializer_class(self):
 		if self.action in ['update_property_pictures']:
 			return BulkFileUploadSerializer
+		if self.action == 'list':
+			return PropertyImagesSerializer
 
 	def get_permissions(self):
-		permission_classes = [IsAuthenticated, ]
+		permission_classes = []
+		if self.action == "update_property_pictures":
+			permission_classes = [CanAddImages, ]
+		if self.action == "delete_images":
+			permission_classes = [CanDeleteImages, ]
 		return [permission() for permission in permission_classes]
 
 	def get_parsers(self):
-		if self.request.method == "DELETE":
+		if self.request.method in ["DELETE", "GET"]:
 			parser_classes = [JSONParser, ]
 		else:
 			parser_classes = [FormParser, MultiPartParser]
 		return [parser() for parser in parser_classes]
+
+	def get_queryset(self):
+		if self.action == "list":
+			return PremisesImage.objects.all().filter(
+				premises=self.kwargs["pk"]
+			)
