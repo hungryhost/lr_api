@@ -221,7 +221,7 @@ INSTALLED_APPS = [
 	'organisations',
 	'jwtauth',
 	'comms',
-	'groups',
+	'propertyGroups',
 	'store',
 	'userAccount',
 	'corsheaders',
