@@ -15,7 +15,7 @@ from .utils import username_generate_from_email
 from .tasks import email_confirmation_task
 from .serializers import UserCreateSerializer, UserLoginSerializer
 from django.contrib.sites.shortcuts import get_current_site
-
+from .throttles import LoginThrottle
 
 User = get_user_model()
 
@@ -60,6 +60,7 @@ def registration(request):
 
 @decorators.api_view(["POST"])
 @decorators.permission_classes([permissions.AllowAny])
+@decorators.throttle_classes([LoginThrottle])
 def login(request):
 	"""
 	This method implements user login action.
@@ -68,6 +69,7 @@ def login(request):
 	:param request: incoming POST request
 	:return: JSON object with data
 	"""
+
 	serializer = UserLoginSerializer(data=request.data)
 	# permission_classes = (AllowAny,)
 	if not serializer.is_valid():
