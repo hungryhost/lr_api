@@ -1,34 +1,31 @@
 import datetime
+import logging
 
-import pytz
-
-from .availability_utils import available_days_from_db, available_hours_from_db, \
-	available_hours_to_db
-from bookings.models import Booking
-from .property_permissions import IsPublicProperty, CanBeRetrieved, CanUpdateInfo, CanAddImages, CanDeleteProperty, \
-	CanDeleteImages, CanAddOwners, CanManageOwners, CanDeleteOwners, InOwnership
-from .logger_helpers import get_client_ip
-from register.models import Key, Lock
 from django.db.models import Q, Prefetch
 from django.http import Http404
-import logging
 from django_filters import rest_framework as dj_filters
-from .filters import PropertyFilter
 from rest_framework import filters
-from rest_framework import generics, permissions, status, response, serializers, viewsets, mixins, exceptions
-from rest_framework.decorators import action, permission_classes
+from rest_framework import generics, status, viewsets, mixins, exceptions
+from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from register.models import Key
+
+from bookings.models import Booking
+from locks.serializers import AddLockToPropertySerializer, LockAndPropertySerializer
+from .availability_utils import available_days_from_db, available_hours_from_db
+from .filters import PropertyFilter
+from .logger_helpers import get_client_ip
 from .models import Property, Ownership, PremisesImage, LockWithProperty
+from .property_permissions import CanBeRetrieved, CanUpdateInfo, CanAddImages, CanDeleteProperty, \
+	CanDeleteImages, CanManageOwners, CanDeleteOwners, InOwnership, CanManageLocks, CanDeleteLocks, \
+	CanAddLocks
 from .serializers import PropertySerializer, PropertyUpdateSerializer, \
 	PropertyCreateSerializer, PropertyOwnershipListSerializer, PropertyListSerializer, BulkFileUploadSerializer, \
 	PropertyOwnershipAddSerializer, PropertyOwnershipUpdateSerializer, PropertyImagesSerializer
-from .permissions import IsOwner, IsInitialOwner, IsSuperUser
-from .models import PropertyLog
-from locks.serializers import AddLockToPropertySerializer, LockSerializer, LockAndPropertySerializer
+from checkAccess.serializers import AccessListSerializer
+from checkAccess.models import AccessLog
 
 crud_logger_info = logging.getLogger('rentAccess.properties.crud.info')
 owners_logger = logging.getLogger('rentAccess.properties.owners.info')
@@ -73,6 +70,8 @@ class LockList(generics.ListCreateAPIView):
 			property_id=self.kwargs["pk"])
 
 	def get_serializer_class(self):
+		if self.request.method == 'GET':
+			return LockAndPropertySerializer
 		return AddLockToPropertySerializer
 
 	def get_serializer_context(self):
@@ -91,7 +90,7 @@ class LockList(generics.ListCreateAPIView):
 		return property_owners
 
 
-class OwnersListCrete(generics.ListCreateAPIView):
+class OwnersListCreate(generics.ListCreateAPIView):
 	def create(self, request, *args, **kwargs):
 		property_owners = self.get_property_object()
 		if not property_owners.owners.filter(
@@ -296,6 +295,70 @@ class PropertyListCreate(generics.ListCreateAPIView):
 	def get_permissions(self):
 		permission_classes = [IsAuthenticated]
 		return [permission() for permission in permission_classes]
+
+
+class LocksViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
+	parser_classes = [JSONParser, ]
+
+	@action(detail=True, methods=['get'])
+	def retrieve(self, request, pk=None, lock_id=None):
+		try:
+			lock = LockWithProperty.objects.get(pk=lock_id, property_id=pk)
+		except LockWithProperty.DoesNotExist:
+			raise Http404
+		serializer = LockAndPropertySerializer(
+			lock,
+			context={'request': request, 'property_id': pk}
+		)
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	@action(detail=True, methods=['put'])
+	def update(self, request, pk=None, lock_id=None):
+		try:
+			lock = LockWithProperty.objects.get(pk=lock_id, property_id=pk)
+		except LockWithProperty.DoesNotExist:
+			raise Http404
+		serializer = AddLockToPropertySerializer(
+			lock,
+			data=self.request.data,
+			partial=False,
+			context={'request': request, 'property_id': pk, 'lock_id': lock_id}
+		)
+		serializer.is_valid(raise_exception=True)
+		serializer.save()
+
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	@action(detail=True, methods=['get'])
+	def get_accesses(self, request, pk=None, lock_id=None):
+		try:
+			lock = LockWithProperty.objects.get(pk=lock_id, property_id=pk)
+		except LockWithProperty.DoesNotExist:
+			raise Http404
+		accesses = AccessLog.objects.all().filter(lock=lock.lock.id)
+		serializer = AccessListSerializer(
+			accesses,
+			many=True,
+			context={'request': request, 'property_id': pk, 'lock_id': lock_id}
+		)
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	def get_queryset(self):
+		if self.action in 'get_access':
+			return AccessLog.objects.all()
+
+	def get_permissions(self):
+		permission_classes = []
+		if self.action in ['retrieve', 'get_accesses']:
+			permission_classes = [CanManageLocks | CanAddLocks | CanDeleteLocks]
+		if self.action == 'update':
+			permission_classes = [CanManageLocks]
+		if self.action == 'destroy':
+			permission_classes = [CanDeleteLocks]
+		return [permission() for permission in permission_classes]
+
+	def get_serializer_class(self):
+		return AddLockToPropertySerializer
 
 
 class OwnershipViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
