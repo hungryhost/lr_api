@@ -491,6 +491,30 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 			f"ip_addr: {get_client_ip(self.request)}; status: OK;")
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
+	@action(detail=True, methods=['put'])
+	def update(self, request, pk=None):
+		try:
+			instance = Property.objects.prefetch_related(
+				"property_images", "property_address__city", "owners",
+				"owners__user"
+			).select_related('availability', 'property_type',
+			                 'property_address'
+			                 ).get(id=pk)
+			self.check_object_permissions(self.request, instance)
+		except Property.DoesNotExist:
+			raise Http404
+		serializer = PropertyUpdateSerializer(
+			instance,
+			data=self.request.data,
+			context={'request': request, "property_id": pk}
+		)
+		serializer.is_valid(raise_exception=True)
+		serializer.save()
+		crud_logger_info.info(
+			f"object: property; stage: view; action_type: update; user_id: {self.request.user.id}; property_id: {instance.id}; "
+			f"ip_addr: {get_client_ip(self.request)}; status: OK;")
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
 	@action(detail=True, methods=['delete'])
 	def delete_property(self, request, pk=None):
 		instance = self.get_object(pk=pk)
@@ -601,7 +625,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		permission_classes = []
 		if self.action in ['retrieve', 'get_availability', 'get_hourly_availability']:
 			permission_classes = [CanBeRetrieved]
-		if self.action == 'partial_update':
+		if self.action in ['partial_update', 'update']:
 			permission_classes = [CanUpdateInfo]
 		if self.action == 'change_main_image':
 			permission_classes = [CanAddImages]
