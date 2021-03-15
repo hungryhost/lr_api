@@ -21,7 +21,8 @@ router.register(r'documents', ProfileDocumentsViewSet, basename='documents')
 
 
 urlpatterns = [
-    path('', ProfileDetailViewSet.as_view({'get': 'retrieve', 'patch': 'partial_update'}), name='user-details'),
+    path('', ProfileDetailViewSet.as_view(
+        {'get': 'retrieve', 'put': 'update'}), name='user-details'),
     path('change_password/', change_password, name='change-password'),
     path('', include((router.urls, 'userAccount'),)),
     path('billing_addresses/', ProfileAddressesViewSet.as_view({'post': 'create', 'get': 'list'})),
