@@ -66,7 +66,22 @@ def property_daily(
 		premises=prop_obj,
 		permission_level_id=400,
 		user=owner,
-		is_creator=True
+		is_creator=True,
+		can_edit=True,
+		can_delete=True,
+		can_add_images=True,
+		can_delete_images=True,
+		can_add_bookings=True,
+		can_manage_bookings=True,
+		can_add_owners=True,
+		can_manage_owners=True,
+		can_delete_owners=True,
+		can_add_locks=True,
+		can_manage_locks=True,
+		can_delete_locks=True,
+		can_add_to_group=True,
+		can_add_to_organisation=True,
+		is_super_owner=True
 	)
 	return prop_obj, owner, client
 
@@ -87,7 +102,22 @@ def property_hourly(
 		premises=prop_obj,
 		permission_level_id=400,
 		user=owner,
-		is_creator=True
+		is_creator=True,
+		can_edit=True,
+		can_delete=True,
+		can_add_images=True,
+		can_delete_images=True,
+		can_add_bookings=True,
+		can_manage_bookings=True,
+		can_add_owners=True,
+		can_manage_owners=True,
+		can_delete_owners=True,
+		can_add_locks=True,
+		can_manage_locks=True,
+		can_delete_locks=True,
+		can_add_to_group=True,
+		can_add_to_organisation=True,
+		is_super_owner=True
 	)
 	return prop_obj, owner, client
 
