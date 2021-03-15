@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-
+from userAccount.models import PlannedClient
 
 # TODO: make username generated from email and separate them
 # TODO: customize login response for the one in the docs
@@ -68,7 +68,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
                     last_name=last_name)
         user.set_password(password)
 
+        plan = PlannedClient(
+            client=user,
+            plan_id='DEFAULT'
+        )
+
         user.save()
+        plan.save()
+
         return user
 
 
