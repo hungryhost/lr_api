@@ -10,6 +10,7 @@ app_name = 'properties'
 
 properties_details = PropertiesViewSet.as_view({
 		'patch': 'partial_update',
+		'put': 'update',
 		'get': 'retrieve',
 		'delete': 'delete_property'
 	})
