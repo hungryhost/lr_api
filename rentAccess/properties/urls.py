@@ -1,7 +1,7 @@
 from django.urls import path
 from django.views.generic import TemplateView
 from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet, \
-	LockList, OwnersListCrete, OwnershipViewSet
+	LockList, OwnersListCreate, OwnershipViewSet, LocksViewSet
 from register.views import CardList, KeyList
 from bookings.views import BookingsListCreateView, BookingsViewSet, BookingsAllList
 
@@ -22,7 +22,7 @@ urlpatterns = [
 		'delete': 'destroy'
 	}), name='properties-owners-details'),
 
-	path('<int:pk>/owners/', OwnersListCrete.as_view(), name='properties-owners-list'),
+	path('<int:pk>/owners/', OwnersListCreate.as_view(), name='properties-owners-list'),
 	path('<int:pk>/', properties_details, name='properties-details'),
 	path('<int:pk>/bookings/', BookingsListCreateView.as_view(), name='properties-bookings-list'),
 	path('<int:pk>/images/', PropertyImagesViewSet.as_view(
@@ -52,9 +52,19 @@ urlpatterns = [
 
 	), name='properties-main-image-setter'),
 	path('<int:pk>/locks/', LockList.as_view(), name='properties-locks-list'),
-	# path('<int:pk>/locks/<int:lock_id>/', LockDetail.as_view()),
-	path('<int:pk>/cards/', CardList.as_view(), name='properties-cards-list'),
-	path('<int:pk>/keys/', KeyList.as_view(), name='properties-keys-list'),
+	path('<int:pk>/locks/<int:lock_id>/', LocksViewSet.as_view(
+		{
+			'get': 'retrieve',
+			'put': 'update'
+		}
+	)),
+	path('<int:pk>/locks/<int:lock_id>/accesses/', LocksViewSet.as_view(
+		{
+			'get': 'get_accesses',
+		}
+	)),
+	path('<int:pk>/locks/<int:lock_id>/cards/', CardList.as_view(), name='properties-cards-list'),
+	path('<int:pk>/locks/<int:lock_id>/keys/', KeyList.as_view(), name='properties-keys-list'),
 	#path('<int:pk>/images/<int:image_id>/', PropertyImagesViewSet.as_view(
 	#	{
 	#		'delete': 'delete_image'
