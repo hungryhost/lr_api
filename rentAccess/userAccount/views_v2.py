@@ -92,8 +92,9 @@ class UserPropertiesList(generics.ListAPIView):
 		return [permission() for permission in permission_classes]
 
 
-class ProfileDetailViewSet(viewsets.ViewSet):
+class ProfileDetailViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
 
+	@action(detail=True, methods=['get'])
 	def retrieve(self, request):
 		profile = get_object_or_404(User, id=self.request.user.id)
 		serializer = ProfileDetailSerializer(profile, context={'request': request})
@@ -102,12 +103,12 @@ class ProfileDetailViewSet(viewsets.ViewSet):
 	def get_object(self):
 		return get_object_or_404(User, id=self.request.user.id)
 
-	def partial_update(self, request):
+	@action(detail=True, methods=['put'])
+	def update(self, request):
 		instance = User.objects.get(id=self.request.user.id)
 		serializer = ProfileUpdateSerializer(
 			instance,
 			data=self.request.data,
-			partial=True,
 			context={'request': request}
 		)
 		serializer.is_valid(raise_exception=True)
@@ -129,6 +130,9 @@ class ProfileDetailViewSet(viewsets.ViewSet):
 	def get_permissions(self):
 		permission_classes = [IsOwnerOrSuperuser]
 		return [permission() for permission in permission_classes]
+
+	def get_serializer_class(self):
+		return ProfileUpdateSerializer
 
 
 class ProfileImageViewSet(viewsets.ViewSet):
