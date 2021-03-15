@@ -777,13 +777,15 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 class PropertyUpdateSerializer(serializers.ModelSerializer):
 	availability = AvailabilityCreateSerializer(many=False, required=False)
 	property_address = PropertyAddressesSerializer(many=False, required=False)
-	property_images = PropertyImagesSerializer(many=True, required=False)
-	contacts = serializers.SerializerMethodField('get_contacts')
-	can_edit = serializers.SerializerMethodField('get_can_edit')
-	main_image = serializers.SerializerMethodField('get_main_image')
+	property_images = PropertyImagesSerializer(many=True, read_only=True)
+	contacts = serializers.SerializerMethodField('get_contacts', read_only=True)
+	is_owner = serializers.SerializerMethodField('get_can_edit',  read_only=True)
+	main_image = serializers.SerializerMethodField('get_main_image',  read_only=True)
 	id = serializers.IntegerField(read_only=True)
 	client_greeting_message = serializers.CharField(required=False, allow_blank=True)
 	requires_additional_confirmation = serializers.BooleanField(required=False)
+	current_user_permissions = serializers.SerializerMethodField(
+		'get_current_user_permissions', read_only=True)
 
 	class Meta:
 		model = Property
@@ -793,7 +795,8 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'body',
 			'price',
 			'active',
-			'can_edit',
+			'is_owner',
+			'current_user_permissions',
 			'property_type',
 			'availability',
 			'main_image',
@@ -812,7 +815,9 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'id',
 			'created_at',
 			'updated_at',
-			'main_image'
+			'main_image',
+			'property_images',
+			'current_user_permissions'
 		]
 
 	def get_contacts(self, obj):
@@ -826,6 +831,16 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			many=True
 		)
 		return serializer.data
+
+	def get_current_user_permissions(self, obj):
+		current_owner = None
+		owners = obj.owners.all()
+		for owner in owners:
+			if self.context["request"].user == owner.user:
+				current_owner = owner
+		if current_owner:
+			return CurrentUserPermissionsSerializer(current_owner).data
+		return current_owner
 
 	def get_can_edit(self, obj):
 		owners = obj.owners.all()
