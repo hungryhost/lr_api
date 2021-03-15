@@ -17,12 +17,18 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+	timezone = TimeZoneSerializerField(required=False, read_only=True)
+
 	class Meta:
 		model = User
-		fields = (
+		fields = [
+			'id',
+			'email',
 			'first_name',
-			'last_name'
-		)
+			'last_name',
+			'middle_name',
+			'timezone'
+		]
 
 
 class UserImagesSerializer(serializers.ModelSerializer):
@@ -41,19 +47,27 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 	first_name = serializers.CharField(required=False, max_length=50)
 	last_name = serializers.CharField(required=False, max_length=50)
 	middle_name = serializers.CharField(max_length=50,
-			read_only=False, required=False)
-	dob = serializers.DateField(read_only=False, required=False)
+			read_only=False, required=False, allow_blank=True)
+	dob = serializers.DateField(read_only=False, required=False, allow_null=True)
 	gender = serializers.CharField(max_length=1,
-			read_only=False, required=False)
-	bio = serializers.CharField(read_only=False, max_length=1024, required=False)
+			read_only=False, required=False, allow_blank=True)
+	bio = serializers.CharField(read_only=False, max_length=1024, required=False, allow_blank=True)
 	timezone = TimeZoneSerializerField(required=False)
-
+	phone = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 	userpic = serializers.SerializerMethodField('get_userpic', default="")
 	documents_url = serializers.SerializerMethodField('get_documents_url')
 	billing_addresses_url = serializers.SerializerMethodField('get_billing_addresses_url')
 	phones_url = serializers.SerializerMethodField('get_phones_url')
 	# emails_url = serializers.SerializerMethodField('get_emails_url')
 	properties_url = serializers.SerializerMethodField('get_properties_url')
+	plan = serializers.SerializerMethodField("get_plan")
+
+	def get_plan(self, obj):
+		try:
+			plan = obj.user_plans.last()
+			return plan.plan.code
+		except Exception as e:
+			return "DEFAULT"
 
 	def get_userpic(self, obj):
 		try:
@@ -106,12 +120,18 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 		first_name = validated_data.get('first_name', None)
 		last_name = validated_data.get('last_name', None)
 		middle_name = validated_data.get('middle_name', None)
+		phone = validated_data.get('phone', -1)
 
 		dob = validated_data.get('dob', None)
 		gender = validated_data.get('gender', None)
 		bio = validated_data.get('bio', None)
 		_timezone = validated_data.get('timezone', None)
 
+		if phone != -1:
+			instance.phone = phone
+			instance.phone_confirmed = True
+		if not phone:
+			instance.phone_confirmed = False
 		if dob:
 			instance.dob = dob
 		if middle_name:
@@ -132,13 +152,20 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 		fields = [
 			'id',
 			'email',
+			'phone',
 			'userpic',
 			'first_name',
 			'last_name',
 			'middle_name',
 			'bio',
 			'timezone',
-			'is_confirmed',
+			'plan',
+			'email_confirmed',
+			'phone_confirmed',
+			'client_rating',
+			'is_banned',
+			'last_password_update',
+			'tos_version',
 			'two_factor_auth',
 			'is_staff',
 			'dob',
@@ -162,6 +189,14 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 	# emails_url = serializers.SerializerMethodField('get_emails_url')
 	properties_url = serializers.SerializerMethodField('get_properties_url')
 	timezone = TimeZoneSerializerField()
+	plan = serializers.SerializerMethodField("get_plan")
+
+	def get_plan(self, obj):
+		try:
+			plan = obj.user_plans.last()
+			return plan.plan.code
+		except Exception as e:
+			return "DEFAULT"
 
 	def get_userpic(self, obj):
 		try:
@@ -225,13 +260,20 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 		fields = [
 			'id',
 			'email',
+			'phone',
 			'userpic',
 			'first_name',
 			'last_name',
 			'middle_name',
 			'bio',
 			'timezone',
-			'is_confirmed',
+			'plan',
+			'email_confirmed',
+			'phone_confirmed',
+			'client_rating',
+			'is_banned',
+			'last_password_update',
+			'tos_version',
 			'two_factor_auth',
 			'is_staff',
 			'dob',
