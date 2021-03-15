@@ -125,7 +125,7 @@ class CanAddLocks(permissions.BasePermission):
 	# for object level permissions
 	def has_object_permission(self, request, view, obj):
 		try:
-			owner = obj.owners.get(user=request.user)
+			owner = obj.property.owners.get(user=request.user)
 		except Ownership.DoesNotExist:
 			return False
 		if owner.can_add_locks or request.user.is_superuser:
@@ -140,7 +140,7 @@ class CanManageLocks(permissions.BasePermission):
 	# for object level permissions
 	def has_object_permission(self, request, view, obj):
 		try:
-			owner = obj.owners.get(user=request.user)
+			owner = obj.property.owners.get(user=request.user)
 		except Ownership.DoesNotExist:
 			return False
 		if owner.can_manage_locks or request.user.is_superuser:
@@ -155,7 +155,7 @@ class CanDeleteLocks(permissions.BasePermission):
 	# for object level permissions
 	def has_object_permission(self, request, view, obj):
 		try:
-			owner = obj.owners.get(user=request.user)
+			owner = obj.property.owners.get(user=request.user)
 		except Ownership.DoesNotExist:
 			return False
 		if owner.can_delete_locks or request.user.is_superuser:
