@@ -75,17 +75,58 @@ def get_slots_from_bookings(bookings, timezone, b_date):
 	return booked_slots
 
 
+def decompose_nightly_slots(av_from, av_until, b_date, open_days):
+	start_hour = av_from.hour
+	end_hour = av_until.hour
+	iterations_current_day = 24 - start_hour
+	iterations_next_day = end_hour
+	nightly_slots = []
+	for i in range(iterations_current_day):
+		if i + start_hour > 22:
+			slot_until = datetime.combine(b_date+timedelta(days=1), time(0)).strftime("%Y-%m-%dT%H:%M")
+			slot_from = datetime.combine(b_date, time(23)).strftime("%Y-%m-%dT%H:%M")
+		else:
+			slot_until = datetime.combine(b_date, time(start_hour+i+1)).strftime("%Y-%m-%dT%H:%M")
+			slot_from = datetime.combine(b_date, time(start_hour+i)).strftime("%Y-%m-%dT%H:%M")
+		slot_dict = {
+			"start": slot_from,
+			"end"  : slot_until
+		}
+		nightly_slots.append(slot_dict)
+	if iterations_next_day != 0:
+		start_hour = 0
+	days = available_days_from_db(open_days)
+	if b_date.weekday() + 1 in days:
+		for i in range(iterations_next_day):
+			slot_until = datetime.combine(b_date+timedelta(days=1), time(start_hour+i+1)).strftime("%Y-%m-%dT%H:%M")
+			slot_from = datetime.combine(b_date+timedelta(days=1), time(start_hour+i)).strftime("%Y-%m-%dT%H:%M")
+			slot_dict = {
+				"start": slot_from,
+				"end"  : slot_until
+			}
+			nightly_slots.append(slot_dict)
+	return nightly_slots
+
+
 def available_hours_from_db(_property, booking, b_date=None):
 	hours_from_db = list(_property.availability.available_hours)
+	if _property.availability.available_from >= _property.availability.available_until:
+		nightly_slots = decompose_nightly_slots(
+			_property.availability.available_from,
+			_property.availability.available_until,
+			b_date,
+			_property.availability.open_days
+		)
+		return nightly_slots
 	slots = []
 	timezone = _property.property_address.city.city.timezone
 	for i in range(len(hours_from_db)):
 		if hours_from_db[i] == "1":
 			if i < 23:
-				slot_until = datetime.combine(b_date, time(i + 1)).strftime("%Y-%m-%dT%H:%M")
+				slot_until = datetime.combine(b_date, time(i+1)).strftime("%Y-%m-%dT%H:%M")
 				slot_from = datetime.combine(b_date, time(i)).strftime("%Y-%m-%dT%H:%M")
 			else:
-				slot_until = datetime.combine(b_date, time(0)).strftime("%Y-%m-%dT%H:%M")
+				slot_until = datetime.combine(b_date+timedelta(days=1), time(0)).strftime("%Y-%m-%dT%H:%M")
 				slot_from = datetime.combine(b_date, time(23)).strftime("%Y-%m-%dT%H:%M")
 			slot_dict = {
 				"start": slot_from,
@@ -98,6 +139,7 @@ def available_hours_from_db(_property, booking, b_date=None):
 
 
 def decompose_incoming_booking(datetime_from, datetime_until, timezone):
+	# TODO: handle nightly bookings
 	time_from_unaware = datetime_from.time()
 	time_until_unaware = datetime_until.time()
 	booked_slots = []
