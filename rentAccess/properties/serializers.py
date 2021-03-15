@@ -7,6 +7,7 @@ from rest_framework import serializers, status
 from common.models import SupportedCity
 import logging
 
+from userAccount.models import UserImage
 from .logger_helpers import get_client_ip
 from .models import Property, PremisesAddress, PremisesImage, Ownership, Availability
 from .validators import validate_price, validate_city, validate_available_time
@@ -99,7 +100,7 @@ class PropertyOwnershipListSerializer(serializers.ModelSerializer):
 	first_name = serializers.CharField(source='user.first_name', read_only=True)
 	last_name = serializers.CharField(source='user.last_name', read_only=True)
 	middle_name = serializers.CharField(max_length=50, source='user.middle_name',
-	                                   read_only=True)
+	                                    read_only=True)
 	user_id = serializers.IntegerField(source='user.id', read_only=True)
 	owner_id = serializers.IntegerField(source='id', read_only=True)
 
@@ -136,23 +137,30 @@ class PropertyOwnershipListSerializer(serializers.ModelSerializer):
 class PropertyContactsListSerializer(serializers.ModelSerializer):
 	email = serializers.CharField(read_only=True, source='user.email')
 	first_name = serializers.CharField(source='user.first_name', read_only=True)
-	last_name = serializers.CharField(source='user.last_name', read_only=True)
-	middle_name = serializers.CharField(max_length=50, source='user.middle_name',
-	                                   read_only=True)
 	user_id = serializers.IntegerField(source='user.id', read_only=True)
+	email_confirmed = serializers.BooleanField(source='user.email_confirmed')
+	phone_confirmed = serializers.BooleanField(source='user.phone_confirmed')
+	userpic = serializers.SerializerMethodField('get_userpic')
 
 	class Meta:
 		model = Ownership
 		fields = (
 			'user_id',
+			'userpic',
 			'email',
 			'first_name',
-			'last_name',
-			'middle_name',
 			'is_creator',
-			'created_at',
-			'updated_at'
+			'email_confirmed',
+			'phone_confirmed'
 		)
+
+	def get_userpic(self, obj):
+		print(obj.user.id)
+		try:
+			image_object = UserImage.objects.get(account_id=obj.user.id, is_deleted=False)
+			return self.context['request'].build_absolute_uri(image_object.image.url)
+		except Exception as e:
+			return ""
 
 
 class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
@@ -177,7 +185,7 @@ class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
 	first_name = serializers.CharField(source='user.first_name', read_only=True)
 	last_name = serializers.CharField(source='user.last_name', read_only=True)
 	middle_name = serializers.CharField(max_length=50, source='user.profile.middle_name',
-	                                   read_only=True)
+	                                    read_only=True)
 	user_id = serializers.IntegerField(source='user.id', read_only=True)
 	owner_id = serializers.IntegerField(source='id', read_only=True)
 
@@ -280,6 +288,49 @@ class PropertyOwnershipAddSerializer(serializers.ModelSerializer):
 			f"property_id: {self.context['property_id']}; "
 			f"owner_id: {obj.id}; ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 		return obj
+
+
+class CurrentUserPermissionsSerializer(serializers.ModelSerializer):
+	can_edit = serializers.BooleanField(required=True)
+	can_delete = serializers.BooleanField(required=True)
+	can_add_images = serializers.BooleanField(required=True)
+	can_delete_images = serializers.BooleanField(required=True)
+	can_add_bookings = serializers.BooleanField(required=True)
+	can_manage_bookings = serializers.BooleanField(required=True)
+	can_add_owners = serializers.BooleanField(required=True)
+	can_manage_owners = serializers.BooleanField(required=True)
+	can_delete_owners = serializers.BooleanField(required=True)
+	can_add_locks = serializers.BooleanField(required=True)
+	can_manage_locks = serializers.BooleanField(required=True)
+	can_delete_locks = serializers.BooleanField(required=True)
+	can_add_to_group = serializers.BooleanField(required=True)
+	can_add_to_organisation = serializers.BooleanField(required=True)
+	has_super_owner_permissions = serializers.BooleanField(source='is_super_owner')
+	is_creator = serializers.BooleanField()
+
+	class Meta:
+		model = Ownership
+		fields = (
+			'has_super_owner_permissions',
+			'is_creator',
+			'can_edit',
+			'can_delete',
+			'can_add_images',
+			'can_delete_images',
+			'can_add_bookings',
+			'can_manage_bookings',
+			'can_add_owners',
+			'can_manage_owners',
+			'can_delete_owners',
+			'can_add_locks',
+			'can_manage_locks',
+			'can_delete_locks',
+			'can_add_to_group',
+			'can_add_to_organisation'
+		)
+		read_only_fields = [
+			fields
+		]
 
 
 class PropertyOwnershipUpdateSerializer(serializers.ModelSerializer):
@@ -471,7 +522,8 @@ class PropertySerializer(serializers.ModelSerializer):
 	contacts = serializers.SerializerMethodField('get_contacts')
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField()
-	can_edit = serializers.SerializerMethodField('get_can_edit')
+	is_owner = serializers.SerializerMethodField('get_can_edit')
+	current_user_permissions = serializers.SerializerMethodField('get_current_user_permissions')
 
 	class Meta:
 		model = Property
@@ -481,7 +533,8 @@ class PropertySerializer(serializers.ModelSerializer):
 			'title',
 			'body',
 			'price',
-			'can_edit',
+			'is_owner',
+			'current_user_permissions',
 			'active',
 			'booking_type',
 			'availability',
@@ -507,7 +560,8 @@ class PropertySerializer(serializers.ModelSerializer):
 				contacts.append(owner)
 		serializer = PropertyContactsListSerializer(
 			contacts,
-			many=True
+			many=True,
+			context={'request': self.context["request"]}
 		)
 		return serializer.data
 
@@ -525,6 +579,16 @@ class PropertySerializer(serializers.ModelSerializer):
 			if self.context["request"].user == owner.user:
 				return True
 		return False
+
+	def get_current_user_permissions(self, obj):
+		current_owner = None
+		owners = obj.owners.all()
+		for owner in owners:
+			if self.context["request"].user == owner.user:
+				current_owner = owner
+		if current_owner:
+			return CurrentUserPermissionsSerializer(current_owner).data
+		return current_owner
 
 	def get_main_image(self, obj):
 		try:
@@ -702,7 +766,7 @@ class PropertyCreateSerializer(serializers.ModelSerializer):
 			available_from=available_from,
 			available_until=available_until,
 			available_hours=available_hours,
-			)
+		)
 		crud_logger_info.info(
 			f"object: property; stage: serialization; action_type: create; "
 			f"user_id: {self.context['request'].user.id}; property_id: {property_to_create.id}; "
@@ -900,14 +964,28 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 					availability_to_update.available_until = available_until
 			if instance.booking_type == 200:
 				booking_interval = availability_data.get("booking_interval", None)
-				available_from = availability_data.get("available_from", None)
-				available_until = availability_data.get("available_until", None)
+				available_from = availability_data.get("available_from", -1)
+				available_until = availability_data.get("available_until", -1)
+
 				if booking_interval:
 					availability_to_update.booking_interval = booking_interval
-				if available_from:
+				if available_from != -1:
 					availability_to_update.available_from = available_from
-				if available_until:
+				if available_until != -1:
 					availability_to_update.available_until = available_until
+				if available_until == -1 and available_from != -1:
+					available_hours = available_hours_to_db(
+						available_from,
+						availability_to_update.available_until)
+				if available_from == -1 and available_until != -1:
+					available_hours = available_hours_to_db(
+						availability_to_update.available_from,
+						available_until)
+				if available_from != -1 and available_until != -1:
+					available_hours = available_hours_to_db(
+						available_from,
+						available_until)
+				availability_to_update.available_hours = available_hours
 			availability_to_update.save()
 		if address_data:
 			address_to_update = PremisesAddress.objects.get(premises_id=instance.id)
