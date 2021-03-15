@@ -136,8 +136,8 @@ def email_verification(request):
 	try:
 		payload = jwt.decode(token, settings.SECRET_KEY)
 		user = User.objects.get(id=payload['user_id'])
-		if not user.is_confirmed:
-			user.is_confirmed = True
+		if not user.email_confirmed:
+			user.email_confirmed = True
 			user.save()
 		return Response({
 			'email': 'Email confirmed'
