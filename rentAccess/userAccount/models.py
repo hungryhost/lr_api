@@ -4,6 +4,7 @@ from django.db import models
 import os
 from uuid import uuid4
 from timezone_field import TimeZoneField
+from phone_field import PhoneField
 #
 #
 #
@@ -106,9 +107,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 	middle_name = models.CharField('middle_name', null=False, blank=True, max_length=50)
 	bio = models.CharField('bio', null=False, blank=True, max_length=500, default="")
-
-	is_confirmed = models.BooleanField('is_confirmed', default=False)
-	dob = models.DateField('dob', null=False, blank=True, default="1970-01-01")
+	phone = PhoneField(blank=True, help_text='Contact phone number')
+	email_confirmed = models.BooleanField('email_confirmed', default=False)
+	phone_confirmed = models.BooleanField('phone_confirmed', default=False)
+	dob = models.DateField('dob', null=True, blank=True)
 	gender = models.CharField('gender', max_length=1, choices=GENDER_CHOICES, null=False,
 	blank=True, default='')
 	timezone = TimeZoneField('timezone', default='Europe/Moscow')
@@ -118,6 +120,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 	two_factor_auth = models.BooleanField(default=False)
 	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
 	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	client_rating = models.CharField(default='', max_length=15, null=False, blank=True)
+	is_banned = models.BooleanField(default=False)
+	additional_info = models.CharField(max_length=1024, null=False, blank=True)
+	last_password_update = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	tos_version = models.CharField(max_length=20, null=True, blank=False, default='1.0')
 
 	EMAIL_FIELD = 'email'
 	USERNAME_FIELD = 'email'
@@ -163,6 +170,49 @@ def path_and_rename(instance, filename):
 	return os.path.join(path, filename)
 
 
+class MetaBannedInfo(models.Model):
+	banned_user = models.ForeignKey(
+		settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+	)
+	reason = models.CharField(max_length=500, null=False, blank=True)
+	employee_id = models.IntegerField(null=False, blank=False)
+	expiration = models.DateTimeField(blank=True, null=True)
+
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+
+
+class ClientPlan(models.Model):
+	code = models.CharField(max_length=255, primary_key=True)
+	description = models.CharField(max_length=500, null=False, blank=True)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+
+
+class PlannedClient(models.Model):
+	plan = models.ForeignKey(
+		ClientPlan, to_field='code', on_delete=models.CASCADE)
+	client = models.ForeignKey(
+		settings.AUTH_USER_MODEL, related_name='user_plans', on_delete=models.CASCADE
+	)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+
+
+class KYCOperation(models.Model):
+	KYC_CHOICES = [
+		("OK", 'OK'),
+		("PENDING", 'Pending'),
+		("BAD", 'Bad'),
+	]
+	user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='kyc_info', on_delete=models.CASCADE)
+	kys_status = models.CharField(
+		'kyc_status', max_length=10, choices=KYC_CHOICES, null=False, blank=True, default='')
+	kyc_last_performed = models.DateTimeField(blank=True, null=True)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+
+
 class UserImage(models.Model):
 	class Meta:
 		app_label = 'userAccount'
@@ -194,6 +244,8 @@ class Phone(models.Model):
 	phone_number = models.CharField(max_length=13, null=False, blank=False)
 	phone_type = models.ForeignKey(PhoneType, on_delete=models.RESTRICT)
 	is_deleted = models.BooleanField(default=False)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
 
 
 class DocumentType(models.Model):
@@ -226,6 +278,8 @@ class Document(models.Model):
 	doc_issued_at = models.DateField(null=True, blank=True)
 	doc_issued_by = models.CharField(max_length=100, blank=True, null=True)
 	doc_is_confirmed = models.BooleanField(default=False)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
 
 
 class BillingAddress(models.Model):
@@ -243,3 +297,5 @@ class BillingAddress(models.Model):
 	addr_number = models.CharField(max_length=30, blank=True, null=True)
 	zip_code = models.CharField(max_length=10, blank=True)
 	addr_is_active = models.BooleanField(default=True)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
