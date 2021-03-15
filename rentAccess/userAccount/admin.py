@@ -6,7 +6,7 @@ from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.core.exceptions import ValidationError
 from .models import (CustomUser, UserImage,
                      Document, DocumentType, AddressType,
-                     BillingAddress)
+                     BillingAddress, MetaBannedInfo, ClientPlan, KYCOperation, PlannedClient)
 from .models import Phone, PhoneType
 
 # Register your models here.
@@ -34,7 +34,6 @@ class UserCreationForm(forms.ModelForm):
 			'last_name',
 			'middle_name',
 			'bio',
-			'is_confirmed',
 			'dob',
 			'gender'
 		)
@@ -71,11 +70,10 @@ class UserChangeForm(forms.ModelForm):
 			'last_name',
 			'middle_name',
 			'bio',
-			'is_confirmed',
 			'dob',
 			'gender',
 			'is_active',
-			#'is_admin',
+			'is_admin',
 			'is_staff',
 			'is_superuser'
 		)
@@ -118,4 +116,8 @@ class UserAdmin(BaseUserAdmin):
 
 
 admin.site.register(CustomUser, UserAdmin)
+admin.site.register(MetaBannedInfo)
+admin.site.register(ClientPlan)
+admin.site.register(PlannedClient)
+admin.site.register(KYCOperation)
 #admin.site.unregister(Group)
