@@ -82,9 +82,9 @@ class UserGroupMemberCreateSerializer(serializers.ModelSerializer):
 		try:
 			user = User.objects.get(email=email)
 		except User.DoesNotExist:
-			raise serializers.ValidationError({
+			raise serializers.ValidationError(
 				"user: user with given email does not exist."
-			})
+			)
 		can_add_properties = validated_data.get("can_add_properties")
 		can_delete_properties = validated_data.get("can_delete_properties")
 		can_book_properties = validated_data.get("can_book_properties")
@@ -285,7 +285,9 @@ class PropertyGroupMemberCreateSerializer(serializers.ModelSerializer):
 		if properties_input:
 			properties_instance = [
 				PropertyGroupMembership(
-					group_id=self.context['group_id'], premises_id=premises)
+					group_id=self.context['group_id'], premises_id=premises,
+					added_by=self.context['request'].user
+				)
 				for premises in properties_input]
 			properties = PropertyGroupMembership.objects.bulk_create(properties_instance)
 
