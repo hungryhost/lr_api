@@ -172,8 +172,8 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 		)
 		return Response(serializer.data)
 
-	@action(detail=True, methods=['patch'])
-	def partial_update(self, request, pk=None, booking_id=None):
+	@action(detail=True, methods=['put'])
+	def update(self, request, pk=None, booking_id=None):
 		instance = self.get_object(booked_property=pk, booking_id=booking_id)
 		# booked_property = Property.objects.get(id=pk)
 		if self.request.user.email == instance.client_email:
