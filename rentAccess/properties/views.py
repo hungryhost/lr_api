@@ -3,6 +3,9 @@ import logging
 
 from django.db.models import Q, Prefetch
 from django.http import Http404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 from django_filters import rest_framework as dj_filters
 from rest_framework import filters
 from rest_framework import generics, status, viewsets, mixins, exceptions
@@ -445,15 +448,22 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	"""
 
+	@action(detail=True, methods=['get'])
 	def retrieve(self, request, pk=None):
 		# obj = self.get_object(pk=pk)
 		try:
 			obj = Property.objects.prefetch_related(
-				"property_images", "property_address__city", "owners",
-				"owners__user"
-			).select_related('availability', 'property_type',
-			                 'property_address'
-			                 ).get(id=pk)
+				"property_images",
+				"property_address__city",
+				"owners",
+				"owners__user",
+				'mem_groups',
+				'mem_groups__group',
+				'mem_groups__group__property_groups'
+			).select_related(
+				'availability',
+				'property_type',
+				'property_address').get(id=pk)
 
 			self.check_object_permissions(self.request, obj)
 		except Property.DoesNotExist:
@@ -470,11 +480,17 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 	def partial_update(self, request, pk=None):
 		try:
 			instance = Property.objects.prefetch_related(
-				"property_images", "property_address__city", "owners",
-				"owners__user"
-			).select_related('availability', 'property_type',
-			                 'property_address'
-			                 ).get(id=pk)
+				"property_images",
+				"property_address__city",
+				"owners",
+				"owners__user",
+				'mem_groups',
+				'mem_groups__group',
+				'mem_groups__group__property_groups'
+			).select_related(
+				'availability',
+				'property_type',
+				'property_address').get(id=pk)
 			self.check_object_permissions(self.request, instance)
 		except Property.DoesNotExist:
 			raise Http404
@@ -583,18 +599,12 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		except Exception as e:
 			return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-		bookings = Booking.objects.all().filter(
-			booked_property=prop,
-			booked_from__date=date,
-			booked_until__date=date
-		)
-
 		days = available_days_from_db(prop.availability.open_days)
 		if date_dt.weekday() not in days:
 			return Response(
 				data={"date": "Property is not available at that day."},
 				status=status.HTTP_400_BAD_REQUEST)
-		slots = available_hours_from_db(prop, bookings, b_date=date_dt)
+		slots = available_hours_from_db(prop, b_date=date_dt)
 		data = {
 			"count"            : len(slots),
 			"property_timezone": prop.property_address.city.city.timezone,
