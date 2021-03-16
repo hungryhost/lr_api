@@ -34,7 +34,16 @@ class UserGroupMemberListSerializer(serializers.ModelSerializer):
 			"updated_at"
 		]
 		read_only_fields = [
-			fields
+			"user",
+			"can_add_properties",
+			"can_delete_properties",
+			"can_book_properties",
+			"recursive_ownership",
+			"can_add_members",
+			"can_remove_members",
+			"can_manage_members",
+			"created_at",
+			"updated_at"
 		]
 
 
@@ -167,7 +176,12 @@ class GroupListSerializer(serializers.ModelSerializer):
 			"updated_at"
 		]
 		read_only_fields = [
-			fields
+			"id",
+			"title",
+			"is_my_group",
+			"description",
+			"created_at",
+			"updated_at"
 		]
 
 	def get_is_my_group(self, obj):
@@ -196,7 +210,11 @@ class PropertyGroupMemberListSerializer(serializers.ModelSerializer):
 			"updated_at"
 		]
 		read_only_fields = [
-			fields
+			"id",
+			"group",
+			"property",
+			"created_at",
+			"updated_at"
 		]
 
 

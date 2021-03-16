@@ -5,22 +5,22 @@ info:
   description: |
     # General Information
     ## About the API
-    This API documentation page references methods that are __implemented or _to
-    be implemented_ to the current date__ and not only
-    methods that are used for the front-end development but also for the
-    embedded developers. For more information about the changes
-    please refer to the __CHANGELOG__ in the Gitlab internal [repository](https://git.miem.hse.ru/294/web-294).
+    This API references methods that are __implemented or _to be implemented_ to the current date__. API will reference not only methods that are used for front-end development but also for the embedded developers. For more information about the changes in methods please refer to __CHANGELOG__ in the Gitlab internal [repository](https://git.miem.hse.ru/294/web-294).
+
+    ---
+    ## API Overview
+      - ### User Related Info
+        - Insert user related info.
+
+      - ### Properties Related Info
+        - Insert user related info.
 
     ---
     ## Useful Links
-      - __Current Database Schema__
-        - [in .png]()
-        - [in .drawio](https://drive.google.com/file/d/1CZ8V4UajRzSIxLgdKohlQvpL2J3z4oU_/view?usp=sharing)
-      - __Property API Overview Schema__
-        - [in .png](https://drive.google.com/file/d/1JQZ85QEowpoEcnGmM5FjuW9tjAB8lwFn/view?usp=sharing)
-        - [in .drawio](https://drive.google.com/file/d/1Vi_iIHOfyeDa_CF8TzIoI00R2TuQgWXK/view?usp=sharing)
-      - [__Current Functionality Overview Schema__](https://yuiborodin.xyz/api/v1/service-specs/general/)
-      - [Backend Changelog](https://git.miem.hse.ru/294/web-294/-/blob/test-build/backend/CHANGELOG.md)
+      - [Current Database Schema](https://git.miem.hse.ru/yuiborodin)
+      - [Current Backend API Functionality Schema](https://git.miem.hse.ru/yuiborodin)
+      - [Current Workflow Schema](https://git.miem.hse.ru/yuiborodin)
+      - [Backend Changelog](https://git.miem.hse.ru/yuiborodin)
 
     ---
     ## Conventions
@@ -29,16 +29,6 @@ info:
     <br>Tested methods marked as <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
     <br>
     <br>
-    ---
-    ## IMPORTANT CHANGES
-    ###   - Changed datetime format [25.12.2020].
-      - For fields `booked_from` and `booked_until` the format is `%Y-%m-%dT%H:%M%z`.
-        - Represented as `2020-12-22T00:52+0300` with only date, hour and minutes with
-      a timezone stamp, for example, as `+0300` for MSK.
-
-      - For __all__ other datetime fields the format is `%Y-%m-%dT%H:%M:%S%z`,
-      which is represented as `2020-12-22T00:52:30+0300` (__added seconds__).
-    ---
     __*!!!  METHODS THAT DO NOT HAVE "TEST" LABEL ARE NOT SUITABLE FOR PRODUCTION USE.<br> METHODS THAT ARE NOT MARKED AS COMPLETED ARE NOT AVAILABLE YET*.__
 
     ---
@@ -69,10 +59,9 @@ paths:
     post:
       operationId: createregistration
       description: |
-        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
-        ---
         This method is used for account registration
+        <br>
+        <br><img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Completed"> <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Tested">
       requestBody:
         content:
           application/json:
@@ -109,11 +98,10 @@ paths:
     post:
       operationId: createTokenObtainPair
       description: |
-        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
-        ---
         Takes a set of user credentials and returns an access and refresh
         JSON web token pair to prove the authentication of those credentials.
+        <br>
+        <br><img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Completed"> <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Tested">
       parameters: []
       requestBody:
         content:
@@ -130,12 +118,10 @@ paths:
   /api/v1/auth/token/refresh/:
     post:
       operationId: createTokenRefresh
-      description: |
-        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
-        ---
-        Takes a refresh type JSON web token and returns an access type
-          JSON webtoken if the refresh token is valid.
+      description: 'Takes a refresh type JSON web token and returns an access type
+          JSON web
+
+          token if the refresh token is valid.'
       parameters: []
       requestBody:
         content:
@@ -156,12 +142,8 @@ paths:
   /api/v1/auth/token/verify/:
     post:
       operationId: createTokenVerify
-      description: |
-        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
-        ---
-          Takes a token and indicates if it is valid.  This view provides
-          no information about a token's fitness for a particular use.
+      description: 'Takes a token and indicates if it is valid.  This view provides
+          no information about a token''s fitness for a particular use.'
       parameters: []
       requestBody:
         content:
@@ -182,9 +164,6 @@ paths:
   /api/v1/auth/logout/:
     post:
       description: |
-        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
-        ---
         Takes a given refresh token and blacklists it.
         - Requires access token (isAuthenticated permission) passed with the request.
       parameters: []
@@ -203,9 +182,6 @@ paths:
   /api/v1/auth/logoutall/:
     post:
       description: |
-        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
-        ---
         Blacklists all tokens associated with the user that sent the request.
         - Requires access token (isAuthenticated permission) passed with the request.
       parameters: []
@@ -262,6 +238,62 @@ paths:
       tags:
       - PropertiesAPI
     patch:
+      operationId: patchProperty
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for retrieving information about a particular property.
+        <br>Updatable fields:
+          - `title`
+          - `body`
+          - `price`
+          - `active`
+          - `property_type`
+          - `visibility`
+          - `property_address`
+          - `availability`
+          - `client_greeting_message`
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Property'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+    put:
       operationId: updateProperty
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
@@ -269,21 +301,14 @@ paths:
         ---
         <br>This method is used for retrieving information about a particular property.
         <br>Updatable fields:
-
           - `title`
-
           - `body`
-
           - `price`
-
           - `active`
-
           - `property_type`
-
           - `visibility`
-
+          - `availability`
           - `property_address`
-
           - `client_greeting_message`
       parameters:
       - name: properties:id
@@ -442,6 +467,8 @@ paths:
                 status_code: 401
 
           description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
@@ -502,9 +529,8 @@ paths:
         <br>Use this endpoint in order to create a booking for a particular property.
         <br> *This endpoint could be used by any authenticated user. If the owner of the property
         doest the booking, the status is automatically set to `ACCEPTED`*.
-        <br> *The `AWAITING` and `DECLINED` statuses are used only if the
-        property has `need_confirmation` parameter set to `true` and could be changed via `patch`
-        requests.*
+        <br> *The `AWAITING` and `DECLINED` statuses are awailable only if the
+        property has `need_confirmation` parameter set to `true`.*
       parameters:
       - name: properties:id
         in: path
@@ -524,26 +550,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/Booking'
           description: ''
-        '404':
-          $ref: '#/components/responses/404_Not_Found'
-        '401':
-            content:
-              application/json:
-                schema:
-                  oneOf:
-                    - $ref: '#/components/schemas/401BadToken'
-                    - $ref: '#/components/schemas/401Unauthorized'
-                example:
-                  errors: [ "Invalid Token : Given token is not valid"
-                  ]
-                  status_code: 401
-            description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
-        '403':
-            $ref: '#/components/responses/403_Forbidden'
         '422':
-            $ref: '#/components/responses/422_Invalid_Data'
+          $ref: '#/components/responses/422_Invalid_Data_Property'
         '400':
-            $ref: '#/components/responses/400_Bad_Request_Property'
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - PropertiesAPI.PropertyAttributes.Bookings
   /api/v1/properties/{properties:id}/bookings/{bookings:id}:
@@ -641,7 +651,7 @@ paths:
         '403':
           $ref: '#/components/responses/403_Forbidden'
         '422':
-          $ref: '#/components/responses/422_Invalid_Data'
+          $ref: '#/components/responses/422_Invalid_Data_Property'
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
@@ -692,9 +702,9 @@ paths:
       operationId: listPropertyOwners
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-
-        ---
-        Use this to access a list of owners for the property.
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        This method is used for retrieving information about a
+        particular property
       parameters:
       - name: properties:id
         in: path
@@ -707,7 +717,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Owner'
+                $ref: '#/components/schemas/Property'
           description: ''
         '404':
           $ref: '#/components/responses/404_Not_Found'
@@ -733,12 +743,7 @@ paths:
       - PropertiesAPI.PropertyAttributes.Owners
     post:
       operationId: createPropertyOwner
-      description: |
-        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-
-        ---
-        Use this method to add a property admin for the property. Can be used only with
-        permission level of 300 and higher.
+      description: ''
       parameters:
       - name: properties:id
         in: path
@@ -750,13 +755,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Owner'
+              $ref: '#/components/schemas/Property'
       responses:
         '201':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Owner'
+                $ref: '#/components/schemas/Property'
           description: ''
         '422':
           $ref: '#/components/responses/422_Invalid_Data_Property'
@@ -769,10 +774,9 @@ paths:
       operationId: retrievePropertyOwner
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-
-        ---
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
         This method is used for retrieving information about a
-        particular owner.
+        particular property
       parameters:
       - name: properties:id
         in: path
@@ -791,7 +795,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Owner'
+                $ref: '#/components/schemas/Property'
           description: ''
         '404':
           $ref: '#/components/responses/404_Not_Found'
@@ -817,11 +821,7 @@ paths:
       - PropertiesAPI.PropertyAttributes.Owners
     patch:
       operationId: updatePropertyOwner
-      description: |
-        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-
-        ---
-        Use this endpoint to update permission level for the owner.
+      description: ''
       parameters:
       - name: properties:id
         in: path
@@ -839,13 +839,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Owner'
+              $ref: '#/components/schemas/Property'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Owner'
+                $ref: '#/components/schemas/Property'
           description: ''
         '404':
           $ref: '#/components/responses/404_Not_Found'
@@ -871,13 +871,7 @@ paths:
       - PropertiesAPI.PropertyAttributes.Owners
     delete:
       operationId: destroyPropertyOwner
-      description: |
-        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-
-        ---
-        Use this endpoint in order to delete the owner. Owners with permissions of 350 can delete
-        other owners with permissions *lower* than 350. Owners with permissions of 400 (equal to creator)
-        can delete any owner.
+      description: ''
       parameters:
       - name: properties:id
         in: path
@@ -923,17 +917,13 @@ paths:
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
         This method is used for retrieving information about a
         particular property
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Images'
+
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Images'
+                $ref: '#/components/schemas/Property'
           description: ''
         '404':
           $ref: '#/components/responses/404_Not_Found'
@@ -979,7 +969,11 @@ paths:
             summary: Example of multiple Image delete
             value: [1, 5, 7]   # ?ids=1,5,7
       responses:
-        '204':
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Property'
           description: ''
         '422':
           $ref: '#/components/responses/422_Invalid_Data_Property'
@@ -1000,7 +994,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Images'
+                $ref: '#/components/schemas/Property'
           description: ''
         '404':
           $ref: '#/components/responses/404_Not_Found'
@@ -1024,44 +1018,6 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - PropertiesAPI.PropertyAttributes.Images
-  /api/v1/properties/<property:id>/available/:
-      post:
-        operationId: checkAvailability
-        description: |
-          <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-          <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
-          ---
-          This endpoint is used for determining whether the property
-          can be booked with given parameters. Returns mainly `200` code if can be booked and
-          `409` if not.
-        requestBody:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Availability'
-        responses:
-          '200':
-            description: 'The property can be booked.'
-          '400':
-            $ref: '#/components/responses/400_Bad_Request_Property'
-          '401':
-            content:
-              application/json:
-                schema:
-                  oneOf:
-                    - $ref: '#/components/schemas/401BadToken'
-                    - $ref: '#/components/schemas/401Unauthorized'
-                example:
-                  errors: [ "Invalid Token : Given token is not valid"
-                  ]
-                  status_code: 401
-            description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
-          '403':
-            $ref: '#/components/responses/403_Forbidden'
-          '409':
-            description: "The property cannot be booked."
-        tags:
-        - PropertiesAPI.PropertyAttributes.Availability
 # PROPERTIES LOCKS PATHS
 
 # PROPERTIES AVAILABILITY PATHS
@@ -1076,11 +1032,9 @@ paths:
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope"><br>
         ---
         Retrieve information about the authenticated user with that endpoint. <br>
-
-        Note that the user can choose which email is shown with the `user:emails`
+        <br>Note that the user can choose which email is shown with the `user:emails`
         scope. By default, the email with which the user signed up is shown.
-
-        Email visibility options are also shown in the `user:emails` scope.
+        <br> Email visibility options are also shown in the `user:emails` scope.
       parameters:
         - in: query
           name: expand
@@ -1106,21 +1060,9 @@ paths:
           description: ''
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
-        '401':
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/401BadToken'
-                  - $ref: '#/components/schemas/401Unauthorized'
-              example:
-                errors: [ "Invalid Token : Given token is not valid"
-                ]
-                status_code: 401
-          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
       tags:
       - UserAPI
-    patch:
+    put:
       operationId: partialUpdateUser
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
@@ -1167,18 +1109,6 @@ paths:
           description: ''
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
-        '401':
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/401BadToken'
-                  - $ref: '#/components/schemas/401Unauthorized'
-              example:
-                errors: [ "Invalid Token : Given token is not valid"
-                ]
-                status_code: 401
-          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
       tags:
       - UserAPI
 # USER-RELATED ENTITIES
@@ -1195,18 +1125,6 @@ paths:
           $ref: '#/components/responses/200_OK_Properties_Paginated'
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
-        '401':
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/401BadToken'
-                  - $ref: '#/components/schemas/401Unauthorized'
-              example:
-                errors: [ "Invalid Token : Given token is not valid"
-                ]
-                status_code: 401
-          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
       tags:
       - UserAPI.UserRelatedEntities
   /api/v1/user/bookings/:
@@ -1228,18 +1146,6 @@ paths:
           description: ''
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
-        '401':
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/401BadToken'
-                  - $ref: '#/components/schemas/401Unauthorized'
-              example:
-                errors: [ "Invalid Token : Given token is not valid"
-                ]
-                status_code: 401
-          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
       tags:
       - UserAPI.UserRelatedEntities
 # USER DOCS
@@ -1256,18 +1162,6 @@ paths:
           description: ''
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
-        '401':
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/401BadToken'
-                  - $ref: '#/components/schemas/401Unauthorized'
-              example:
-                errors: [ "Invalid Token : Given token is not valid"
-                ]
-                status_code: 401
-          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
       tags:
       - UserAPI.UserAttributes.UserDocs
     post:
@@ -1282,18 +1176,6 @@ paths:
           description: ''
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
-        '401':
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/401BadToken'
-                  - $ref: '#/components/schemas/401Unauthorized'
-              example:
-                errors: [ "Invalid Token : Given token is not valid"
-                ]
-                status_code: 401
-          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
       tags:
       - UserAPI.UserAttributes.UserDocs
   /api/v1/user/docs/{docs:id}:
@@ -1316,20 +1198,6 @@ paths:
           description: ''
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
-        '404':
-          $ref: '#/components/responses/404_Not_Found'
-        '401':
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/401BadToken'
-                  - $ref: '#/components/schemas/401Unauthorized'
-              example:
-                errors: [ "Invalid Token : Given token is not valid"
-                ]
-                status_code: 401
-          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
       tags:
         - UserAPI.UserAttributes.UserDocs
     patch:
@@ -1351,20 +1219,6 @@ paths:
           description: ''
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
-        '404':
-          $ref: '#/components/responses/404_Not_Found'
-        '401':
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/401BadToken'
-                  - $ref: '#/components/schemas/401Unauthorized'
-              example:
-                errors: [ "Invalid Token : Given token is not valid"
-                ]
-                status_code: 401
-          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
       tags:
       -  UserAPI.UserAttributes.UserDocs
     delete:
@@ -1389,7 +1243,6 @@ paths:
       tags:
       - UserAPI.UserAttributes.UserDocs
 # USER BILLING INFO
-
   /api/v1/user/billing_info/:
     get:
       operationId: listUserAddr
@@ -1483,7 +1336,6 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - UserAPI.UserAttributes.UserBillingInfo
-
 # USER PHONES INFO
   /api/v1/user/phones/:
     get:
@@ -1715,13 +1567,12 @@ paths:
     put:
       operationId: changePassword
       description: |
-        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Completed">
-        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Tested">
-        ---
-
         Takes the new password and it's confirmation as well as the old password and
         changes user's password to the new one.
-        <br>The request must be sent with a valid access token.
+        <br>
+
+        <h4>The request must be sent with a valid access token.</h4>
+        <br><img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Completed"> <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Tested">
       requestBody:
         content:
           application/json:
@@ -1775,16 +1626,23 @@ components:
         price:
           type: number
           example: 999
-        creator_id:
-          type: integer
-          readOnly: true
-          example: 1
+        availability:
+          $ref: "#/components/schemas/Availability"
+        is_owner:
+          type: boolean
+          example: true
+        current_user_permissions:
+          $ref: "#/components/schemas/CurrentUserPermissions"
         active:
           type: boolean
           example: true
         property_type:
           type: integer
           enum: [100, 200, 300]
+          example: 100
+        booking_type:
+          type: integer
+          enum: [100, 200]
           example: 100
         visibility:
           type: integer
@@ -1793,11 +1651,11 @@ components:
         main_image:
           type: string
           readOnly: true
-          example: ""
-        owners:
+          example: "http://testserver/media/5500e68537c740898615ad80466d0942.png"
+        contacts:
           type: array
           items:
-            $ref: "#/components/schemas/Owner"
+            $ref: "#/components/schemas/Contact"
           readOnly: true
         property_address:
           $ref: "#/components/schemas/PropertyAddress"
@@ -1811,26 +1669,81 @@ components:
           readOnly: false
           example:
             "Some nice message to greet a client."
+        requires_additional_confirmation:
+          type: boolean
+          example: false
         created_at:
           type: string
           readOnly: true
-          example: "2020-12-20T23:19:03+0300"
+          example: "2020-12-19T04:53:34+0300"
         updated_at:
           type: string
           readOnly: true
-          example: "2020-12-20T23:19:03+0300"
+          example: "2020-12-19T04:53:34+0300"
       required:
       - title
       - body
       - price
       - property_address
-    Owner:
+      - availability
+
+    Availability:
+      type: object
+      properties:
+        open_days:
+          type: array
+          items:
+            type: integer
+
+        departure_time_until:
+          type: string
+          example: "11:00"
+
+        arrival_time_from:
+          type: string
+          example: "14:00"
+
+        maximum_number_of_clients:
+          type: integer
+          example: 11
+        available_until:
+          type: string
+          example: "14:00"
+        available_from:
+          type: integer
+          example: "08:00"
+    Contact:
       type: object
       properties:
         user_id:
           type: integer
           example: 2
-          writeOnly: true
+          readOnly: true
+        email:
+          type: string
+          example: "example@test.com"
+          readOnly: true
+        first_name:
+          type: string
+          example: "OwnerFirstName"
+          readOnly: true
+        userpic:
+          type: string
+          example: ""
+          readOnly: true
+        is_creator:
+          type: boolean
+          example: false
+        email_confirmed:
+          type: boolean
+          example: false
+        phone_confirmed:
+          type: boolean
+          example: false
+
+    Owner:
+      type: object
+      properties:
         user:
           type: integer
           example: 2
@@ -1854,18 +1767,17 @@ components:
         is_creator:
           type: boolean
           example: false
-          readOnly: true
         permission_level:
           type: integer
           example: 100
         created_at:
           type: string
           readOnly: true
-          example: "2020-12-20T23:19:03+0300"
+          example: "2020-12-19T04:53:34+0300"
         updated_at:
           type: string
           readOnly: true
-          example: "2020-12-20T23:19:03+0300"
+          example: "2020-12-19T04:53:34+03:00"
     PropertyAddress:
       type: object
       properties:
@@ -1874,13 +1786,10 @@ components:
           example: "Russia"
         city:
           type: string
-          example: "Москва"
-        street_1:
+          example: "Moscow"
+        street:
           type: string
           example: "Таллинская"
-        street_2:
-          type: string
-          example: ""
         building:
           type: string
           example: "34"
@@ -1896,6 +1805,104 @@ components:
         directions_description:
           type: string
           example: "Some directions from the nearest metro station or smth."
+    CurrentUserPermissions:
+      type: object
+      properties:
+        owner_id:
+            type: integer
+            readOnly: true
+        user_id:
+            type: integer
+            readOnly: true
+        can_edit:
+            type: boolean
+            readOnly: true
+            example: true
+        can_delete:
+            type: boolean
+            readOnly: true
+            example: true
+
+        can_add_images:
+            type: boolean
+            readOnly: true
+            example: true
+        can_delete_images:
+            type: boolean
+            readOnly: true
+            example: true
+
+        can_add_bookings:
+            type: boolean
+            readOnly: true
+            example: true
+        can_manage_bookings:
+            type: boolean
+            readOnly: true
+            example: true
+
+        can_add_owners:
+            type: boolean
+            readOnly: true
+            example: true
+        can_manage_owners:
+            type: boolean
+            readOnly: true
+            example: true
+
+        can_delete_owners:
+            type: boolean
+            readOnly: true
+            example: true
+        can_add_locks:
+            type: boolean
+            readOnly: true
+            example: true
+
+        can_manage_locks:
+            type: boolean
+            readOnly: true
+            example: true
+        can_delete_locks:
+            type: boolean
+            readOnly: true
+            example: true
+
+        can_add_to_group:
+            type: boolean
+            readOnly: true
+            example: true
+        can_add_to_organisation:
+            type: boolean
+            readOnly: true
+            example: true
+
+        is_creator:
+            type: boolean
+            readOnly: true
+            example: true
+        first_name:
+            type: string
+            example: "Имя"
+        last_name:
+            type: string
+            example: "Фамилия"
+        middle_name:
+            type: string
+            example: "Отчество"
+        visibility:
+          type: integer
+          enum: [100, 200]
+          example: 100
+        created_at:
+          readOnly: true
+          type: string
+          example: "2020-12-17T00:43:42.148287+03:00"
+        updated_at:
+          readOnly: true
+          type: string
+          example: "2020-12-17T00:43:42.149282+03:00"
+
     PropertyImageToRepr:
       type: object
       properties:
@@ -1909,11 +1916,11 @@ components:
         is_main:
           type: boolean
           readOnly: true
-          example: false
+          example: true
         uploaded_at:
           type: string
           readOnly: true
-          example: "2020-12-20T23:19:03+0300"
+          example: "2020-12-12T20:36:11.567997+03:00"
     Booking:
       type: object
       properties:
@@ -1938,70 +1945,32 @@ components:
           enum: ["ACCEPTED", "AWAITING", "DECLINED", "EXPIRED"]
         booked_from:
           type: string
-          example: "2020-12-20T23:19+0300"
+          example: "2020-12-17T00:43:30+03:00"
         booked_until:
           type: string
-          example: "2020-12-25T23:19+0300"
+          example: "2020-12-17T00:43:31+03:00"
         booked_by:
           type: integer
           example: 57
         created_at:
           readOnly: true
           type: string
-          example: "2020-12-17T00:43:42+0300"
+          example: "2020-12-17T00:43:42.148287+03:00"
         updated_at:
           readOnly: true
           type: string
-          example: "2020-12-17T00:43:42+0300"
+          example: "2020-12-17T00:43:42.149282+03:00"
       required:
       - number_of_clients
       - client_email
       - booked_from
       - booked_until
-    Images:
-      type: object
-      properties:
-        id:
-          type: number
-          example: 1
-          readOnly: true
-        premises:
-          type: integer
-          example: 1
-          readOnly: true
-        images:
-          type: array
-          items:
-            type: string
-            format: binary
-        uploaded_at:
-          type: string
-          readOnly: true
-          example: "2020-12-20T23:19:03+0300"
-        is_main:
-          type: boolean
-          readOnly: true
-          example: true
-    Availability:
-      type: object
-      properties:
-        booked_from:
-          type: string
-          writeOnly: true
-          example: "2020-12-20T23:00+0300"
-        booked_until:
-          type: string
-          writeOnly: true
-          example: "2020-12-21T12:00+0300"
     User:
       type: object
       properties:
         id:
           type: number
           example: 1
-        username:
-          type: string
-          example: "janedoe"
         email:
           type: string
           example: "janedoe@test.com"
@@ -2014,15 +1983,30 @@ components:
         last_name:
           type: string
           example: "Фамилия"
-        patronymic:
+        middle_name:
           type: string
           example: "Отчество"
         bio:
           type: string
           example: "О себе"
-        is_confirmed:
+        email_confirmed:
           type: boolean
           example: False
+        phone_confirmed:
+          type: boolean
+          example: False
+        two_factor_auth:
+          type: boolean
+          example: False
+        is_banned:
+          type: boolean
+          example: False
+        tos_version:
+          type: "string"
+          example: "1.0"
+        timezone:
+          type: "string"
+          example: "Europe/Moscow"
         dob:
           type: "string"
           example: "1970-01-01"
@@ -2053,21 +2037,19 @@ components:
         emails_url:
           type: string
           example: "http://testserver/api/v1/user/emails/"
-        created_at:
+        date_created:
           type: string
-          example: "2020-12-20T23:19:03+0300"
-        updated_at:
+          example: "2020-11-25T23:36:11.562947+03:00"
+        last_updated:
           type: string
-          example: "2020-12-20T23:19:03+0300"
+          example: "2020-11-25T23:36:11.562947+03:00"
     TokenObtainPair:
       type: object
       properties:
-        email:
+        username:
           type: string
-          example: "example@test.com"
         password:
           type: string
-          example: "qwerty1234"
           writeOnly: true
       required:
       - username
@@ -2275,12 +2257,12 @@ components:
                   emails_url:
                     type: string
                     example: "http://testserver/api/v1/user/emails/"
-                  created_at:
+                  date_created:
                     type: string
-                    example: "2020-12-20T23:19:03+0300"
-                  updated_at:
+                    example: "2020-11-25T23:36:11.562947+03:00"
+                  last_updated:
                     type: string
-                    example: "2020-12-20T23:19:03+0300"
+                    example: "2020-11-25T23:36:11.562947+03:00"
     200_OK_Properties_Paginated:
       description: Responce was processed
       content:
@@ -2374,10 +2356,10 @@ components:
                     example: "http://testserver/api/v1/user/emails/"
                   date_created:
                     type: string
-                    example: "2020-12-20T23:19:03+0300"
+                    example: "2020-11-25T23:36:11.562947+03:00"
                   last_updated:
                     type: string
-                    example: "2020-12-20T23:19:03+0300"
+                    example: "2020-11-25T23:36:11.562947+03:00"
     404_Not_Found:
       description: "404 not found: resource doesn't exist."
       content:
@@ -2417,20 +2399,6 @@ components:
                 example: [
                   "price : price parameter cannot be negative"
                   ]
-              status_code:
-                type: integer
-                example: 422
-    422_Invalid_Data:
-      description: "Invalid Data : Invalid data has been submitted"
-      content:
-        application/json:
-          schema:
-            properties:
-              errors:
-                type: array
-                example: [
-                  "InvalidData : Invalid data has been submitted"
-                ]
               status_code:
                 type: integer
                 example: 422
@@ -2487,8 +2455,8 @@ tags:
     description: "Endpoint for managing images for a property. Available only for property owners."
   #- name: PropertiesAPI.PropertyAttributes.Locks
   #  description: "Endpoint for managing locks for a property. Available only for property owners with permission levels of 300 or 400."
-  - name: PropertiesAPI.PropertyAttributes.Availability
-    description: "Endpoint for accessing a property availability. Available only for all authenticated users."
+  #- name: PropertiesAPI.PropertyAttributes.Availability
+  #  description: "Endpoint for accessing a property availablility. Available only for all authenticated users."
   - name: UsersAPI
     description: "Admin-only scope of endpoints."
   - name: AuthAPI
