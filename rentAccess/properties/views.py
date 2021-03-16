@@ -511,11 +511,17 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 	def update(self, request, pk=None):
 		try:
 			instance = Property.objects.prefetch_related(
-				"property_images", "property_address__city", "owners",
-				"owners__user"
-			).select_related('availability', 'property_type',
-			                 'property_address'
-			                 ).get(id=pk)
+				"property_images",
+				"property_address__city",
+				"owners",
+				"owners__user",
+				'mem_groups',
+				'mem_groups__group',
+				'mem_groups__group__property_groups'
+			).select_related(
+				'availability',
+				'property_type',
+				'property_address').get(id=pk)
 			self.check_object_permissions(self.request, instance)
 		except Property.DoesNotExist:
 			raise Http404
