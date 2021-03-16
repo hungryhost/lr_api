@@ -1,18 +1,16 @@
-from abc import ABC
-
-from django.contrib.auth import get_user_model
-from django.db.models import Q
-from django.urls import reverse
-from rest_framework import serializers, status
-from common.models import SupportedCity
 import logging
 
+from django.contrib.auth import get_user_model
+from django.urls import reverse
+from rest_framework import serializers
+
 from userAccount.models import UserImage
+from userAccount.serializers import UserSerializer
+from .availability_utils import available_days_to_db, available_days_from_db, available_hours_to_db
 from .logger_helpers import get_client_ip
 from .models import Property, PremisesAddress, PremisesImage, Ownership, Availability
 from .validators import validate_price, validate_city, validate_available_time
-from .availability_utils import available_days_to_db, available_days_from_db, available_hours_to_db
-
+from django.forms.models import model_to_dict
 #
 #
 User = get_user_model()
@@ -20,6 +18,8 @@ crud_logger_info = logging.getLogger('rentAccess.properties.crud.info')
 owners_logger = logging.getLogger('rentAccess.properties.owners.info')
 bookings_logger = logging.getLogger('rentAccess.properties.bookings.info')
 images_logger = logging.getLogger('rentAccess.properties.images.info')
+
+
 
 
 class DaysListField(serializers.ListField):
@@ -509,6 +509,21 @@ class PropertyListSerializer(serializers.ModelSerializer):
 			return ""
 
 
+class GroupInfoSerializer(serializers.Serializer):
+	group_id = serializers.IntegerField(source='id', read_only=True)
+	title = serializers.CharField(max_length=255, required=True, allow_blank=False)
+	description = serializers.CharField(max_length=500, required=True, allow_blank=False)
+	added_by = serializers.SerializerMethodField('get_added_by')
+
+
+	def get_added_by(self, obj):
+		if self.context['added_by']:
+			added_by = UserSerializer(
+				self.context['added_by'], many=False)
+			return added_by.data
+		return None
+
+
 class PropertySerializer(serializers.ModelSerializer):
 	"""
 	Serializer class for general purposes.
@@ -523,7 +538,15 @@ class PropertySerializer(serializers.ModelSerializer):
 	main_image = serializers.SerializerMethodField('get_main_image')
 	id = serializers.IntegerField()
 	is_owner = serializers.SerializerMethodField('get_can_edit')
-	current_user_permissions = serializers.SerializerMethodField('get_current_user_permissions')
+	current_user_permissions = serializers.SerializerMethodField('get_current_user_permissions', read_only=True)
+	groups_info = serializers.SerializerMethodField('get_group_info', read_only=True)
+
+	organisation_info = serializers.SerializerMethodField('get_org_info', read_only=True)
+
+	complementary_info = serializers.SerializerMethodField('get_complementary_info', read_only=True)
+	favorites_marks = serializers.SerializerMethodField('get_favorites_marks', read_only=True)
+	rating = serializers.SerializerMethodField('get_rating', read_only=True)
+	views_info = serializers.SerializerMethodField('get_views_info', read_only=True)
 
 	class Meta:
 		model = Property
@@ -546,11 +569,83 @@ class PropertySerializer(serializers.ModelSerializer):
 			'visibility',
 			'requires_additional_confirmation',
 			'client_greeting_message',
+			'groups_info',
+			'organisation_info',
+			'views_info',
+			'favorites_marks',
+			'rating',
+			'complementary_info',
 			'created_at',
 			'updated_at'
 
 		)
-		read_only_fields = ['id']
+		read_only_fields = [
+			'id',
+			'title',
+			'body',
+			'price',
+			'is_owner',
+			'current_user_permissions',
+			'active',
+			'booking_type',
+			'availability',
+			'property_type',
+			'main_image',
+			'contacts',
+			'property_address',
+			'property_images',
+			'visibility',
+			'requires_additional_confirmation',
+			'client_greeting_message',
+			'groups_info',
+			'organisation_info',
+			'views_info',
+			'favorites_marks',
+			'rating',
+			'complementary_info',
+			'created_at',
+			'updated_at'
+		]
+
+	def get_complementary_info(self, obj):
+		return []
+
+	def get_favorites_marks(self, obj):
+		return 0
+
+	def get_rating(self, obj):
+		return None
+
+	def get_views_info(self, obj):
+		views_dict = {
+			"views_today"               : 0,
+			"views_overall"             : 0,
+			"current_user_views_today"  : 0,
+			"current_user_views_overall": 0,
+		}
+
+		return views_dict
+
+	def get_group_info(self, obj):
+		groups = obj.mem_groups.all()
+		groups_list = []
+		added_by = None
+		if groups:
+			for group in groups:
+				groups_list.append(group.group)
+				if group.added_by:
+					added_by = group.added_by
+		if groups:
+			serializer = GroupInfoSerializer(
+				groups_list,
+				many=True,
+				context={'added_by': added_by}
+			)
+			return serializer.data
+		return None
+
+	def get_org_info(self, obj):
+		return None
 
 	def get_contacts(self, obj):
 		queryset = obj.owners.all()
@@ -786,6 +881,14 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 	requires_additional_confirmation = serializers.BooleanField(required=False)
 	current_user_permissions = serializers.SerializerMethodField(
 		'get_current_user_permissions', read_only=True)
+	groups_info = serializers.SerializerMethodField('get_group_info', read_only=True)
+
+	organisation_info = serializers.SerializerMethodField('get_org_info', read_only=True)
+
+	complementary_info = serializers.SerializerMethodField('get_complementary_info', read_only=True)
+	favorites_marks = serializers.SerializerMethodField('get_favorites_marks', read_only=True)
+	rating = serializers.SerializerMethodField('get_rating', read_only=True)
+	views_info = serializers.SerializerMethodField('get_views_info', read_only=True)
 
 	class Meta:
 		model = Property
@@ -794,31 +897,82 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'title',
 			'body',
 			'price',
-			'active',
 			'is_owner',
 			'current_user_permissions',
-			'property_type',
-			'availability',
-			'main_image',
+			'active',
 			'booking_type',
+			'availability',
+			'property_type',
+			'main_image',
 			'contacts',
 			'property_address',
 			'property_images',
 			'visibility',
 			'requires_additional_confirmation',
 			'client_greeting_message',
+			'groups_info',
+			'organisation_info',
+			'views_info',
+			'favorites_marks',
+			'rating',
+			'complementary_info',
 			'created_at',
-			'updated_at',
+			'updated_at'
 
 		)
 		read_only_fields = [
 			'id',
+			'groups_info',
+			'organisation_info',
+			'views_info',
+			'favorites_marks',
+			'rating',
+			'complementary_info',
 			'created_at',
-			'updated_at',
+			'updated_at'
 			'main_image',
 			'property_images',
 			'current_user_permissions'
 		]
+	def get_complementary_info(self, obj):
+		return []
+
+	def get_favorites_marks(self, obj):
+		return 0
+
+	def get_rating(self, obj):
+		return None
+
+	def get_views_info(self, obj):
+		views_dict = {
+			"views_today"               : 0,
+			"views_overall"             : 0,
+			"current_user_views_today"  : 0,
+			"current_user_views_overall": 0,
+		}
+
+		return views_dict
+
+	def get_group_info(self, obj):
+		groups = obj.mem_groups.all()
+		groups_list = []
+		added_by = None
+		if groups:
+			for group in groups:
+				groups_list.append(group.group)
+				if group.added_by:
+					added_by = group.added_by
+		if groups:
+			serializer = GroupInfoSerializer(
+				groups_list,
+				many=True,
+				context={'added_by': added_by}
+			)
+			return serializer.data
+		return None
+
+	def get_org_info(self, obj):
+		return None
 
 	def get_contacts(self, obj):
 		queryset = obj.owners.all()
