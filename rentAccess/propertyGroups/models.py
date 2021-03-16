@@ -29,6 +29,8 @@ class PropertyGroupMembership(models.Model):
 		null=False,
 		blank=False
 	)
+	added_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='added_properties',
+		on_delete=models.SET_NULL, null=True, blank=True)
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 
@@ -42,7 +44,7 @@ class UserGroupMembership(models.Model):
 		unique_together = [['user', 'group']]
 
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='user_groups',
-		on_delete=models.CASCADE, null=False, blank=False)
+		on_delete=models.SET_NULL, null=True, blank=False)
 	group = models.ForeignKey(PropertyGroup, related_name='property_groups', on_delete=models.CASCADE, null=False, blank=False)
 	is_creator = models.BooleanField(default=False, null=False)
 
@@ -56,6 +58,12 @@ class UserGroupMembership(models.Model):
 	can_add_members = models.BooleanField(default=False, null=False)
 	can_remove_members = models.BooleanField(default=False, null=False)
 	can_manage_members = models.BooleanField(default=False, null=False)
+
+	joined_with_code = models.BooleanField(default=False, null=False)
+	joined_with_link = models.BooleanField(default=False, null=False)
+
+	added_by_user_id = models.IntegerField(null=True, blank=True)
+	added_by_owner_id = models.IntegerField(null=True, blank=True)
 
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
