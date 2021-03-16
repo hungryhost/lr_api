@@ -8,13 +8,6 @@ from bookings.views import BookingsListCreateView, BookingsViewSet, BookingsAllL
 # from .views import LockDetail
 app_name = 'properties'
 
-properties_details = PropertiesViewSet.as_view({
-		'patch': 'partial_update',
-		'put': 'update',
-		'get': 'retrieve',
-		'delete': 'delete_property'
-	})
-
 urlpatterns = [
 	path('', PropertyListCreate.as_view(), name='properties-list'),
 	path('<int:pk>/owners/<int:owner_id>/', OwnershipViewSet.as_view({
@@ -24,7 +17,12 @@ urlpatterns = [
 	}), name='properties-owners-details'),
 
 	path('<int:pk>/owners/', OwnersListCreate.as_view(), name='properties-owners-list'),
-	path('<int:pk>/', properties_details, name='properties-details'),
+	path('<int:pk>/', PropertiesViewSet.as_view({
+		'patch': 'partial_update',
+		'put': 'update',
+		'get': 'retrieve',
+		'delete': 'delete_property'
+	}), name='properties-details'),
 	path('<int:pk>/bookings/', BookingsListCreateView.as_view(), name='properties-bookings-list'),
 	path('<int:pk>/images/', PropertyImagesViewSet.as_view(
 		{
