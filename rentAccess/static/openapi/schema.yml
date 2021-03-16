@@ -143,7 +143,9 @@ paths:
     post:
       operationId: createTokenVerify
       description: 'Takes a token and indicates if it is valid.  This view provides
-          no information about a token''s fitness for a particular use.'
+          no
+
+          information about a token''s fitness for a particular use.'
       parameters: []
       requestBody:
         content:
@@ -1588,27 +1590,60 @@ paths:
 
 components:
   schemas:
-    PropertyForUser:
+    PropertyList:
       type: object
       properties:
         id:
           type: integer
           readOnly: true
+          example: 1
         title:
           type: string
           maxLength: 50
+          example: "The Best Property Out There"
         body:
           type: string
+          example: "Description of the Best Property"
         price:
           type: number
+          example: 999
         active:
           type: boolean
-        image:
+          example: true
+        property_type:
+          type: integer
+          enum: [100, 200, 300]
+          example: 100
+        booking_type:
+          type: integer
+          enum: [100, 200]
+          example: 100
+        visibility:
+          type: integer
+          enum: [100, 200, 300]
+          example: 100
+        main_image:
           type: string
-      required:
-      - title
-      - body
-      - price
+          readOnly: true
+          example: "http://testserver/media/5500e68537c740898615ad80466d0942.png"
+        property_address:
+          $ref: "#/components/schemas/PropertyAddress"
+        client_greeting_message:
+          type: string
+          readOnly: false
+          example:
+            "Some nice message to greet a client."
+        requires_additional_confirmation:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          readOnly: true
+          example: "2020-12-19T04:53:34+0300"
+        updated_at:
+          type: string
+          readOnly: true
+          example: "2020-12-19T04:53:34+0300"
     Property:
       type: object
       properties:
@@ -1632,7 +1667,9 @@ components:
           type: boolean
           example: true
         current_user_permissions:
+
           $ref: "#/components/schemas/CurrentUserPermissions"
+
         active:
           type: boolean
           example: true
@@ -1686,7 +1723,6 @@ components:
       - price
       - property_address
       - availability
-
     Availability:
       type: object
       properties:
@@ -1807,6 +1843,7 @@ components:
           example: "Some directions from the nearest metro station or smth."
     CurrentUserPermissions:
       type: object
+      readOnly: true
       properties:
         owner_id:
             type: integer
@@ -1890,6 +1927,7 @@ components:
         middle_name:
             type: string
             example: "Отчество"
+
         visibility:
           type: integer
           enum: [100, 200]
@@ -1932,7 +1970,7 @@ components:
           type: array
           readOnly: true
           items:
-            $ref: "#/components/schemas/Property"
+            $ref: "#/components/schemas/PropertyList"
         number_of_clients:
           type: integer
           example: 1
