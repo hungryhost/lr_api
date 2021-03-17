@@ -561,6 +561,34 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
 		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
+		try:
+			prop = Property.objects.select_related('availability', 'property_type',
+			                                       'property_address').get(id=pk)
+			self.check_object_permissions(self.request, prop)
+		except Property.DoesNotExist:
+			raise Http404
+		if not datetime_stop or not datetime_start or not number_of_clients:
+			return Response(
+				status=status.HTTP_400_BAD_REQUEST)
+
+		days = available_days_from_db(prop.availability.open_days)
+		if prop.booking_type == 200:
+			return Response(data={"No date provided or wrong booking_type of the property"},
+			                status=status.HTTP_400_BAD_REQUEST)
+		try:
+			date_dt_start = datetime.datetime.strptime(datetime_start, '%Y-%m-%d')
+			date_dt_end = datetime.datetime.strptime(datetime_stop, '%Y-%m-%d')
+		except Exception as e:
+			return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+		if date_dt_start.weekday() not in days or date_dt_end.weekday() not in days:
+			return Response(
+				status=status.HTTP_409_CONFLICT)
+		if date_dt_start > date_dt_end:
+			return Response(
+				status=status.HTTP_409_CONFLICT)
+		if number_of_clients > prop.availability.maximum_number_of_clients:
+			return Response(
+				status=status.HTTP_409_CONFLICT)
 		query_1.add(
 			Q(booked_from__lte=datetime_start)
 			& Q(booked_until__gte=datetime_start), query_1.connector
