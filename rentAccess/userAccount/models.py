@@ -172,7 +172,7 @@ def path_and_rename(instance, filename):
 
 class MetaBannedInfo(models.Model):
 	banned_user = models.ForeignKey(
-		settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+		settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
 	)
 	reason = models.CharField(max_length=500, null=False, blank=True)
 	employee_id = models.IntegerField(null=False, blank=False)
@@ -199,13 +199,37 @@ class PlannedClient(models.Model):
 	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
 
 
+class PlanRequests(models.Model):
+
+	CHOICES = [
+		("APPROVED", 'OK'),
+		("WAIT", 'Pending'),
+		("DECLINED", 'Bad'),
+	]
+
+	requested_plan = models.ForeignKey(
+		ClientPlan, null=True, on_delete=models.SET_NULL)
+	client = models.ForeignKey(
+		settings.AUTH_USER_MODEL, related_name='user_plan_requests', on_delete=models.CASCADE
+	)
+
+	status = models.CharField(
+		'status', max_length=20, choices=CHOICES, null=False, blank=True, default='WAIT')
+	status_changed_reason = models.CharField(max_length=255, null=False, blank=True)
+	status_changed_by = models.CharField(max_length=255, null=False, blank=True)
+
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+
+
 class KYCOperation(models.Model):
 	KYC_CHOICES = [
 		("OK", 'OK'),
 		("PENDING", 'Pending'),
 		("BAD", 'Bad'),
 	]
-	user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='kyc_info', on_delete=models.CASCADE)
+	user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
+	                         related_name='kyc_info', on_delete=models.SET_NULL)
 	kys_status = models.CharField(
 		'kyc_status', max_length=10, choices=KYC_CHOICES, null=False, blank=True, default='')
 	kyc_last_performed = models.DateTimeField(blank=True, null=True)
