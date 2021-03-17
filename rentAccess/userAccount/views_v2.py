@@ -10,10 +10,11 @@ from properties.models import Property
 from bookings.serializers import BookingsListSerializer
 from properties.serializers import PropertyListSerializer
 from .permissions import IsOwnerOrSuperuser
-from .models import Document, UserImage, BillingAddress
+from .models import Document, UserImage, BillingAddress, PlanRequests, ClientPlan, PlannedClient
 from .serializers import (ChangePasswordSerializer,
-						  FileUploadSerializer,
-						  ProfileUpdateSerializer, ProfileDetailSerializer)
+                          FileUploadSerializer,
+                          ProfileUpdateSerializer, ProfileDetailSerializer, UserPlanRequestCreateSerializer,
+                          UserPlanSerializer)
 from .property_filters import UserPropertyFilter
 from .booking_filters import UserBookingsFilter
 from django_filters import rest_framework as dj_filters
@@ -104,6 +105,96 @@ class ProfileDetailViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Gen
 		return get_object_or_404(User, id=self.request.user.id)
 
 	@action(detail=True, methods=['put'])
+	def change_plan_pro(self, request):
+		instance = User.objects.get(id=self.request.user.id)
+		request_plan = PlanRequests.objects.get_or_create(
+			requested_plan=ClientPlan.objects.get(code='PRO'),
+			client=instance
+		)
+
+		serializer = UserPlanRequestCreateSerializer(
+			request_plan[0],
+			context={'request': request}
+		)
+
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	@action(detail=True, methods=['delete'])
+	def reset_plan(self, request):
+		instance = User.objects.get(id=self.request.user.id)
+		plan = PlannedClient(
+			client=instance,
+			plan_id='DEFAULT'
+		)
+		plan.save()
+		return Response(status=status.HTTP_204_NO_CONTENT)
+
+	@action(detail=True, methods=['put'])
+	def change_plan_corp(self, request):
+		instance = User.objects.get(id=self.request.user.id)
+		request_plan = PlanRequests.objects.update_or_create(
+			requested_plan=ClientPlan.objects.get(code='CORP'),
+			client=instance
+		)
+
+		serializer = UserPlanRequestCreateSerializer(
+			request_plan[0],
+			context={'request': request}
+		)
+
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	@action(detail=True, methods=['get'])
+	def get_plan_request(self, request):
+		instance = User.objects.get(id=self.request.user.id)
+		request_plan = PlannedClient.objects.all().filter(
+			client=instance
+		).last()
+
+		serializer = UserPlanSerializer(
+			request_plan,
+			context={'request': request}
+		)
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	@action(detail=True, methods=['get'])
+	def get_plan_pro_request(self, request):
+		instance = User.objects.get(id=self.request.user.id)
+		try:
+			request_plan = PlanRequests.objects.all().filter(
+				client=instance,
+				requested_plan=ClientPlan.objects.get(code='PRO'),
+			).last()
+
+		except PlanRequests.DoesNotExist:
+			request_plan = None
+		if not request_plan:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+		serializer = UserPlanRequestCreateSerializer(
+			request_plan,
+			context={'request': request}
+		)
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	@action(detail=True, methods=['get'])
+	def get_plan_corp_request(self, request):
+		instance = User.objects.get(id=self.request.user.id)
+		try:
+			request_plan = PlanRequests.objects.all().filter(
+				client=instance,
+				requested_plan=ClientPlan.objects.get(code='CORP'),
+			).last()
+		except PlanRequests.DoesNotExist:
+			request_plan = None
+		if not request_plan:
+			return Response(status=status.HTTP_404_NOT_FOUND)
+		serializer = UserPlanRequestCreateSerializer(
+			request_plan,
+			context={'request': request}
+		)
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	@action(detail=True, methods=['put'])
 	def update(self, request):
 		instance = User.objects.get(id=self.request.user.id)
 		serializer = ProfileUpdateSerializer(
@@ -132,6 +223,12 @@ class ProfileDetailViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Gen
 		return [permission() for permission in permission_classes]
 
 	def get_serializer_class(self):
+		if self.action in [
+			'change_plan_pro',
+			'change_plan_corp',
+			'get_plan_request'
+		]:
+			return UserPlanRequestCreateSerializer
 		return ProfileUpdateSerializer
 
 
