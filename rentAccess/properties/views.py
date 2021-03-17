@@ -583,7 +583,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		if date_dt_start.weekday() not in days or date_dt_end.weekday() not in days:
 			return Response(
 				status=status.HTTP_409_CONFLICT)
-		if date_dt_start > date_dt_end:
+		if date_dt_start >= date_dt_end:
 			return Response(
 				status=status.HTTP_409_CONFLICT)
 		if number_of_clients > prop.availability.maximum_number_of_clients:
