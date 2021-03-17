@@ -25,6 +25,22 @@ urlpatterns = [
         {'get': 'retrieve', 'put': 'update'}), name='user-details'),
     path('change_password/', change_password, name='change-password'),
     path('lock-requests/', LockMessageListCreate.as_view()),
+
+    path('plan/', ProfileDetailViewSet.as_view(
+        {
+            'get': 'get_plan_request',
+            'delete': 'reset_plan'
+        }), name='user-details'),
+    path('plan/corp/', ProfileDetailViewSet.as_view(
+        {
+            'get': 'get_plan_corp_request',
+            'put': 'change_plan_corp',
+        }), name='user-details'),
+    path('plan/pro/', ProfileDetailViewSet.as_view(
+        {
+            'get': 'get_plan_pro_request',
+            'put': 'change_plan_pro',
+        }), name='user-details'),
     path('lock-requests/<int:pk>/', LockMessageRetrieveDeleteView.as_view()),
     path('', include((router.urls, 'userAccount'),)),
     path('billing_addresses/', ProfileAddressesViewSet.as_view({'post': 'create', 'get': 'list'})),
