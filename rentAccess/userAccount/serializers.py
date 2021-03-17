@@ -10,7 +10,7 @@ from timezone_field.rest_framework import TimeZoneSerializerField
 
 from .models import (
 	UserImage,
-	BillingAddress, Document
+	BillingAddress, Document, PlanRequests, PlannedClient
 )
 
 User = get_user_model()
@@ -344,3 +344,40 @@ class FileUploadSerializer(serializers.ModelSerializer):
 				uploaded_at=datetime.datetime.now()
 			)
 			return UserImage.objects.get(account=self.context['request'].user)
+
+
+class UserPlanRequestCreateSerializer(serializers.ModelSerializer):
+
+	class Meta:
+		model = PlanRequests
+		fields = [
+			'requested_plan',
+			'client',
+			'status',
+			'status_changed_reason',
+			'created_at',
+			'updated_at'
+		]
+		read_only_fields = [
+			'requested_plan',
+			'client',
+			'status',
+			'status_changed_reason',
+			'created_at',
+			'updated_at'
+		]
+
+
+class UserPlanSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = PlannedClient
+		fields = [
+			'plan',
+			'created_at',
+			'updated_at'
+		]
+		read_only_fields = [
+			'plan',
+			'created_at',
+			'updated_at'
+		]
