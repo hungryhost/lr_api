@@ -6,7 +6,7 @@ from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.core.exceptions import ValidationError
 from .models import (CustomUser, UserImage,
                      Document, DocumentType, AddressType,
-                     BillingAddress, MetaBannedInfo, ClientPlan, KYCOperation, PlannedClient)
+                     BillingAddress, MetaBannedInfo, ClientPlan, KYCOperation, PlannedClient, PlanRequests)
 from .models import Phone, PhoneType
 
 # Register your models here.
@@ -119,5 +119,6 @@ admin.site.register(CustomUser, UserAdmin)
 admin.site.register(MetaBannedInfo)
 admin.site.register(ClientPlan)
 admin.site.register(PlannedClient)
+admin.site.register(PlanRequests)
 admin.site.register(KYCOperation)
 #admin.site.unregister(Group)
