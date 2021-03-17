@@ -608,8 +608,12 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		days = available_days_from_db(prop.availability.open_days)
 		if date_dt.weekday() not in days:
 			return Response(
-				data={"date": "Property is not available at that day."},
-				status=status.HTTP_400_BAD_REQUEST)
+				data={
+					"count"            : 0,
+					"property_timezone": prop.property_address.city.city.timezone,
+					"available_slots"  : [],
+				},
+				status=status.HTTP_409_CONFLICT)
 		slots = available_hours_from_db(prop, b_date=date_dt)
 		data = {
 			"count"            : len(slots),
