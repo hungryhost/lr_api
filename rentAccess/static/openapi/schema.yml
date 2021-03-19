@@ -3,17 +3,6 @@ info:
   title: '294 Internal API Documentation'
   version: '1'
   description: |
-    # General Information
-    ## About the API
-    This API references methods that are __implemented or _to be implemented_ to the current date__. API will reference not only methods that are used for front-end development but also for the embedded developers. For more information about the changes in methods please refer to __CHANGELOG__ in the Gitlab internal [repository](https://git.miem.hse.ru/294/web-294).
-
-    ---
-    ## API Overview
-      - ### User Related Info
-        - Insert user related info.
-
-      - ### Properties Related Info
-        - Insert user related info.
 
     ---
     ## Useful Links
@@ -28,16 +17,7 @@ info:
     Completed methods are marked as <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
     <br>Tested methods marked as <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
     <br>
-    <br>
-    __*!!!  METHODS THAT DO NOT HAVE "TEST" LABEL ARE NOT SUITABLE FOR PRODUCTION USE.<br> METHODS THAT ARE NOT MARKED AS COMPLETED ARE NOT AVAILABLE YET*.__
 
-    ---
-    ## Current issues to consider:
-      * *Replace http for https for the server url in order to securely use API from outside.*
-      * *Due to Swagger UI bug endpoints are not shown in an order they are
-      supposed to.*
-      * *Endpoints for password reset and phone confirmations are not yet available
-      due to some internal issues.*
     ---
     <h4 align="center"> Author: Yury Borodin </h4>
     <h5 align="center"> Gitlab: [yuiborodin](https://git.miem.hse.ru/yuiborodin)
@@ -58,7 +38,7 @@ servers:
 security:
   - bearerAuth: []
 paths:
-  # AUTH PATHS
+# AUTH PATHS
   /api/v1/auth/register/:
     post:
       operationId: createregistration
@@ -198,7 +178,435 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
         - AuthAPI
-# PROPERTIES PATHS
+# PROPERTY GROUPS
+  /api/v1/property-groups/{group:id}/:
+    get:
+      operationId: retrieveGroup
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>
+        This method is used for retrieving information about a
+        particular group
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - GroupsAPI
+    put:
+      operationId: patchGroup
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for updating information about a particular group.
+
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+        - GroupsAPI
+    delete:
+      operationId: destroyGroup
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for delete action for a particular group.
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      responses:
+        '204':
+          $ref: '#/components/responses/204_Deleted'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - GroupsAPI
+  /api/v1/property-groups/:
+    get:
+      operationId: listGroups
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for retrieving a list of groups.
+
+      parameters: []
+      responses:
+        '200':
+          $ref: '#/components/responses/200_OK_Groups_Paginated'
+      tags:
+      - GroupsAPI
+    post:
+      operationId: createGroup
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for creating a group.
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+          description: ''
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - GroupsAPI
+# PROPERTY GROUPS MEMBERS
+  /api/v1/property-groups/{group:id}/members/{member:id}/:
+    get:
+      operationId: retrieveGroupMembers
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>
+        This method is used for retrieving information about members of a particular group
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying the group.
+        schema:
+          type: string
+      - name: member:id
+        in: path
+        required: true
+        description: A unique integer value identifying the member.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - GroupsAPI.Members
+    put:
+      operationId: patchGroupMember
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for updating information about a particular group member.
+
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      - name: member:id
+        in: path
+        required: true
+        description: A unique integer value identifying the member.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Member'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+        - GroupsAPI.Members
+    delete:
+      operationId: destroyGroupMember
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for delete action for a particular group member.
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      - name: member:id
+        in: path
+        required: true
+        description: A unique integer value identifying the member.
+        schema:
+          type: string
+      responses:
+        '204':
+          $ref: '#/components/responses/204_Deleted'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - GroupsAPI
+  /api/v1/property-groups/{group:id}/members/:
+    get:
+      operationId: listGroupsMembers
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for retrieving a list of group members.
+
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/200_OK_Groups_Paginated'
+      tags:
+      - GroupsAPI.Members
+    post:
+      operationId: createGroupMember
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for creating a group member.
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Member'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+          description: ''
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - GroupsAPI.Members
+
+# PROPERTY GROUPS PROPERTIES
+  /api/v1/property-groups/{group:id}/properties/:
+    get:
+      operationId: listGroupsProperties
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for retrieving a list of group properties.
+
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/200_OK_Property_Member_Paginated'
+      tags:
+      - GroupsAPI.Properties
+    post:
+      operationId: createGroupProperties
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for creating a group property member (adding a property to a group).
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PropertyAddToGroup'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PropertyGroupMembership'
+          description: ''
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - GroupsAPI.Properties
+# PROPERTIES
   /api/v1/properties/{properties:id}/:
     get:
       operationId: retrieveProperty
@@ -1049,9 +1457,712 @@ paths:
       tags:
       - PropertiesAPI.Images
 # PROPERTIES LOCKS PATHS
+  /api/v1/properties/{properties:id}/locks/:
+    get:
+      operationId: listPropertyLocks
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        <br>
+        This method is used for retrieving information about locks of a
+        particular property
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      responses:
+        '200':
+            $ref: '#/components/responses/200_OK_Locks_Paginated'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
 
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks
+    post:
+      operationId: createPropertyLock
+      description: ''
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LockCreate'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lock'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks
+  /api/v1/properties/{properties:id}/locks/{lock:id}:
+    get:
+      operationId: retrievePropertyLock
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+
+        This method is used for retrieving information about a single lock of a particular property
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the lock.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lock'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks
+    put:
+      operationId: updatePropertyLock
+      description: |
+        This endpoint updates lock's description
+
+        Note: this endpoint is available only if the authenticated user
+        has one of these permissions:
+          - `can_manage_locks`
+
+          - `has_super_owner_permissions`
+          - `is_creator`
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the booking.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Lock'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lock'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks
+    delete:
+      operationId: destroyPropertyLock
+      description: ''
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the booking.
+        schema:
+          type: string
+      responses:
+        '204':
+          $ref: '#/components/responses/204_Deleted'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks
+# PROPERTIES LOCKS CARDS PATHS
+  /api/v1/properties/{properties:id}/locks/{lock:id}/cards/:
+    get:
+      operationId: listPropertyCards
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        <br>
+        This method is used for retrieving information about cards of a lock of a
+        particular property
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the lock.
+        schema:
+          type: string
+      responses:
+        '200':
+            $ref: '#/components/responses/200_OK_Cards_Paginated'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks.Cards
+    post:
+      operationId: createPropertyLockCard
+      description: ''
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the lock.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Card'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks.Cards
+  /api/v1/properties/{properties:id}/locks/{lock:id}/cards/{card:id}/:
+    get:
+      operationId: retrievePropertyLockCard
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+
+        This method is used for retrieving information about a single lock of a particular property
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the lock.
+        schema:
+          type: string
+      - name: card:id
+        in: path
+        required: true
+        description: A unique integer value identifying the card.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks.Cards
+    delete:
+      operationId: destroyPropertyLockCard
+      description: ''
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the booking.
+        schema:
+          type: string
+      - name: card:id
+        in: path
+        required: true
+        description: A unique integer value identifying the card.
+        schema:
+          type: string
+      responses:
+        '204':
+          $ref: '#/components/responses/204_Deleted'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks.Cards
+
+# PROPERTIES LOCKS ACCESSES
+  /api/v1/properties/{properties:id}/locks/{lock:id}/accesses/:
+    get:
+      operationId: retrievePropertyLockAccesses
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+
+        This method is used for retrieving information about a single lock's accesses.
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the lock.
+        schema:
+          type: string
+
+      responses:
+        '200':
+          $ref: '#/components/responses/200_OK_Locks_Access_Paginated'
+
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks.Accesses
+# PROPERTIES LOCKS KEYS PATHS
+  /api/v1/properties/{properties:id}/locks/{lock:id}/keys/:
+    get:
+      operationId: listPropertyKeys
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        <br>
+        This method is used for retrieving information about cards of a lock of a
+        particular property
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the lock.
+        schema:
+          type: string
+      responses:
+        '200':
+            $ref: '#/components/responses/200_OK_Keys_Paginated'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks.Keys
+    post:
+      operationId: createPropertyLockKey
+      description: ''
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the lock.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Key'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Key'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks.Keys
+  /api/v1/properties/{properties:id}/locks/{lock:id}/keys/{key:id}/:
+    get:
+      operationId: retrievePropertyLockkey
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+
+        This method is used for retrieving information about a single lock of a particular property
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the lock.
+        schema:
+          type: string
+      - name: key:id
+        in: path
+        required: true
+        description: A unique integer value identifying the card.
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Key'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks.Keys
+    delete:
+      operationId: destroyPropertyLockkey
+      description: ''
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      - name: lock:id
+        in: path
+        required: true
+        description: A unique integer value identifying the booking.
+        schema:
+          type: string
+      - name: key:id
+        in: path
+        required: true
+        description: A unique integer value identifying the card.
+        schema:
+          type: string
+      responses:
+        '204':
+          $ref: '#/components/responses/204_Deleted'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Locks.Keys
 # PROPERTIES AVAILABILITY PATHS
+  /api/v1/properties/{properties:id}/available/:
+    post:
+      operationId: getPropertyDailyAvailability
+      description: 'This endpoint is used to check whether the property can be booked. Returns 200 OK if can be, 409 Conflict if cannot be booked.'
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DailyAvailablePost'
+      responses:
+        '200':
+          description: 'The property can be booked.'
+        '409':
+          description: 'The property cannot be booked.'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Availability
 
+  /api/v1/properties/{properties:id}/available/slots/:
+    get:
+      operationId: getPropertyHourlySlotsAvailability
+      description: |
+        This endpoint is used to retrieve free slots for a date. Works only on properties with HOURLY booking type - otherwise returns 400.
+        Slots can be empty with 200 OK, which means the property can be booked today, but there are no available slots.
+        <br>
+        IF THE PROPERTY IS NOT AVAILABLE AT THAT DAY - returns 409 with empty slots array.
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      - name: date
+        in: query
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+          example: '2020-02-12'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SlotsList'
+          description: 'The property can be booked and the slots are available.'
+        '409':
+
+          description: 'The property cannot be booked.'
+
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Availability
 # USER PATHS
   /api/v1/user/:
     get:
@@ -1658,13 +2769,14 @@ paths:
     put:
       operationId: uploadUserUserPic
       description: ''
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserImageToUpload'
       responses:
         '200':
-          content:
-            multipart:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
+          description: 'OK.'
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
@@ -1673,12 +2785,8 @@ paths:
       operationId: deleteUserUserPic
       description: ''
       responses:
-        '200':
-          content:
-            multipart:
-              schema:
-                $ref: '#/components/schemas/User'
-          description: ''
+        '204':
+          description: 'Deleted successfully.'
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
@@ -1705,8 +2813,37 @@ paths:
         #'400':
           #$ref: '#/components/responses/400_Bad_Request_Property'
       tags:
-      - UserAPI.AccountRelatedAPI
+      - UserAPI.Security
+  /api/v1/user/reset_password/:
+    put:
+      operationId: resetPassword
+      description: |
+        <h4>The request must be sent with a valid access token.</h4>
+        <br><img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Completed"> <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Tested">
 
+      responses:
+        '200':
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        #'400':
+          #$ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - UserAPI.Security
 components:
   schemas:
     PropertyList:
@@ -1785,6 +2922,7 @@ components:
         is_owner:
           type: boolean
           example: true
+          readOnly: true
         current_user_permissions:
 
           $ref: "#/components/schemas/CurrentUserPermissions"
@@ -1895,7 +3033,99 @@ components:
         phone_confirmed:
           type: boolean
           example: false
+    UserMember:
+      readOnly: true
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+          readOnly: true
+        email:
+          type: string
+          example: "example@test.com"
+          readOnly: true
+        first_name:
+          type: string
+          example: "OwnerFirstName"
+          readOnly: true
+        last_name:
+          type: string
+          example: "OwnerLastName"
+          readOnly: true
+        middle_name:
+          type: string
+          example: "OwnerMiddleName"
+          readOnly: true
+        timezone:
+          type: boolean
+          example: false
 
+    Member:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/UserMember"
+        email:
+          type: string
+          example: "example@test.com"
+        is_creator:
+          type: boolean
+          example: false
+        can_add_properties:
+          type: boolean
+          example: false
+        can_delete_properties:
+          type: boolean
+          example: false
+        can_book_properties:
+          type: boolean
+          example: false
+        recursive_ownership:
+          type: boolean
+          example: false
+        can_add_members:
+          type: boolean
+          example: false
+        can_manage_members:
+          type: boolean
+          example: false
+        can_remove_members:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          example: "2021-03-19T02:33:36+0300"
+          readOnly: true
+        updated_at:
+          type: string
+          example: "2021-03-19T02:33:36+0300"
+          readOnly: true
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 11
+          readOnly: true
+        title:
+          type: string
+          example: "Storages"
+        description:
+          type: string
+          example: "Storages"
+        is_my_group:
+          type: boolean
+          example: true
+          readOnly: true
+        created_at:
+          type: string
+          example: "2021-03-19T02:33:08+0300"
+          readOnly: true
+        updated_at:
+          type: integer
+          example: "2021-03-19T02:33:08+0300"
+          readOnly: true
     Owner:
       type: object
       readOnly: true
@@ -2132,7 +3362,7 @@ components:
         uploaded_at:
           type: string
           readOnly: true
-          example: "2020-12-12T20:36:11.567997+03:00"
+          example: "2020-12-12T20:36:11+03:00"
     Booking:
       type: object
       properties:
@@ -2176,16 +3406,80 @@ components:
         created_at:
           readOnly: true
           type: string
-          example: "2020-12-17T00:43:42.148287+03:00"
+          example: "2020-12-12T20:36:11+03:00"
         updated_at:
           readOnly: true
           type: string
-          example: "2020-12-17T00:43:42.149282+03:00"
+          example: "2020-12-12T20:36:11+03:00"
       required:
       - number_of_clients
       - client_email
       - booked_from
       - booked_until
+    LockCreate:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "A21V1212"
+    LockAccess:
+      readOnly: true
+      type: object
+      properties:
+        try_time:
+          type: string
+          example: "2020-12-12T20:36:11+03:00"
+          readOnly: true
+        result:
+          type: boolean
+          example: true
+          readOnly: true
+    Lock:
+      type: object
+      properties:
+        lock_id:
+          type: string
+          example: "1"
+          readOnly: true
+        description:
+          type: string
+          example: "Smart Lock on door 1"
+        lastAccess:
+          $ref: "#/components/schemas/LockAccess"
+    SingleSlot:
+      type: object
+      properties:
+        start:
+          type: string
+          example: "2021-02-09T21:00"
+        end:
+          type: string
+          example: "2021-02-09T22:00"
+    SlotsList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: "1"
+        property_timezone:
+          type: string
+          example: "Europe/Moscow"
+        available_slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/SingleSlot"
+    DailyAvailablePost:
+      type: object
+      properties:
+        booked_from:
+          type: string
+          example: "2021-02-01"
+        booked_until:
+          type: string
+          example: "2021-02-12"
+        number_of_clients:
+          type: integer
+          example: 2
     User:
       type: object
       properties:
@@ -2264,6 +3558,43 @@ components:
         last_updated:
           type: string
           example: "2020-11-25T23:36:11.562947+03:00"
+    Key:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+          readOnly: true
+        lock:
+          type: integer
+          example: 1
+          readOnly: true
+        key:
+          type: string
+          example: "123411"
+        access_start:
+          type: string
+          example: "2020-12-17T03:00+0300"
+        access_stop:
+          type: string
+          example: "2020-12-18T03:00+0300"
+    Card:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+          readOnly: true
+        lock:
+          type: integer
+          example: 1
+          readOnly: true
+        card_id:
+          type: string
+          example: "A23A12"
+        is_master:
+          type: boolean
+          example: true
     TokenObtainPair:
       type: object
       properties:
@@ -2343,6 +3674,38 @@ components:
           type: string
           example: "2021-03-17T18:52:20+0300"
           readOnly: true
+    UserImageToUpload:
+      type: object
+      properties:
+        images:
+          type: string
+          format: binary
+    PropertyAddToGroup:
+      type: object
+      properties:
+        properties:
+          type: array
+          items:
+            type: integer
+            example: 1
+
+    PropertyGroupMembership:
+      type: object
+      properties:
+        prop_member_id:
+          type: integer
+          example: 1
+        property:
+          $ref: "#/components/schemas/PropertyList"
+        created_at:
+          type: string
+          example: "2021-03-17T18:52:20+0300"
+          readOnly: true
+        updated_at:
+          type: string
+          example: "2021-03-17T18:52:20+0300"
+          readOnly: true
+
     Plan:
       type: object
       properties:
@@ -2553,6 +3916,82 @@ components:
                   last_updated:
                     type: string
                     example: "2020-11-25T23:36:11.562947+03:00"
+    200_OK_Keys_Paginated:
+      description: Responce was processed
+      content:
+        application/json:
+          schema:
+            properties:
+              count:
+                type: integer
+                example: 7
+              next:
+                type: string
+                example: "http://testserver/api/v1/properties/1/locks/1/keys/?page=4"
+              previous:
+                type: string
+                example: "http://testserver/api/v1/properties/1/locks/1/keys/?page=2"
+              results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Key"
+    200_OK_Cards_Paginated:
+      description: Responce was processed
+      content:
+        application/json:
+          schema:
+            properties:
+              count:
+                type: integer
+                example: 7
+              next:
+                type: string
+                example: "http://testserver/api/v1/properties/1/locks/1/cards/?page=4"
+              previous:
+                type: string
+                example: "http://testserver/api/v1/properties/1/locks/1/cards/?page=2"
+              results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Card"
+    200_OK_Locks_Paginated:
+      description: Responce was processed
+      content:
+        application/json:
+          schema:
+            properties:
+              count:
+                type: integer
+                example: 7
+              next:
+                type: string
+                example: "http://testserver/api/v1/properties/1/locks/?page=4"
+              previous:
+                type: string
+                example: "http://testserver/api/v1/properties/1/locks/?page=2"
+              results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Lock"
+    200_OK_Locks_Access_Paginated:
+      description: Responce was processed
+      content:
+        application/json:
+          schema:
+            properties:
+              count:
+                type: integer
+                example: 7
+              next:
+                type: string
+                example: "http://testserver/api/v1/properties/1/locks/accesses/?page=4"
+              previous:
+                type: string
+                example: "http://testserver/api/v1/properties/1/locks/accesses/?page=2"
+              results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/LockAccess"
     200_OK_Owners_Paginated:
       description: Responce was processed
       content:
@@ -2590,8 +4029,45 @@ components:
               results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/Property"
-
+                    $ref: "#/components/schemas/PropertyList"
+    200_OK_Members_Paginated:
+      description: Responce was processed
+      content:
+        application/json:
+          schema:
+            properties:
+              count:
+                type: integer
+                example: 7
+              next:
+                type: string
+                example: "http://testserver/api/v1/property-groups/members/?page=4"
+              previous:
+                type: string
+                example: "http://testserver/api/v1/property-groups/members/?page=2"
+              results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Member"
+    200_OK_Property_Member_Paginated:
+      description: Responce was processed
+      content:
+        application/json:
+          schema:
+            properties:
+              count:
+                type: integer
+                example: 7
+              next:
+                type: string
+                example: "http://testserver/api/v1/property-groups/properties/?page=4"
+              previous:
+                type: string
+                example: "http://testserver/api/v1/property-groups/properties/?page=2"
+              results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/PropertyGroupMembership"
     200_OK_Bookings_Paginated:
       description: Responce was processed
       content:
@@ -2611,7 +4087,25 @@ components:
                   type: array
                   items:
                     $ref: "#/components/schemas/Booking"
-
+    200_OK_Groups_Paginated:
+      description: Responce was processed
+      content:
+        application/json:
+          schema:
+            properties:
+              count:
+                type: integer
+                example: 7
+              next:
+                type: string
+                example: "http://testserver/api/v1/property-groups/?page=4"
+              previous:
+                type: string
+                example: "http://testserver/api/v1/property-groups/?page=2"
+              results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Group"
     200_OK:
       description: Responce was processed
       content:
@@ -2703,17 +4197,17 @@ tags:
       url: google.com
   - name: UserAPI.UserRelatedEntities
     description: "Endpoints for the related entites of the authenticated user such as bookings or organisations."
-  - name: UserAPI.UserBillingInfo
-    description: "Endpoints for billing info of the authenticated user."
-  - name: UserAPI.UserEmails
-    description: "Endpoints for emails of the authenticated user."
-  - name: UserAPI.UserDocs
-    description: "Endpoints for documents of the authenticated user."
-  - name: UserAPI.UserPhones
-    description: "Endpoints for phones of the authenticated user."
+  #- name: UserAPI.UserBillingInfo
+  #  description: "Endpoints for billing info of the authenticated user."
+  #- name: UserAPI.UserEmails
+  #  description: "Endpoints for emails of the authenticated user."
+  #- name: UserAPI.UserDocs
+  #  description: "Endpoints for documents of the authenticated user."
+  #- name: UserAPI.UserPhones
+  #  description: "Endpoints for phones of the authenticated user."
   - name: UserAPI.UserPic
     description: "Endpoints for userpic of the authenticated user."
-  - name: UserAPI.AccountRelatedAPI
+  - name: UserAPI.Security
     description: "Endpoints for account-related actions of the authenticated user, such as changing password."
   - name: UserAPI.Plan
     description: "Endpoints for plan-related actions of the authenticated user, such as requesting a pro plan."
@@ -2730,8 +4224,8 @@ tags:
     description: "Endpoint for managing images for a property."
   - name: PropertiesAPI.Locks
     description: "Endpoint for managing locks for a property. "
-  - name: PropertiesAPI.PropertyAttributes.Availability
-    description: "Endpoint for accessing a property availability. Available only for all authenticated users."
+  - name: PropertiesAPI.Availability
+    description: "Endpoint for accessing a property availability."
   - name: PropertiesAPI.Locks.Accesses
     description: "Endpoint for managing lock accesses for a property. "
   - name: PropertiesAPI.Locks.Cards
