@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from rest_framework import generics, permissions, viewsets, status, mixins
+from rest_framework import generics, permissions, viewsets, status, mixins, decorators
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -256,3 +256,25 @@ class ProfileImageViewSet(viewsets.ViewSet):
 	def get_permissions(self):
 		permission_classes = [IsOwnerOrSuperuser, ]
 		return [permission() for permission in permission_classes]
+
+
+@decorators.api_view(["POST"])
+@decorators.permission_classes([permissions.IsAuthenticated])
+def request_password_reset(request):
+	"""
+	This method implements user logout_all endpoint.
+	Version: 1.0
+
+	:param request: incoming POST request
+	:return: JSON object with status code
+	"""
+	pass
+
+	return Response(status=status.HTTP_205_RESET_CONTENT)
+
+
+@decorators.api_view(["GET"])
+@decorators.permission_classes([permissions.AllowAny])
+def email_verification(request):
+	pass
+	return Response(status=status.HTTP_400_BAD_REQUEST)
