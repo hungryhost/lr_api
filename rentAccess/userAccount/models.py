@@ -102,6 +102,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 	]
 	email = models.EmailField('email', null=False, blank=False, max_length=64,
 		unique=True, db_index=True)
+	work_email = models.EmailField('work_email', null=True, blank=True, max_length=64,
+		unique=True, db_index=True)
+
+	use_work_email_incbookings = models.BooleanField('use_work_email_incbookings', default=False)
+	use_work_email_outbookings = models.BooleanField('use_work_email_outbookings', default=False)
+
 	first_name = models.CharField('first_name', null=False, blank=False, max_length=50)
 	last_name = models.CharField('last_name', null=False, blank=False, max_length=50)
 
