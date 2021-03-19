@@ -36,7 +36,7 @@ class OrganisationListSerializer(serializers.ModelSerializer):
 			'created_at',
 			'updated_at',
 			'is_confirmed',
-			'is_my_organization',
+			'is_my_organisation',
 			'created_at',
 			'updated_at'
 		]
@@ -96,7 +96,7 @@ class OrganisationCreateSerializer(serializers.ModelSerializer):
 		except OrganisationMember.DoesNotExist:
 			membership = None
 		if membership:
-			if membership.organization.active:
+			if membership.organisation.active:
 				raise serializers.ValidationError({
 					"user": "User is already a creator of an active organisation."
 				})
@@ -310,7 +310,7 @@ class PropertyOrganisationMemberCreateSerializer(serializers.ModelSerializer):
 			for owner in ownerships:
 				if owner.user.id == self.context["request"].user.id:
 					current_user = owner
-			if not (current_user and current_user.can_add_to_organization):
+			if not (current_user and current_user.can_add_to_organisation):
 				raise exceptions.PermissionDenied
 		# finally we check if the user has permissions to add properties
 		# to the group

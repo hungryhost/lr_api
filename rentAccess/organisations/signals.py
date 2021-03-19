@@ -31,7 +31,7 @@ def hash_card_id(sender: Organisation.__class__, **kwargs):
     name_1 = random.choice(letters)
     name_2 = random.choice(letters)
     try:
-        reg = org.organization_address.region
+        reg = org.organisation_address.region
     except Exception as e:
         reg = "R00"
     org.LR_CRM_ID = increment_helpdesk_number(name_2+name_1, reg)
