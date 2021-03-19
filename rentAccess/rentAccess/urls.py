@@ -49,6 +49,7 @@ urlpatterns = [
     # ------------------- SERVICE API -------------------
     path('api/v1/properties/', include('properties.urls'), name='properties'),
     path('api/v1/property-groups/', include('propertyGroups.urls'), name='propertyGroups'),
+    path('api/v1/organisations/', include('organisations.urls'), name='organisations'),
     path('api/v1/common/', include('common.urls'), name='common'),
     path('api/v1/comms/', include('comms.urls'), name='comms'),
     # path('auth/', include('rest_framework.urls')),
