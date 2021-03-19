@@ -17,7 +17,10 @@ class Booking(models.Model):
 	STATUS_CHOICES = [
 		('ACCEPTED', 'Approved'),
 		('AWAITING', 'Awaiting action from the owner'),
-		('DECLINED', 'The owner declined the request')
+		('DECLINED', 'The owner declined the request'),
+		('EXPIRED', 'Booking is no longer valid.'),
+		('CANCELLED_BY_CLIENT', 'A client has cancelled the booking'),
+		('CANCELLED_BY_OWNER', 'An owner has cancelled the booking'),
 	]
 	status = models.CharField(max_length=100, choices=STATUS_CHOICES,
 							null=False, blank=False, default='AWAITING')
