@@ -17,7 +17,7 @@ from rest_framework.response import Response
 
 from bookings.models import Booking
 from locks.serializers import AddLockToPropertySerializer, LockAndPropertySerializer
-from .availability_utils import available_days_from_db, available_hours_from_db
+from .availability_utils import available_days_from_db, available_hours_from_db, confirm_open_days
 from .filters import PropertyFilter
 from .logger_helpers import get_client_ip
 from .models import Property, Ownership, PremisesImage, LockWithProperty
@@ -33,6 +33,16 @@ from checkAccess.models import AccessLog
 crud_logger_info = logging.getLogger('rentAccess.properties.crud.info')
 owners_logger = logging.getLogger('rentAccess.properties.owners.info')
 images_logger = logging.getLogger('rentAccess.properties.images.info')
+
+ERROR_BAD_REQUEST = {
+	"errors"     : ["No date provided or wrong booking_type of the property"],
+	"status_code": 400
+}
+
+ERROR_409 = {
+	"errors"     : ["Cannot book with given date(s)"],
+	"status_code": 409
+}
 
 
 class LockList(generics.ListCreateAPIView):
@@ -448,6 +458,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	"""
 
+
 	@action(detail=True, methods=['get'])
 	def retrieve(self, request, pk=None):
 		# obj = self.get_object(pk=pk)
@@ -573,21 +584,25 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 		days = available_days_from_db(prop.availability.open_days)
 		if prop.booking_type == 200:
-			return Response(data={"No date provided or wrong booking_type of the property"},
+			return Response(data=ERROR_BAD_REQUEST,
 			                status=status.HTTP_400_BAD_REQUEST)
 		try:
 			date_dt_start = datetime.datetime.strptime(datetime_start, '%Y-%m-%d')
 			date_dt_end = datetime.datetime.strptime(datetime_stop, '%Y-%m-%d')
 		except Exception as e:
-			return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-		if date_dt_start.weekday() not in days or date_dt_end.weekday() not in days:
+			return Response(data={'errors': [str(e)],
+			                      'status_code': 400}, status=status.HTTP_400_BAD_REQUEST)
+		if not confirm_open_days(days, date_dt_start, date_dt_end):
 			return Response(
+				data=ERROR_409,
 				status=status.HTTP_409_CONFLICT)
 		if date_dt_start >= date_dt_end:
 			return Response(
-				status=status.HTTP_409_CONFLICT)
+				data=ERROR_BAD_REQUEST,
+				status=status.HTTP_400_BAD_REQUEST)
 		if number_of_clients > prop.availability.maximum_number_of_clients:
 			return Response(
+				data=ERROR_409,
 				status=status.HTTP_409_CONFLICT)
 		query_1.add(
 			Q(booked_from__lte=datetime_start)
@@ -610,7 +625,7 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		)
 		queryset = Booking.objects.filter(query_1).exclude(query_2)
 		if queryset.exists():
-			return Response(status=status.HTTP_409_CONFLICT)
+			return Response(data=ERROR_409, status=status.HTTP_409_CONFLICT)
 		return Response(status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['get'])
@@ -626,21 +641,18 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 		date = self.request.query_params.get('date', None)
 		if (date is None) or prop.booking_type == 100:
-			return Response(data={"No date provided or wrong booking_type of the property"},
+			return Response(data=ERROR_BAD_REQUEST,
 			                status=status.HTTP_400_BAD_REQUEST)
 		try:
 			date_dt = datetime.datetime.strptime(date, '%Y-%m-%d')
 		except Exception as e:
-			return Response(data={'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+			return Response(data={'errors': [str(e)], 'status_code': 400},
+			                status=status.HTTP_400_BAD_REQUEST)
 
 		days = available_days_from_db(prop.availability.open_days)
-		if date_dt.weekday() not in days:
+		if not confirm_open_days(days, date_dt, date_dt):
 			return Response(
-				data={
-					"count"            : 0,
-					"property_timezone": prop.property_address.city.city.timezone,
-					"available_slots"  : [],
-				},
+				data=ERROR_409,
 				status=status.HTTP_409_CONFLICT)
 		slots = available_hours_from_db(prop, b_date=date_dt)
 		data = {
