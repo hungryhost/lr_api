@@ -2123,8 +2123,6 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - PropertiesAPI.Availability
-
-  /api/v1/properties/{properties:id}/available/slots/:
     get:
       operationId: getPropertyHourlySlotsAvailability
       description: |
