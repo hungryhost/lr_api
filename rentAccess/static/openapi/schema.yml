@@ -3077,7 +3077,7 @@ components:
       properties:
         count:
           type: integer
-          example: "1"
+          example: 1
         property_timezone:
           type: string
           example: "Europe/Moscow"
