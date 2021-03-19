@@ -96,11 +96,18 @@ class UserGroupMemberCreateSerializer(serializers.ModelSerializer):
 		group_id = self.context["group_id"]
 		if recursive_ownership is None:
 			recursive_ownership = False
-
+		if UserGroupMembership.objects.all().filter(
+			user=user,
+			group_id=group_id
+		).exists():
+			raise serializers.ValidationError({
+				"user": "user with given email is already a member."
+			}
+			)
 		member = UserGroupMembership(
 			user=user,
 			group_id=group_id,
-			is_creator=True,
+			is_creator=False,
 			can_add_properties=can_add_properties,
 			can_delete_properties=can_delete_properties,
 			can_book_properties=can_book_properties,
