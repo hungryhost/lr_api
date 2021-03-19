@@ -550,10 +550,11 @@ class HourlyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 
 
 class BookingsListSerializer(serializers.ModelSerializer):
-	booked_property = PropertyListSerializer(many=False)
-	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
-	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False)
-	timezone = serializers.CharField(source='booked_property.property_address.city.city.timezone', required=False)
+	booked_property = PropertyListSerializer(many=False, read_only=True)
+	booked_from = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False, read_only=True)
+	booked_until = serializers.DateTimeField(format="%Y-%m-%dT%H:%M%z", required=False, read_only=True)
+	timezone = serializers.CharField(source='booked_property.property_address.city.city.timezone', required=False,
+	                                 read_only=True)
 
 	class Meta:
 		model = Booking
@@ -571,6 +572,20 @@ class BookingsListSerializer(serializers.ModelSerializer):
 			'created_at',
 			'updated_at'
 		)
+		read_only_fields = [
+			'id',
+			'booked_property',
+			'number_of_clients',
+			'client_email',
+			'status',
+			'price',
+			'timezone',
+			'booked_from',
+			'booked_until',
+			'booked_by',
+			'created_at',
+			'updated_at'
+		]
 
 
 class BookingUpdateAdminAndCreatorSerializer(serializers.ModelSerializer):
