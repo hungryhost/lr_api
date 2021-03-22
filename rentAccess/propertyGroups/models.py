@@ -58,7 +58,8 @@ class UserGroupMembership(models.Model):
 	can_add_members = models.BooleanField(default=False, null=False)
 	can_remove_members = models.BooleanField(default=False, null=False)
 	can_manage_members = models.BooleanField(default=False, null=False)
-
+	can_update_info = models.BooleanField(default=False, null=False)
+	can_delete_group = models.BooleanField(default=False, null=False)
 	joined_with_code = models.BooleanField(default=False, null=False)
 	joined_with_link = models.BooleanField(default=False, null=False)
 
