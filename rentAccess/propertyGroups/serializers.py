@@ -11,6 +11,7 @@ User = get_user_model()
 
 class UserGroupMemberListSerializer(serializers.ModelSerializer):
 	user = UserSerializer(many=False, read_only=True)
+	id = serializers.IntegerField(source='user.id', read_only=True)
 	can_add_properties = serializers.BooleanField(required=True)
 	can_delete_properties = serializers.BooleanField(required=True)
 	can_book_properties = serializers.BooleanField(required=True)
@@ -22,6 +23,7 @@ class UserGroupMemberListSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = UserGroupMembership
 		fields = [
+			'id',
 			"user",
 			"can_add_properties",
 			"can_delete_properties",
@@ -30,10 +32,13 @@ class UserGroupMemberListSerializer(serializers.ModelSerializer):
 			"can_add_members",
 			"can_remove_members",
 			"can_manage_members",
+			"can_update_info",
+			"can_delete_group",
 			"created_at",
 			"updated_at"
 		]
 		read_only_fields = [
+			'id',
 			"user",
 			"can_add_properties",
 			"can_delete_properties",
@@ -42,6 +47,8 @@ class UserGroupMemberListSerializer(serializers.ModelSerializer):
 			"can_add_members",
 			"can_remove_members",
 			"can_manage_members",
+			"can_update_info",
+			"can_delete_group",
 			"created_at",
 			"updated_at"
 		]
@@ -56,6 +63,8 @@ class UserGroupMemberCreateSerializer(serializers.ModelSerializer):
 	can_add_members = serializers.BooleanField(required=True)
 	can_remove_members = serializers.BooleanField(required=True)
 	can_manage_members = serializers.BooleanField(required=True)
+	can_delete_group = serializers.BooleanField(required=True)
+	can_update_info = serializers.BooleanField(required=True)
 
 	class Meta:
 		model = UserGroupMembership
@@ -68,6 +77,8 @@ class UserGroupMemberCreateSerializer(serializers.ModelSerializer):
 			"can_add_members",
 			"can_remove_members",
 			"can_manage_members",
+			"can_update_info",
+			"can_delete_group",
 			"created_at",
 			"updated_at"
 		]
@@ -92,7 +103,8 @@ class UserGroupMemberCreateSerializer(serializers.ModelSerializer):
 		can_add_members = validated_data.get("can_add_members", None)
 		can_remove_members = validated_data.get("can_remove_members")
 		can_manage_members = validated_data.get("can_manage_members")
-
+		can_update_info = validated_data.get("can_update_info")
+		can_delete_group = validated_data.get("can_delete_group")
 		group_id = self.context["group_id"]
 		if recursive_ownership is None:
 			recursive_ownership = False
@@ -115,9 +127,41 @@ class UserGroupMemberCreateSerializer(serializers.ModelSerializer):
 			can_add_members=can_add_members,
 			can_remove_members=can_remove_members,
 			can_manage_members=can_manage_members,
+			can_update_info=can_update_info,
+			can_delete_group=can_delete_group
 		)
 		member.save()
 		return member
+
+
+class GroupRetrieveSerializer(serializers.ModelSerializer):
+	current_user_permissions = serializers.SerializerMethodField('get_current_user_permissions')
+
+	class Meta:
+		model = PropertyGroup
+		fields = [
+			"id",
+			"current_user_permissions",
+			"title",
+			"description",
+			"created_at",
+			"updated_at"
+		]
+		read_only_fields = [
+			'current_user_permissions',
+			'id',
+			'created_at',
+			'updated_at'
+		]
+
+	def get_current_user_permissions(self, obj):
+		members = obj.property_groups.all()
+		current_user = None
+		for member in members:
+			if member.user == self.context['request'].user:
+				current_user = UserGroupMemberListSerializer(member, many=False)
+				return current_user.data
+		return current_user
 
 
 class GroupCreateSerializer(serializers.ModelSerializer):
@@ -153,14 +197,12 @@ class GroupCreateSerializer(serializers.ModelSerializer):
 			user=self.context["request"].user,
 			group=group,
 			is_creator=True,
-
 			can_add_properties=True,
 			can_delete_properties=True,
-
 			can_book_properties=True,
-
 			recursive_ownership=True,
-
+			can_update_info=True,
+			can_delete_group=True,
 			can_add_members=True,
 			can_remove_members=True,
 			can_manage_members=True,
@@ -282,13 +324,6 @@ class PropertyGroupMemberCreateSerializer(serializers.ModelSerializer):
 				raise exceptions.PermissionDenied
 		# finally we check if the user has permissions to add properties
 		# to the group
-		if not UserGroupMembership.objects.all().filter(
-				user=self.context["request"].user,
-				group_id=self.context['group_id'],
-				can_add_properties=True
-		).exists():
-			raise exceptions.PermissionDenied
-
 		if properties_input:
 			properties_instance = [
 				PropertyGroupMembership(
@@ -299,3 +334,30 @@ class PropertyGroupMemberCreateSerializer(serializers.ModelSerializer):
 			properties = PropertyGroupMembership.objects.bulk_create(properties_instance)
 
 		return properties
+
+
+class PropertyGroupMemberDeleteSerializer(serializers.ModelSerializer):
+	r"""
+	A serializer class we use for adding properties to groups;
+	"""
+	properties = PropertiesListField(allow_null=False, allow_empty=False, required=True)
+
+	class Meta:
+		model = PropertyGroupMembership
+		fields = [
+			"id",
+			"group",
+			"properties",
+			"created_at",
+			"updated_at"
+		]
+		read_only_fields = [
+			"id",
+			"group",
+			"created_at",
+			"updated_at"
+		]
+
+	def create(self, validated_data):
+
+		return properties_input
