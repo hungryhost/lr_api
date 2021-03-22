@@ -334,30 +334,3 @@ class PropertyGroupMemberCreateSerializer(serializers.ModelSerializer):
 			properties = PropertyGroupMembership.objects.bulk_create(properties_instance)
 
 		return properties
-
-
-class PropertyGroupMemberDeleteSerializer(serializers.ModelSerializer):
-	r"""
-	A serializer class we use for adding properties to groups;
-	"""
-	properties = PropertiesListField(allow_null=False, allow_empty=False, required=True)
-
-	class Meta:
-		model = PropertyGroupMembership
-		fields = [
-			"id",
-			"group",
-			"properties",
-			"created_at",
-			"updated_at"
-		]
-		read_only_fields = [
-			"id",
-			"group",
-			"created_at",
-			"updated_at"
-		]
-
-	def create(self, validated_data):
-
-		return properties_input
