@@ -30,6 +30,10 @@ class Organisation(models.Model):
 
 
 class OrganisationAPIKey(AbstractAPIKey):
+	class Meta(AbstractAPIKey.Meta):
+		db_table = "organisation_api_keys"
+		verbose_name = "Organization API key"
+		verbose_name_plural = "Organization API keys"
 	organisation = models.ForeignKey(
 		Organisation,
 		on_delete=models.CASCADE,
