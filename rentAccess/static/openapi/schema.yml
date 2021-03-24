@@ -6,10 +6,10 @@ info:
 
     ---
     ## Useful Links
-      - [Current Database Schema](https://git.miem.hse.ru/yuiborodin)
-      - [Current Backend API Functionality Schema](https://git.miem.hse.ru/yuiborodin)
-      - [Current Workflow Schema](https://git.miem.hse.ru/yuiborodin)
-      - [Backend Changelog](https://git.miem.hse.ru/yuiborodin)
+      - [Current Database Schema](https://yuiborodin.xyz/static/specs/294_UserAndPropertiesFunctions.html)
+      - [Current Backend API Functionality Schema](https://yuiborodin.xyz/static/specs/294_UserAndPropertiesFunctions.html)
+      - [Current Workflow Schema](https://yuiborodin.xyz/static/specs/294_UserAndPropertiesFunctions.html)
+
 
     ---
     ## Conventions
@@ -497,7 +497,7 @@ paths:
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
-      - GroupsAPI
+      - GroupsAPI.Members
   /api/v1/property-groups/{group:id}/members/:
     get:
       operationId: listGroupsMembers
@@ -846,45 +846,7 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - PropertiesAPI
-# PROPERTIES BOOKINGS PATHS
-  /api/v1/properties/bookings/:
-    get:
-      operationId: listPropertiesBooking
-      description: |
-        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
-        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
-        ---
-        This method is used for retrieving a list of *incoming* bookings for all properties of the
-        authenticaeted user.
-        <br> In order to access the authenticated user's *outcoming* bookings, use
-        `user:bookings` scope.
-        <br> *Search (filtering) functionality is not yet supported.*
-        <br>
-
-      responses:
-        '200':
-          $ref: '#/components/responses/200_OK_Bookings_Paginated'
-        '404':
-          $ref: '#/components/responses/404_Not_Found'
-        '401':
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/401BadToken'
-                  - $ref: '#/components/schemas/401Unauthorized'
-              example:
-                errors: [ "Invalid Token : Given token is not valid"
-                ]
-                status_code: 401
-
-          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
-        '403':
-          $ref: '#/components/responses/403_Forbidden'
-        '400':
-          $ref: '#/components/responses/400_Bad_Request_Property'
-      tags:
-      - Properties.BookingsAPI
+# PROPERTIES BOOKINGS PATHSBookingsAPI
 
   /api/v1/properties/{properties:id}/bookings/:
     get:
@@ -925,7 +887,7 @@ paths:
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
-      - Properties.BookingsAPI
+      - BookingsAPI
     post:
       operationId: createPropertyBooking
       description: |
@@ -972,7 +934,7 @@ paths:
         '403':
           $ref: '#/components/responses/403_Forbidden'
       tags:
-      - Properties.BookingsAPI
+      - BookingsAPI
   /api/v1/properties/{properties:id}/bookings/{bookings:id}:
     get:
       operationId: retrievePropertyBooking
@@ -1022,7 +984,7 @@ paths:
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
-      - Properties.BookingsAPI
+      - BookingsAPI
     put:
       operationId: updatePropertyBooking
       description: ''
@@ -1072,7 +1034,7 @@ paths:
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
-      - Properties.BookingsAPI
+      - BookingsAPI
     delete:
       operationId: destroyPropertyBooking
       description: ''
@@ -1112,7 +1074,7 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
 
       tags:
-      - Properties.BookingsAPI
+      - BookingsAPI
 # PROPERTIES OWNERS PATHS
   /api/v1/properties/{properties:id}/owners/:
     get:
@@ -3823,35 +3785,45 @@ tags:
   - name: CalendarAPI
     description: "API for the LockAndRent Calendar App"
 
-  - name: Properties.BookingsAPI
+  - name: BookingsAPI
     description: "Endpoint for managing bookings. Available only for property owners."
+  - name: CommonAPI
+    description: "Endpoints for LR Common Resources such as supported property types."
+  - name: CommsAPI
+    description: "Endpoints for LR Comms Operations such as creating a support request."
+  - name: LockStoreAPI
+    description: "Endpoints for LR LockStore resources such as a catalogue of available locks."
   - name: PropertiesAPI.OwnersAPI
-    description: "Endpoint for managing owners."
+    description: "Endpoints for managing owners."
   - name: PropertiesAPI.Images
-    description: "Endpoint for managing images for a property."
+    description: "Endpoints for managing images for a property."
+  - name: PropertiesAPI.Favorites
+    description: "Endpoints for adding/deleting properties from fav."
+  - name: TripsAPI
+    description: "Endpoints for managing trips."
   - name: PropertiesAPI.Locks
-    description: "Endpoint for managing locks for a property. "
+    description: "Endpoints for managing locks for a property. "
   - name: PropertiesAPI.Availability
-    description: "Endpoint for accessing a property availability."
+    description: "Endpoints for accessing a property availability."
   - name: PropertiesAPI.Locks.Accesses
-    description: "Endpoint for managing lock accesses for a property. "
+    description: "Endpoints for managing lock accesses for a property. "
   - name: PropertiesAPI.Locks.Cards
-    description: "Endpoint for managing lock cards for a property."
+    description: "Endpoints for managing lock cards for a property."
   - name: PropertiesAPI.Locks.Keys
-    description: "Endpoint for managing lock keys for a property. "
+    description: "Endpoints for managing lock keys for a property. "
   - name: GroupsAPI
-    description: "Endpoint for managing property groups."
+    description: "Endpoints for managing property groups."
   - name: GroupsAPI.Members
-    description: "Endpoint for managing members of property groups."
+    description: "Endpoints for managing members of property groups."
   - name: GroupsAPI.Properties
-    description: "Endpoint for managing properties of property groups."
+    description: "Endpoints for managing properties of property groups."
   - name: OrganisationsAPI
-    description: "Endpoint for managing organisations."
+    description: "Endpoints for managing organisations."
   - name: OrganisationsAPI.Members
-    description: "Endpoint for managing members of organisations."
+    description: "Endpoints for managing members of organisations."
   - name: OrganisationsAPI.Properties
-    description: "Endpoint for managing properties of organisations."
+    description: "Endpoints for managing properties of organisations."
   - name: UsersAPI
     description: "Admin-only scope of endpoints."
   - name: AuthAPI
-    description: "Endpoints for authentication-related requests."
+    description: "Endpointss for authentication-related requests."
