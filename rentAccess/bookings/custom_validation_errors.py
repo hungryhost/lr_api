@@ -15,7 +15,7 @@ class CustomValidation(APIException):
 			errors = {
 				force_text(detail)
 			}
-			self.detail = {field: errors, 'status_code': self.status_code}
+			self.detail = {"errors": {field: errors}, 'status_code': self.status_code}
 		else:
 			self.detail = {
 				'detail': force_text(self.default_detail)
