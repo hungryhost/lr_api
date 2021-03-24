@@ -5,6 +5,9 @@ from django.conf import settings
 
 
 class PropertyGroup(models.Model):
+	class Meta:
+		db_table = 'property_groups'
+
 	title = models.CharField(max_length=255, null=False, blank=False)
 	description = models.TextField(max_length=500, null=False, blank=False)
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
@@ -15,6 +18,9 @@ class PropertyGroup(models.Model):
 
 
 class PropertyGroupMembership(models.Model):
+	class Meta:
+		db_table = 'property_group_properties'
+
 	premises = models.ForeignKey(
 		Property,
 		related_name='mem_groups',
@@ -39,8 +45,8 @@ class PropertyGroupMembership(models.Model):
 
 
 class UserGroupMembership(models.Model):
-
 	class Meta:
+		db_table = 'property_group_members'
 		unique_together = [['user', 'group']]
 
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='user_groups',
