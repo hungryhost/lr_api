@@ -23,6 +23,10 @@ urlpatterns = [
 		'get': 'retrieve',
 		'delete': 'delete_property'
 	}), name='properties-details'),
+	path('<int:pk>/favorite/', PropertiesViewSet.as_view({
+		'put': 'add_to_favorite',
+		'delete': 'remove_from_favorite'
+	}), name='properties-favorite'),
 	path('<int:pk>/bookings/', BookingsListCreateView.as_view(), name='properties-bookings-list'),
 	path('<int:pk>/images/', PropertyImagesViewSet.as_view(
 		{
@@ -31,6 +35,7 @@ urlpatterns = [
 			'delete': 'delete_images',
 		}
 	), name='properties-images-list'),
+
 	path('<int:pk>/bookings/<int:booking_id>/', BookingsViewSet.as_view(
 		{
 			'get': 'retrieve',
@@ -38,6 +43,11 @@ urlpatterns = [
 			'delete': 'archive_booking'
 		}
 	), name='properties-bookings-detail'),
+	path('<int:pk>/bookings/<int:booking_id>/cancel/', BookingsViewSet.as_view(
+		{
+			'post': 'cancel_booking'
+		}
+	), name='properties-bookings-detail-cancel'),
 	path('<int:pk>/available/', PropertiesViewSet.as_view({
 		'post': 'get_availability',
 		'get': 'get_hourly_availability'
