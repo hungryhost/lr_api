@@ -11,7 +11,7 @@ from properties.logger_helpers import get_client_ip
 from properties.models import Property, Ownership
 from properties.serializers import PropertyListSerializer
 from .models import Booking
-
+from .custom_validation_errors import CustomValidation
 
 User = get_user_model()
 crud_logger_info = logging.getLogger('rentAccess.properties.crud.info')
@@ -37,8 +37,8 @@ class BookedBySerializer(serializers.Serializer):
 class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 	booked_property = PropertyListSerializer(many=False, read_only=True)
 	number_of_clients = serializers.IntegerField(required=True, max_value=100, min_value=1)
-	booked_from = serializers.DateTimeField(format="%Y-%m-%d", required=True)
-	booked_until = serializers.DateTimeField(format="%Y-%m-%d", required=True)
+	booked_from = serializers.DateTimeField(input_formats=["%Y-%m-%d", "%Y-%m-%dT%H:%M"], format="%Y-%m-%d", required=True)
+	booked_until = serializers.DateTimeField(input_formats=["%Y-%m-%d", "%Y-%m-%dT%H:%M"], format="%Y-%m-%d", required=True)
 	client_email = serializers.EmailField(required=True)
 	timezone = serializers.SerializerMethodField('get_timezone', required=False)
 
@@ -85,15 +85,42 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 		return representation
 
 	def validate(self, attrs):
+		tz = pytz.timezone(self.context['property'].property_address.city.city.timezone)
+		datetime_ = tz.localize(datetime.now())
+		if self.context['property'].availability.maximum_number_of_clients < attrs["number_of_clients"]:
+			raise CustomValidation(
+				status_code=400,
+				field='number_of_clients',
+				detail="Number of clients is unacceptable."
+			)
+			#raise serializers.ValidationError({
+			#	'number_of_clients': "Number of clients is unacceptable."
+			#})
 		if attrs["booked_from"].date() >= attrs["booked_until"].date():
-			raise serializers.ValidationError({
-				'dates': "Dates are not valid"
-			})
+			raise CustomValidation(
+				status_code=400,
+				field='booked_from',
+				detail="Dates are not valid. booked_from >= booked_until"
+			)
+		if attrs["booked_from"].date() <= datetime_.date():
+			raise CustomValidation(
+				status_code=400,
+				field='booked_from',
+				detail="Dates are not valid. booked_from <= date_now"
+			)
+		if attrs["booked_until"].date() <= datetime_.date():
+			raise CustomValidation(
+				status_code=400,
+				field='booked_until',
+				detail="Dates are not valid. booked_until <= date_now"
+			)
 
 		if self.context["request"].user.email == attrs["client_email"]:
-			raise serializers.ValidationError({
-				"client_email": "Cannot book property you own for yourself.",
-			})
+			raise CustomValidation(
+				status_code=400,
+				field='client_email',
+				detail="Cannot book property you own for yourself."
+			)
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
 		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
@@ -104,14 +131,17 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 		query_1.add(Q(booked_from__date__gte=attrs["booked_from"]) & Q(booked_from__date__lte=attrs["booked_until"]),
 		            Q.OR)
 		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
+		query_1.add(Q(status__in=['ACCEPTED', 'AWAITING']), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from__date=attrs["booked_until"]) | Q(booked_until__date=attrs["booked_from"]),
 		            query_2.connector)
 		queryset = Booking.objects.filter(query_1).exclude(query_2)
 		if queryset.exists():
-			raise serializers.ValidationError({
-				'dates': "Cannot book with these dates"
-			})
+			raise CustomValidation(
+				status_code=400,
+				field='dates',
+				detail="Cannot book with these dates"
+			)
 
 		return super(DailyBookingCreateFromOwnerSerializer, self).validate(attrs)
 
@@ -159,8 +189,10 @@ class DailyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 	booked_property = PropertyListSerializer(many=False, read_only=True)
 	number_of_clients = serializers.IntegerField(required=True, max_value=100)
-	booked_from = serializers.DateTimeField(format="%Y-%m-%d", required=True)
-	booked_until = serializers.DateTimeField(format="%Y-%m-%d", required=True)
+	booked_from = serializers.DateTimeField(input_formats=["%Y-%m-%d", "%Y-%m-%dT%H:%M"], format="%Y-%m-%d",
+	                                        required=True)
+	booked_until = serializers.DateTimeField(input_formats=["%Y-%m-%d", "%Y-%m-%dT%H:%M"], format="%Y-%m-%d",
+	                                         required=True)
 	timezone = serializers.SerializerMethodField('get_timezone', required=False)
 
 	class Meta:
@@ -213,10 +245,42 @@ class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 		return representation
 
 	def validate(self, attrs):
+		tz = pytz.timezone(self.context['property'].property_address.city.city.timezone)
+		datetime_ = tz.localize(datetime.now())
+		if self.context['property'].availability.maximum_number_of_clients < attrs["number_of_clients"]:
+			raise CustomValidation(
+				status_code=400,
+				field='number_of_clients',
+				detail="Number of clients is unacceptable."
+			)
+		# raise serializers.ValidationError({
+		#	'number_of_clients': "Number of clients is unacceptable."
+		# })
 		if attrs["booked_from"].date() >= attrs["booked_until"].date():
-			raise serializers.ValidationError({
-				'dates': "Dates are not valid"
-			})
+			raise CustomValidation(
+				status_code=400,
+				field='booked_from',
+				detail="Dates are not valid. booked_from >= booked_until"
+			)
+		if attrs["booked_from"].date() <= datetime_.date():
+			raise CustomValidation(
+				status_code=400,
+				field='booked_from',
+				detail="Dates are not valid. booked_from <= date_now"
+			)
+		if attrs["booked_until"].date() <= datetime_.date():
+			raise CustomValidation(
+				status_code=400,
+				field='booked_until',
+				detail="Dates are not valid. booked_until <= date_now"
+			)
+
+		if self.context["request"].user.email == attrs["client_email"]:
+			raise CustomValidation(
+				status_code=400,
+				field='client_email',
+				detail="Cannot book property you own for yourself."
+			)
 
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
@@ -228,13 +292,17 @@ class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 		query_1.add(Q(booked_from__date__gte=attrs["booked_from"]) & Q(booked_from__date__lte=attrs["booked_until"]),
 		            Q.OR)
 		query_1.add(Q(booked_property_id=self.context["property_id"]), Q.AND)
+		query_1.add(Q(status__in=['ACCEPTED', 'AWAITING']), Q.AND)
 		query_2 = Q()
 		query_2.add(Q(booked_from__date=attrs["booked_until"]) | Q(booked_until__date=attrs["booked_from"]),
 		            query_2.connector)
 		queryset = Booking.objects.filter(query_1).exclude(query_2)
 		if queryset.exists():
-			raise serializers.ValidationError(
-				"Cannot book with these dates")
+			raise CustomValidation(
+				status_code=400,
+				field='dates',
+				detail="Cannot book with these dates"
+			)
 
 		return super(DailyBookingCreateFromClientSerializer, self).validate(attrs)
 
