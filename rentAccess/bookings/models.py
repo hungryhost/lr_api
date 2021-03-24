@@ -5,6 +5,9 @@ from django.conf import settings
 
 
 class Booking(models.Model):
+	class Meta:
+		db_table = 'bookings'
+
 	booked_from = models.DateTimeField(null=False, blank=False)
 	booked_until = models.DateTimeField(null=False, blank=False)
 	booked_property = models.ForeignKey(Property, related_name="bookings",
@@ -28,6 +31,7 @@ class Booking(models.Model):
 								on_delete=models.CASCADE, null=True, blank=True)
 
 	is_deleted = models.BooleanField(default=False, null=False, blank=False)
+	cancelled_reason = models.CharField(max_length=255, null=False, blank=True, default='')
 
 	def __str__(self):
 		return self.status + " " + "client: " + self.client_email + " from: " + str(self.booked_from.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)) \
