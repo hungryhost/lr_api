@@ -93,6 +93,41 @@ class UserPropertiesList(generics.ListAPIView):
 		return [permission() for permission in permission_classes]
 
 
+class UserFavoritePropertiesList(generics.ListAPIView):
+	serializer_class = PropertyListSerializer
+	filter_backends = (
+		dj_filters.DjangoFilterBackend,
+		filters.SearchFilter,
+		filters.OrderingFilter,)
+	filterset_class = UserPropertyFilter
+	ordering_fields = [
+		'price',
+		'created_at'
+	]
+	ordering = ['-created_at']
+
+	search_fields = [
+		'title',
+		'body',
+		'property_address__city__name',
+		'property_address__street']
+
+	def get_queryset(self, *args, **kwargs):
+		properties = Property.objects.select_related(
+			'availability', 'property_address', 'property_address__city',
+			'property_type'
+		).prefetch_related(
+			'property_images', 'added_to_fav'
+		).filter(
+			(Q(added_to_fav__user=self.request.user))
+		)
+		return properties
+
+	def get_permissions(self):
+		permission_classes = [IsAuthenticated]
+		return [permission() for permission in permission_classes]
+
+
 class ProfileDetailViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericViewSet):
 
 	@action(detail=True, methods=['get'])
