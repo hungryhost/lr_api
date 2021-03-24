@@ -94,6 +94,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 			'middle_name',
 			'email'
 		]
+		db_table = 'users'
 
 	GENDER_CHOICES = [
 		('M', 'Male'),
@@ -177,6 +178,9 @@ def path_and_rename(instance, filename):
 
 
 class MetaBannedInfo(models.Model):
+	class Meta:
+		db_table = 'users_banned_info'
+
 	banned_user = models.ForeignKey(
 		settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
 	)
@@ -189,6 +193,8 @@ class MetaBannedInfo(models.Model):
 
 
 class ClientPlan(models.Model):
+	class Meta:
+		db_table = 'user_available_plans'
 	code = models.CharField(max_length=255, primary_key=True)
 	description = models.CharField(max_length=500, null=False, blank=True)
 	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
@@ -196,6 +202,9 @@ class ClientPlan(models.Model):
 
 
 class PlannedClient(models.Model):
+	class Meta:
+		db_table = 'user_plans'
+
 	plan = models.ForeignKey(
 		ClientPlan, to_field='code', on_delete=models.CASCADE)
 	client = models.ForeignKey(
@@ -206,6 +215,8 @@ class PlannedClient(models.Model):
 
 
 class PlanRequests(models.Model):
+	class Meta:
+		db_table = 'user_plan_requests'
 
 	CHOICES = [
 		("APPROVED", 'OK'),
@@ -229,6 +240,9 @@ class PlanRequests(models.Model):
 
 
 class KYCOperation(models.Model):
+	class Meta:
+		db_table = 'user_kyc_info'
+
 	KYC_CHOICES = [
 		("OK", 'OK'),
 		("PENDING", 'Pending'),
@@ -246,6 +260,7 @@ class KYCOperation(models.Model):
 class UserImage(models.Model):
 	class Meta:
 		app_label = 'userAccount'
+		db_table = 'user_avatars'
 
 	account = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='account_images',
 	                            on_delete=models.CASCADE)
@@ -256,6 +271,7 @@ class UserImage(models.Model):
 
 class PhoneType(models.Model):
 	class Meta:
+		db_table = 'lr_user_phone_types'
 		app_label = 'userAccount'
 
 	phone_type = models.CharField(max_length=20, primary_key=True)
@@ -267,6 +283,7 @@ class PhoneType(models.Model):
 
 class Phone(models.Model):
 	class Meta:
+		db_table = 'user_phones'
 		app_label = 'userAccount'
 
 	account = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='account_phones',
@@ -280,6 +297,7 @@ class Phone(models.Model):
 
 class DocumentType(models.Model):
 	class Meta:
+		db_table = 'lr_user_document_types'
 		app_label = 'userAccount'
 
 	doc_type = models.CharField(max_length=40, primary_key=True)
@@ -291,6 +309,7 @@ class DocumentType(models.Model):
 
 class AddressType(models.Model):
 	class Meta:
+		db_table = 'lr_user_address_types'
 		app_label = 'userAccount'
 
 	addr_type = models.CharField(max_length=40, primary_key=True)
@@ -301,6 +320,8 @@ class AddressType(models.Model):
 
 
 class Document(models.Model):
+	class Meta:
+		db_table = 'user_documents'
 	account = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='documents', on_delete=models.CASCADE)
 	doc_type = models.ForeignKey(DocumentType, to_field='doc_type', on_delete=models.CASCADE)
 	doc_serial = models.PositiveIntegerField(null=True, blank=True, unique=True)
@@ -314,6 +335,7 @@ class Document(models.Model):
 
 class BillingAddress(models.Model):
 	class Meta:
+		db_table = 'user_billing_addresses'
 		app_label = 'userAccount'
 
 	account = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='billing_addresses', on_delete=models.CASCADE)
