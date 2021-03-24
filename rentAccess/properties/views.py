@@ -20,7 +20,7 @@ from locks.serializers import AddLockToPropertySerializer, LockAndPropertySerial
 from .availability_utils import available_days_from_db, available_hours_from_db, confirm_open_days
 from .filters import PropertyFilter
 from .logger_helpers import get_client_ip
-from .models import Property, Ownership, PremisesImage, LockWithProperty
+from .models import Property, Ownership, PremisesImage, LockWithProperty, FavoriteProperty
 from .property_permissions import CanBeRetrieved, CanUpdateInfo, CanAddImages, CanDeleteProperty, \
 	CanDeleteImages, CanManageOwners, CanDeleteOwners, InOwnership, CanManageLocks, CanDeleteLocks, \
 	CanAddLocks
@@ -458,7 +458,6 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	"""
 
-
 	@action(detail=True, methods=['get'])
 	def retrieve(self, request, pk=None):
 		# obj = self.get_object(pk=pk)
@@ -665,6 +664,38 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 		return Response(data=data, status=status.HTTP_200_OK)
 
 	@action(detail=True, methods=['put'])
+	def add_to_favorite(self, request, pk=None):
+		try:
+			property_obj = Property.objects.get(pk=pk)
+		except Property.DoesNotExist:
+			raise Http404
+		try:
+			fav = FavoriteProperty.objects.update_or_create(
+				property=property_obj,
+				user=self.request.user
+			)
+			return Response(status=status.HTTP_200_OK)
+		except Exception as e:
+			return Response(status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=True, methods=['delete'])
+	def remove_from_favorite(self, request, pk=None):
+		try:
+			property_obj = Property.objects.get(pk=pk)
+		except Property.DoesNotExist:
+			raise Http404
+		try:
+			fav = FavoriteProperty.objects.get(
+				property=property_obj,
+				user=self.request.user
+			)
+			fav.delete()
+			return Response(status=status.HTTP_204_NO_CONTENT)
+
+		except Exception as e:
+			return Response(status=status.HTTP_400_BAD_REQUEST)
+
+	@action(detail=True, methods=['put'])
 	def change_main_image(self, request, pk=None):
 		image_id = self.request.data.get("image_id", None)
 		if image_id:
@@ -683,7 +714,8 @@ class PropertiesViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Generi
 
 	def get_permissions(self):
 		permission_classes = []
-		if self.action in ['retrieve', 'get_availability', 'get_hourly_availability']:
+		if self.action in ['retrieve', 'get_availability', 'get_hourly_availability',
+		                   'remove_from_favorite', 'add_to_favorite']:
 			permission_classes = [CanBeRetrieved]
 		if self.action in ['partial_update', 'update']:
 			permission_classes = [CanUpdateInfo]
