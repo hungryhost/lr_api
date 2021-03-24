@@ -183,6 +183,7 @@ INSTALLED_APPS = [
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
 	'rest_framework',
+	"rest_framework_api_key",
 	'debug_toolbar',
 	'rest_framework_swagger',
 	'rest_framework_simplejwt.token_blacklist',
@@ -209,6 +210,8 @@ INSTALLED_APPS = [
 	'locks',
 	'checkAccess',
 ]
+
+API_KEY_CUSTOM_HEADER = "LR-CRM-Key"
 
 MIDDLEWARE = [
 	'django.middleware.security.SecurityMiddleware',

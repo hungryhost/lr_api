@@ -8,7 +8,7 @@ from userAccount.models import UserImage
 from userAccount.serializers import UserSerializer
 from .availability_utils import available_days_to_db, available_days_from_db, available_hours_to_db
 from .logger_helpers import get_client_ip
-from .models import Property, PremisesAddress, PremisesImage, Ownership, Availability
+from .models import Property, PremisesAddress, PremisesImage, Ownership, Availability, FavoriteProperty
 from .validators import validate_price, validate_city, validate_available_time
 from django.forms.models import model_to_dict
 #
@@ -1262,3 +1262,4 @@ class BulkFileUploadSerializer(serializers.ModelSerializer):
 			f"object: image; stage: serialization; action_type: create; user_id: {self.context['request'].user.id}; property_id: {self.context['premises_id']}; "
 			f"ip_addr: {get_client_ip(self.context['request'])}; status: OK;")
 		return PremisesImage.objects.filter(premises_id=self.context['premises_id'])
+
