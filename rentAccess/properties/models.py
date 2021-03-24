@@ -238,3 +238,62 @@ class LockWithProperty(models.Model):
 	description = models.CharField(max_length=200, blank=True, null=False)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class FavoriteProperty(models.Model):
+	class Meta:
+		db_table = 'user_favored_properties'
+
+	user = models.ForeignKey(settings.AUTH_USER_MODEL,
+		related_name='user_fav_prop', on_delete=models.CASCADE, null=False, blank=False)
+	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
+	                             related_name="added_to_fav")
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class Trip(models.Model):
+	class Meta:
+		db_table = 'user_trips'
+
+	title = models.CharField(max_length=50, null=False, blank=False)
+	start_date = models.DateField(null=True, blank=True)
+	end_date = models.DateField(null=True, blank=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class TripProperty(models.Model):
+	class Meta:
+		db_table = 'user_trip_properties'
+
+	trip = models.ForeignKey(Trip, to_field='id', on_delete=models.CASCADE,
+	                             related_name="trip_w_props")
+	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
+	                             related_name="trips")
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class TripMember(models.Model):
+	class Meta:
+		db_table = 'user_trip_members'
+
+	trip = models.ForeignKey(Trip, to_field='id', on_delete=models.CASCADE,
+	                             related_name="trip_w_memb")
+	user = models.ForeignKey(settings.AUTH_USER_MODEL,
+	                         related_name='user_trips', on_delete=models.CASCADE, null=False, blank=False)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class AvailabilityException(models.Model):
+	class Meta:
+		db_table = 'property_availability_exceptions'
+
+	parent_availability = models.ForeignKey(
+		Availability, to_field='id', on_delete=models.CASCADE, related_name="av_exceptions")
+	exception_datetime_start = models.DateTimeField(null=False, blank=False)
+	exception_datetime_end = models.DateTimeField(null=False, blank=False)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
