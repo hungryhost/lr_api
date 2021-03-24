@@ -5,8 +5,8 @@ from django.core.management import call_command
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 from api_tests.pytest_coverage.user_tests.factories import UserFactory
-from .factories import PropertyFactory, OwnershipFactory
-from datetime import datetime
+from .factories import PropertyFactory, OwnershipFactory, PropertyAvailabilityFactory
+from datetime import datetime, time
 import logging
 r"""
 Here we define common fixtures for all (or most) tests, like api_client that
@@ -51,8 +51,14 @@ def authenticated_clients():
 	return ClientFactory()
 
 
+@pytest.fixture
+def bookings_list_create_endpoint():
+	list_create_endpoint = reverse('properties:properties-bookings-list')
+	return list_create_endpoint
+
+
 @pytest.fixture(scope='function')
-def property_daily(
+def property_daily_for_booking(
 		db
 ):
 	prop_obj = PropertyFactory(
@@ -84,11 +90,18 @@ def property_daily(
 		can_add_to_organisation=True,
 		is_super_owner=True
 	)
+	PropertyAvailabilityFactory(
+		premises=prop_obj,
+		open_days='1111100',
+		available_from=time(hour=14, minute=0),
+		available_until=time(hour=11, minute=0),
+		maximum_number_of_clients=5
+	)
 	return prop_obj, owner, client
 
 
 @pytest.fixture(scope='function')
-def property_hourly(
+def property_hourly_for_booking(
 		db
 ):
 	prop_obj = PropertyFactory(
