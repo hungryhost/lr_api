@@ -11,6 +11,8 @@ class ActionType(models.Model):
 	Used for logs only.
 	WARNING: MUST BE FILLED OUT INITIALLY
 	"""
+	class Meta:
+		db_table = 'action_types'
 	act_type = models.CharField(max_length=30, primary_key=True)
 	description = models.CharField(max_length=150)
 
@@ -21,20 +23,16 @@ class ResultType(models.Model):
 	certain request or action. Used for logs only.
 	WARNING: MUST BE FILLED OUT INITIALLY
 	"""
+	class Meta:
+		db_table = 'action_result_types'
 	res_type = models.CharField(max_length=30, primary_key=True)
 	description = models.CharField(max_length=150)
 
 
-class AccountType(models.Model):
-	"""
-	This model defines types of account types used for permissions
-	across the app.
-	WARNING: MUST BE FILLED OUT INITIALLY
-	"""
-	acc_type = models.CharField(max_length=50, primary_key=True)
-
-
 class SupportedCity(models.Model):
+	class Meta:
+		db_table = 'supported_cities'
+
 	name = models.CharField(max_length=255, blank=True, null=False, primary_key=True)
 	city = models.ForeignKey(City, related_name='supported_cities',
 		on_delete=models.CASCADE, null=False, blank=False)
