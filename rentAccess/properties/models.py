@@ -9,6 +9,8 @@ from common.models import SupportedCity
 
 
 class PermissionLevel(models.Model):
+	class Meta:
+		db_table = 'property_permission_levels'
 	p_level = models.PositiveIntegerField(primary_key=True)
 	description = models.CharField(max_length=150, null=True, blank=True)
 
@@ -19,6 +21,8 @@ class PropertyType(models.Model):
 		- 100: Ordinary non-inhabitable property, like an office
 		- 200: Inhabitable property, a flat or a house
 	"""
+	class Meta:
+		db_table = 'property_types'
 	property_type = models.IntegerField(primary_key=True, null=False, blank=False)
 	title = models.CharField(max_length=150, null=False, blank=False)
 	description = models.CharField(max_length=255, null=False, blank=True)
@@ -31,6 +35,9 @@ class Property(models.Model):
 	r"""
 	Main model for storing information about properties.
 	"""
+	class Meta:
+		db_table = 'properties'
+
 	VISIBILITY_CHOICES = [
 		(100, 'Publicly Visible'),
 		(150, 'Only within the organisation'),
@@ -78,6 +85,9 @@ class Availability(models.Model):
 	r"""
 	This model is used for storing information about property's availability.
 	"""
+	class Meta:
+		db_table = 'property_availability'
+
 	premises = models.OneToOneField(Property, related_name='availability',
 		on_delete=models.CASCADE, null=False, blank=False)
 	open_days = models.CharField(max_length=7, default='1111111', null=False, blank=False)
@@ -106,6 +116,9 @@ class Ownership(models.Model):
 	r"""
 	This model is used to store information about property's owners.
 	"""
+	class Meta:
+		db_table = 'property_ownership'
+
 	VISIBILITY_CHOICES = [
 		(100, 'Publicly Visible'),
 		(200, 'Not visible'),
@@ -150,6 +163,7 @@ class Ownership(models.Model):
 
 
 class PropertyLog(models.Model):
+
 	listed_prop = models.ForeignKey(Property, on_delete=models.CASCADE)
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 	CHOICES = [
@@ -179,6 +193,8 @@ def path_and_rename(instance, filename):
 
 
 class PremisesImage(models.Model):
+	class Meta:
+		db_table = 'property_images'
 	# TODO: add uploaded_by
 	premises = models.ForeignKey(Property, to_field='id',
 								related_name='property_images', on_delete=models.CASCADE)
@@ -191,6 +207,8 @@ class PremisesImage(models.Model):
 
 
 class PremisesAddress(models.Model):
+	class Meta:
+		db_table = 'property_address'
 	premises = models.OneToOneField(Property, related_name='property_address', on_delete=models.CASCADE,
 									null=False, blank=False)
 	country = models.CharField(max_length=100, blank=False, null=False)
@@ -207,6 +225,9 @@ class PremisesAddress(models.Model):
 
 
 class LockWithProperty(models.Model):
+	class Meta:
+		db_table = 'property_locks'
+
 	# TODO: add added_by
 	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
 								related_name="property_with_lock")
