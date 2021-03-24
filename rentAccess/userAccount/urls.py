@@ -7,7 +7,7 @@ from rest_framework.routers import DefaultRouter
 from .addresses_views import ProfileAddressesViewSet
 from .documents_views import ProfileDocumentsViewSet
 from .views_v2 import ProfileDetailViewSet, UserBookingsList, UserPropertiesList, ProfileImageViewSet, \
-    request_password_reset
+    request_password_reset, UserFavoritePropertiesList
 from comms.views import LockMessageListCreate, LockMessageRetrieveDeleteView
 app_name = 'userAccount'
 change_password = ProfileDetailViewSet.as_view({'put': 'change_password'})
@@ -51,4 +51,5 @@ urlpatterns = [
     path('userpic/', images_post, name='userpic'),
     path('bookings/', UserBookingsList.as_view(), name='user-bookings-list'),
     path('properties/', UserPropertiesList.as_view(), name='user-properties-list'),
+    path('properties/favorite/', UserFavoritePropertiesList.as_view(), name='user-fav-properties-list'),
 ]
