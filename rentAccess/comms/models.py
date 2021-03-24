@@ -6,6 +6,8 @@ from common.models import SupportedCity
 
 
 class LockCatalogInfo(models.Model):
+	class Meta:
+		db_table = 'lock_catalog_info'
 	name = models.CharField(max_length=500, null=False, blank=True)
 	description = models.CharField(max_length=3000, null=False, blank=True)
 	price = models.FloatField(null=False, blank=True)
@@ -17,6 +19,8 @@ class LockCatalogInfo(models.Model):
 
 
 class LockCatalogImages(models.Model):
+	class Meta:
+		db_table = 'lock_catalog_images'
 	lock_info = models.ForeignKey(LockCatalogInfo, related_name='catalog_images', on_delete=models.CASCADE)
 	image = models.ImageField()
 	is_main = models.BooleanField(default=False, null=False)
@@ -25,6 +29,9 @@ class LockCatalogImages(models.Model):
 
 
 class LockAvailabilityStorage(models.Model):
+	class Meta:
+		db_table = 'lock_catalog_storage_availability'
+
 	lock_info = models.ForeignKey(LockCatalogInfo, related_name='lock_availability',
 	                              on_delete=models.CASCADE)
 	quantity = models.IntegerField(null=False, blank=False)
@@ -35,6 +42,9 @@ class LockAvailabilityStorage(models.Model):
 
 
 class SupportMessage(models.Model):
+	class Meta:
+		db_table = 'support_messages'
+
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="support_messages",
 	                         on_delete=models.CASCADE, null=True, blank=True)
 	title = models.CharField(max_length=255, null=False, blank=True)
@@ -42,6 +52,8 @@ class SupportMessage(models.Model):
 
 
 class LockMessage(models.Model):
+	class Meta:
+		db_table = 'lock_purchase_requests'
 	CHOICES = [
 		('OK', 'Approved'),
 		('FAIL', 'Rejected'),
@@ -63,6 +75,9 @@ class ShippingAddress(models.Model):
 	r"""
 	Model for storing address for shipping
 	"""
+	class Meta:
+		db_table = 'lock_purchase_shipping_address'
+
 	shipping_ticket = models.OneToOneField(LockMessage, related_name='shipping_address', on_delete=models.CASCADE,
 	                                       null=True, blank=True)
 	country = models.CharField(max_length=100, blank=False, null=False)
