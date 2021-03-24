@@ -211,7 +211,8 @@ def available_hours_from_db(_property, b_date=None):
         bookings = Booking.objects.all().filter(
             booked_property=_property,
             booked_from__date__gte=b_date,
-            booked_until__date__lte=b_date+timedelta(1)
+            booked_until__date__lte=b_date+timedelta(1),
+            status="ACCEPTED"
         )
         nightly_slots = decompose_nightly_slots(
             _property.availability.available_from,
@@ -220,7 +221,7 @@ def available_hours_from_db(_property, b_date=None):
             _property.availability.open_days
         )
         booked_slots = get_slots_from_bookings(bookings=bookings, timezone=timezone, b_date=b_date)
-
+        #print(booked_slots)
         final_slots = [x for x in nightly_slots if x not in booked_slots]
         #print(booked_slots)
         #print(nightly_slots)
@@ -229,7 +230,8 @@ def available_hours_from_db(_property, b_date=None):
     bookings = Booking.objects.all().filter(
         booked_property=_property,
         booked_from__date=b_date,
-        booked_until__date=b_date
+        booked_until__date=b_date,
+        status="ACCEPTED"
     )
     for i in range(len(hours_from_db)):
         if hours_from_db[i] == "1":
