@@ -21,6 +21,6 @@ class AccessLog(models.Model):
 
     class Meta(object):
         ordering = ['-try_time']
-        db_table = 'Logs'
+        db_table = 'lock_access_logs'
 
 
