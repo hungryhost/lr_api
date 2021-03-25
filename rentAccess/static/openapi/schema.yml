@@ -846,6 +846,82 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - PropertiesAPI
+# PROPERTIES FAVORITE
+  /api/v1/properties/{properties:id}/favorite/:
+    put:
+      operationId: setFavortiteProperty
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for adding a property to favorites.
+
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+
+      responses:
+        '200':
+
+          description: 'Added.'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+      tags:
+      - PropertiesAPI.Favorites
+    delete:
+      operationId: destroyFavoriteProperty
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>This method is used for removing a property from favorites.
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      responses:
+        '204':
+          $ref: '#/components/responses/204_Deleted'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.Favorites
+
 # PROPERTIES BOOKINGS PATHSBookingsAPI
 
   /api/v1/properties/{properties:id}/bookings/:
