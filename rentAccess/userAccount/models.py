@@ -108,6 +108,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 	use_work_email_incbookings = models.BooleanField('use_work_email_incbookings', default=False)
 	use_work_email_outbookings = models.BooleanField('use_work_email_outbookings', default=False)
+	show_work_email_in_contact_info = models.BooleanField('show_work_email_in_contact_info', default=False)
+	show_main_email_in_contact_info = models.BooleanField('show_work_email_in_contact_info', default=False)
 
 	first_name = models.CharField('first_name', null=False, blank=False, max_length=50)
 	last_name = models.CharField('last_name', null=False, blank=False, max_length=50)
