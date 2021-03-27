@@ -110,7 +110,6 @@ class UserAdmin(BaseUserAdmin):
 	# The forms to add and change user instances
 
 	inlines = [InlineKYC, ]
-	list_display = ['totol_tagged_article',]
 
 	def totol_tagged_article(self, obj):
 		return obj.kyc_info.all().filter(user=obj)
@@ -127,6 +126,7 @@ class UserAdmin(BaseUserAdmin):
 	# that reference specific fields on auth.User.
 	list_display = (
 		'email',
+		'totol_tagged_article',
 		'first_name',
 		'last_name',
 		'is_admin',
