@@ -36,23 +36,23 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 	def create(self, request, *args, **kwargs):
 		user = self.request.user
 		try:
-			related_property = Property.objects.prefetch_related(
-				Prefetch('owners', queryset=Ownership.objects.prefetch_related('user').all())
+			related_property = Property.objects.select_related(
+				'availability',
+				'property_address',
+				'property_address__city',
+				'property_address__city__city').prefetch_related(
+				'owners', 'owners__user', 'property_images', 'availability'
 			).get(pk=self.kwargs['pk'])
 		except Property.DoesNotExist:
 			raise Http404
 		permitted_owners = []
 		ownerships = [owner for owner in related_property.owners.all()]
 		for owner in ownerships:
-			if owner.permission_level_id == 400:
+			if owner.can_add_bookings:
 				permitted_owners.append(owner)
 
 		owners = [owner.user for owner in ownerships]
-		related_property = Property.objects.select_related(
-			'availability',
-			'property_address',
-			'property_address__city',
-			'property_address__city__city').get(pk=self.kwargs['pk'])
+
 		if related_property.visibility != 100 and (not (user in permitted_owners)):
 			# if the property is not publicly visible
 			# we must check whether the user is an owner and has appropriate permission
@@ -82,13 +82,24 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 			lwp = LockWithProperty.objects.select_related('lock').all().filter(property_id=self.kwargs['pk'])
 		except LockWithProperty.DoesNotExist:
 			lwp = None
-		#if lwp:
-		#	key = Key(lock_id=lwp.lock_id, access_start=obj.booked_from, access_stop=obj.booked_until)
-		#	key.save()
-		#	data['key']: key.code
+		if lwp:
+			keys = []
+			for lock in lwp:
+				key = Key(lock=lock.lock, access_start=obj.booked_from, access_stop=obj.booked_until)
+				key.save()
+				keys.append(
+					{
+						# "lock_id": lock.lock.id,
+						"lwp_id": lock.id,
+						"key": key.id
+					}
+				)
+
+			data['keys'] = keys
 		# send_booking_email_to_client(has_key=True, data=data, duration=0)
-		#else:
-		#	pass
+		else:
+			pass
+
 		# send_booking_email_to_client(has_key=False, data=data, duration=0)
 
 	def get(self, request, *args, **kwargs):
@@ -161,17 +172,6 @@ class BookingsAllList(generics.ListAPIView):
 			query
 		).order_by('booked_from')
 		return queryset
-
-	def get(self, request, *args, **kwargs):
-		try:
-			property_owners = Property.objects.prefetch_related(
-				Prefetch('owners', queryset=Ownership.objects.select_related('user').all())).get(pk=self.kwargs['pk'])
-		except Property.DoesNotExist:
-			raise Http404
-		ownerships = [owner.user for owner in property_owners.owners.all()]
-		if not (self.request.user in ownerships) and self.request.method == "GET":
-			raise exceptions.PermissionDenied
-		return super(self.__class__, self).get(self, request, *args, **kwargs)
 
 	def get_permissions(self):
 		permission_classes = [IsAuthenticated]
@@ -247,7 +247,7 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 
 	def get_permissions(self):
 		permission_classes = []
-		if self.action == 'retrieve':
+		if self.action in ['retrieve', 'cancel_booking']:
 			permission_classes = [
 				CanRetrieve
 			]
