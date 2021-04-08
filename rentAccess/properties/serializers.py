@@ -489,7 +489,7 @@ class PropertyAddressesListSerializer(serializers.ModelSerializer):
 		)
 
 
-class PropertyListSerializer(serializers.ModelSerializer):
+class BookedPropertySerializer(serializers.ModelSerializer):
 	property_address = PropertyAddressesSerializer(many=False, read_only=True)
 	main_image = serializers.SerializerMethodField('get_main_image', read_only=True)
 	id = serializers.IntegerField(read_only=True)
@@ -520,6 +520,199 @@ class PropertyListSerializer(serializers.ModelSerializer):
 			'updated_at',
 			'main_image'
 		]
+
+	def get_main_image(self, obj):
+		try:
+			images = obj.property_images.all()
+			main = None
+			for image in images:
+				if image.is_main is True:
+					main = image
+			return self.context.get('request').build_absolute_uri(
+				main.image.url)
+		except Exception:
+			return ""
+
+	def get_owners_url(self, obj):
+		try:
+			return self.context.get('request').build_absolute_uri(
+				reverse('properties:property-list')) + '{id}/owners/'.format(id=obj.pk)
+		except Exception:
+			return ""
+
+
+class PropertyListSerializer(serializers.ModelSerializer):
+	"""
+		Serializer class for general purposes.
+		Author: Y. Borodin (gitlab: yuiborodin)
+		Version: 1.0
+		Last Update: 16.11.2020
+		"""
+	availability = serializers.SerializerMethodField('get_availability')
+	property_address = PropertyAddressesSerializer(many=False, read_only=True)
+	property_images = PropertyImagesSerializer(many=True, read_only=True)
+	main_image = serializers.SerializerMethodField('get_main_image')
+	id = serializers.IntegerField()
+	is_owner = serializers.SerializerMethodField('get_can_edit')
+	current_user_permissions = serializers.SerializerMethodField('get_current_user_permissions', read_only=True)
+	groups_info = serializers.SerializerMethodField('get_group_info', read_only=True)
+
+	organisation_info = serializers.SerializerMethodField('get_org_info', read_only=True)
+
+	complementary_info = serializers.SerializerMethodField('get_complementary_info', read_only=True)
+	current_user_actions = serializers.SerializerMethodField('get_current_user_actions', read_only=True)
+	favorites_marks = serializers.SerializerMethodField('get_favorites_marks', read_only=True)
+	rating = serializers.SerializerMethodField('get_rating', read_only=True)
+	views_info = serializers.SerializerMethodField('get_views_info', read_only=True)
+
+	class Meta:
+		model = Property
+
+		fields = (
+			'id',
+			'title',
+			'body',
+			'price',
+			'is_owner',
+			'current_user_permissions',
+			'current_user_actions',
+			'active',
+			'booking_type',
+			'availability',
+			'property_type',
+			'main_image',
+			'property_address',
+			'property_images',
+			'visibility',
+			'requires_additional_confirmation',
+			'client_greeting_message',
+			'groups_info',
+			'organisation_info',
+			'views_info',
+			'favorites_marks',
+			'rating',
+			'complementary_info',
+			'created_at',
+			'updated_at'
+
+		)
+		read_only_fields = [
+			'id',
+			'title',
+			'body',
+			'price',
+			'is_owner',
+			'current_user_permissions',
+			'current_user_actions',
+			'active',
+			'booking_type',
+			'availability',
+			'property_type',
+			'main_image',
+			'property_address',
+			'property_images',
+			'visibility',
+			'requires_additional_confirmation',
+			'client_greeting_message',
+			'groups_info',
+			'organisation_info',
+			'views_info',
+			'favorites_marks',
+			'rating',
+			'complementary_info',
+			'created_at',
+			'updated_at'
+		]
+
+	def get_current_user_actions(self, obj):
+		fav_marks = list(obj.added_to_fav.all())
+		is_in_favorites = False
+		users = [fav for fav in fav_marks if fav.user == self.context['request'].user]
+		if users:
+			is_in_favorites = True
+		user_actions_dict = {
+			'is_in_favorites': is_in_favorites
+		}
+		return user_actions_dict
+
+	def get_complementary_info(self, obj):
+		return []
+
+	def get_favorites_marks(self, obj):
+		fav_marks = list(obj.added_to_fav.all())
+		return len(fav_marks)
+
+	def get_rating(self, obj):
+		return None
+
+	def get_views_info(self, obj):
+		views_dict = {
+			"views_today"               : 0,
+			"views_overall"             : 0,
+			"current_user_views_today"  : 0,
+			"current_user_views_overall": 0,
+		}
+
+		return views_dict
+
+	def get_group_info(self, obj):
+		groups = obj.mem_groups.all()
+		groups_list = []
+		added_by = None
+		if groups:
+			for group in groups:
+				groups_list.append(group.group)
+				if group.added_by:
+					added_by = group.added_by
+		if groups:
+			serializer = GroupInfoSerializer(
+				groups_list,
+				many=True,
+				context={'added_by': added_by}
+			)
+			return serializer.data
+		return None
+
+	def get_org_info(self, obj):
+		return None
+
+	def get_contacts(self, obj):
+		queryset = obj.owners.all()
+		contacts = []
+		for owner in queryset:
+			if owner.visibility == 100:
+				contacts.append(owner)
+		serializer = PropertyContactsListSerializer(
+			contacts,
+			many=True,
+			context={'request': self.context["request"]}
+		)
+		return serializer.data
+
+	def get_availability(self, obj):
+		if obj.booking_type == 100:
+			serializer = AvailabilityDailySerializer(obj.availability)
+			return serializer.data
+		else:
+			serializer = AvailabilityHourlySerializer(obj.availability)
+			return serializer.data
+
+	def get_can_edit(self, obj):
+		owners = obj.owners.all()
+		for owner in owners:
+			if self.context["request"].user == owner.user:
+				return True
+		return False
+
+	def get_current_user_permissions(self, obj):
+		current_owner = None
+		owners = obj.owners.all()
+		for owner in owners:
+			if self.context["request"].user == owner.user:
+				current_owner = owner
+		if current_owner:
+			return CurrentUserPermissionsSerializer(current_owner).data
+		return current_owner
 
 	def get_main_image(self, obj):
 		try:
@@ -576,6 +769,7 @@ class PropertySerializer(serializers.ModelSerializer):
 	organisation_info = serializers.SerializerMethodField('get_org_info', read_only=True)
 
 	complementary_info = serializers.SerializerMethodField('get_complementary_info', read_only=True)
+	current_user_actions = serializers.SerializerMethodField('get_current_user_actions', read_only=True)
 	favorites_marks = serializers.SerializerMethodField('get_favorites_marks', read_only=True)
 	rating = serializers.SerializerMethodField('get_rating', read_only=True)
 	views_info = serializers.SerializerMethodField('get_views_info', read_only=True)
@@ -590,6 +784,7 @@ class PropertySerializer(serializers.ModelSerializer):
 			'price',
 			'is_owner',
 			'current_user_permissions',
+			'current_user_actions',
 			'active',
 			'booking_type',
 			'availability',
@@ -618,6 +813,7 @@ class PropertySerializer(serializers.ModelSerializer):
 			'price',
 			'is_owner',
 			'current_user_permissions',
+			'current_user_actions',
 			'active',
 			'booking_type',
 			'availability',
@@ -639,11 +835,23 @@ class PropertySerializer(serializers.ModelSerializer):
 			'updated_at'
 		]
 
+	def get_current_user_actions(self, obj):
+		fav_marks = list(obj.added_to_fav.all())
+		is_in_favorites = False
+		users = [fav for fav in fav_marks if fav.user == self.context['request'].user]
+		if users:
+			is_in_favorites = True
+		user_actions_dict = {
+			'is_in_favorites': is_in_favorites
+		}
+		return user_actions_dict
+
 	def get_complementary_info(self, obj):
 		return []
 
 	def get_favorites_marks(self, obj):
-		return 0
+		fav_marks = list(obj.added_to_fav.all())
+		return len(fav_marks)
 
 	def get_rating(self, obj):
 		return None
@@ -966,6 +1174,7 @@ class PropertyUpdateSerializer(serializers.ModelSerializer):
 			'property_images',
 			'current_user_permissions'
 		]
+
 	def get_complementary_info(self, obj):
 		return []
 
