@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.http import Http404
 from rest_framework import generics, permissions, viewsets, status, mixins, decorators
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
@@ -26,7 +27,6 @@ User = get_user_model()
 
 class UserBookingsList(generics.ListAPIView):
 	serializer_class = BookingsListSerializer
-
 	filter_backends = (
 		dj_filters.DjangoFilterBackend,
 		filters.SearchFilter,
@@ -81,11 +81,21 @@ class UserPropertiesList(generics.ListAPIView):
 	def get_queryset(self, *args, **kwargs):
 		query = Q()
 		query.add(Q(owners__user=self.request.user), query.connector)
-		properties = Property.objects.all().select_related(
-			'availability', 'property_address', 'property_address__city', 'property_type')
+		properties = Property.objects.all().prefetch_related(
+			'property_images',
+			'owners',
+			'owners__user',
+			'mem_groups',
+			'added_to_fav'
+		).select_related(
+			'availability',
+			'property_address',
+			'property_address__city',
+			'property_type'
+		)
 		queryset = properties.filter(
 			query
-		).prefetch_related('property_images')
+		)
 		return queryset
 
 	def get_permissions(self):
@@ -113,11 +123,17 @@ class UserFavoritePropertiesList(generics.ListAPIView):
 		'property_address__street']
 
 	def get_queryset(self, *args, **kwargs):
-		properties = Property.objects.select_related(
-			'availability', 'property_address', 'property_address__city',
+		properties = Property.objects.all().prefetch_related(
+			'property_images',
+			'owners',
+			'owners__user',
+			'mem_groups',
+			'added_to_fav'
+		).select_related(
+			'availability',
+			'property_address',
+			'property_address__city',
 			'property_type'
-		).prefetch_related(
-			'property_images', 'added_to_fav'
 		).filter(
 			(Q(added_to_fav__user=self.request.user))
 		)
@@ -136,8 +152,12 @@ class ProfileDetailViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Gen
 		serializer = ProfileDetailSerializer(profile, context={'request': request})
 		return Response(serializer.data)
 
-	def get_object(self):
-		return get_object_or_404(User, id=self.request.user.id)
+	def get_object(self, pk=None):
+		try:
+			user = User.objects.get(pk=pk)
+		except User.DoesNotExist:
+			raise Http404
+		return user
 
 	@action(detail=True, methods=['put'])
 	def change_plan_pro(self, request):
@@ -254,7 +274,7 @@ class ProfileDetailViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.Gen
 		return Response(serializer.data, status=status.HTTP_200_OK)
 
 	def get_permissions(self):
-		permission_classes = [IsOwnerOrSuperuser]
+		permission_classes = [permissions.IsAuthenticated]
 		return [permission() for permission in permission_classes]
 
 	def get_serializer_class(self):
