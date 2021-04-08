@@ -106,12 +106,13 @@ class LockList(generics.ListCreateAPIView):
 class OwnersListCreate(generics.ListCreateAPIView):
 	def create(self, request, *args, **kwargs):
 		property_owners = self.get_property_object()
-		if not property_owners.owners.filter(
+		if not property_owners.owners.all().filter(
 				premises_id=self.kwargs["pk"],
 				user=self.request.user,
-				permission_level_id=400
+				can_add_owners=True
 		).exists():
 			raise exceptions.PermissionDenied
+
 		serializer = self.get_serializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
 		self.perform_create(serializer)
@@ -209,11 +210,21 @@ class PropertyListCreate(generics.ListCreateAPIView):
 			f"ip_addr: {get_client_ip(self.request)}; status: OK;")
 
 	def get_queryset(self, *args, **kwargs):
-		properties = Property.objects.all().select_related(
-			'availability', 'property_address', 'property_address__city', 'property_type')
+		properties = Property.objects.all().prefetch_related(
+			'property_images',
+			'owners',
+			'owners__user',
+			'mem_groups',
+			'added_to_fav'
+		).select_related(
+			'availability',
+			'property_address',
+			'property_address__city',
+			'property_type'
+		)
 		queryset = properties.filter(
 			~Q(owners__user=self.request.user) & Q(visibility=100)
-		).prefetch_related('property_images')
+		)
 		title = self.request.query_params.get('title', None)
 		d_start = self.request.query_params.get('d_start', None)
 		d_end = self.request.query_params.get('d_end', None)
