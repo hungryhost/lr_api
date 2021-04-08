@@ -4,7 +4,6 @@ from time import timezone
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.urls import reverse
-from django.utils.timezone import now
 from rest_framework import serializers
 from timezone_field.rest_framework import TimeZoneSerializerField
 
@@ -55,11 +54,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 	timezone = TimeZoneSerializerField(required=False)
 	phone = serializers.CharField(required=False, allow_blank=True, allow_null=True)
 	userpic = serializers.SerializerMethodField('get_userpic', default="")
-	documents_url = serializers.SerializerMethodField('get_documents_url')
-	billing_addresses_url = serializers.SerializerMethodField('get_billing_addresses_url')
-	phones_url = serializers.SerializerMethodField('get_phones_url')
-	# emails_url = serializers.SerializerMethodField('get_emails_url')
-	properties_url = serializers.SerializerMethodField('get_properties_url')
+
 	plan = serializers.SerializerMethodField("get_plan")
 
 	def get_plan(self, obj):
@@ -144,7 +139,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 			instance.first_name = first_name
 		if last_name:
 			instance.last_name = last_name
-		instance.updated_at = now()
+		instance.updated_at = datetime.datetime.now()
 		instance.save()
 		return instance
 
@@ -170,10 +165,6 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 			'is_staff',
 			'dob',
 			'gender',
-			'properties_url',
-			'documents_url',
-			'billing_addresses_url',
-			'phones_url',
 			'created_at',
 			'updated_at',
 			# 'emails_url',
@@ -183,13 +174,12 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
 class ProfileDetailSerializer(serializers.ModelSerializer):
 	userpic = serializers.SerializerMethodField('get_userpic', default="")
-	documents_url = serializers.SerializerMethodField('get_documents_url')
-	billing_addresses_url = serializers.SerializerMethodField('get_billing_addresses_url')
-	phones_url = serializers.SerializerMethodField('get_phones_url')
-	# emails_url = serializers.SerializerMethodField('get_emails_url')
-	properties_url = serializers.SerializerMethodField('get_properties_url')
 	timezone = TimeZoneSerializerField()
 	plan = serializers.SerializerMethodField("get_plan")
+	work_email = serializers.EmailField()
+	use_work_email_incbookings = serializers.BooleanField()
+	use_work_email_outbookings = serializers.BooleanField()
+	show_work_email_in_contact_info = serializers.BooleanField()
 
 	def get_plan(self, obj):
 		try:
@@ -268,6 +258,10 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 			'bio',
 			'timezone',
 			'plan',
+			'work_email',
+			'use_work_email_incbookings',
+			'use_work_email_outbookings',
+			'show_work_email_in_contact_info',
 			'email_confirmed',
 			'phone_confirmed',
 			'client_rating',
@@ -278,10 +272,6 @@ class ProfileDetailSerializer(serializers.ModelSerializer):
 			'is_staff',
 			'dob',
 			'gender',
-			'properties_url',
-			'documents_url',
-			'billing_addresses_url',
-			'phones_url',
 			'created_at',
 			'updated_at',
 			# 'emails_url',
@@ -316,6 +306,7 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
 		if user.pk != instance.pk:
 			raise serializers.ValidationError({"Authorize": "You dont have permission for this user."})
 		instance.set_password(validated_data['password'])
+		instance.last_password_update = datetime.datetime.now()
 		instance.save()
 		return instance
 
