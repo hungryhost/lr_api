@@ -3,6 +3,9 @@ info:
   title: '294 Internal API Documentation'
   version: '1'
   description: |
+    --- 
+    
+    Documentation for LockAndRent Internal Web API. 
 
     ---
     ## Useful Links
@@ -511,7 +514,7 @@ paths:
       - name: group:id
         in: path
         required: true
-        description: A unique integer value identifying this property.
+        description: A unique integer value identifying the group.
         schema:
           type: string
       responses:
@@ -551,9 +554,58 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - GroupsAPI.Members
+  /api/v1/property-groups/{group:id}/members/delete/:
+    post:
+      operationId: deleteGroupsMembers
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>Use this method to delete members of a group.
+        A `can_remove_members` permission of a group member is neccessary. 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteMembersBulk'
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying the group.
+        schema:
+          type: string
+      responses:
+        '204':
+          description: "OK."
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - GroupsAPI.Members
+  
+    
 
 # PROPERTY GROUPS PROPERTIES
   /api/v1/property-groups/{group:id}/properties/:
+
     get:
       operationId: listGroupsProperties
       description: |
@@ -606,6 +658,50 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - GroupsAPI.Properties
+
+  /api/v1/property-groups/{group:id}/properties/delete/:
+    post:
+      operationId: deleteGroupsProperties
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        ---
+        <br>Use this method to delete proprerties from a group.
+        A `can_delete_properties` permission of a group member is neccessary. 
+
+      parameters:
+      - name: group:id
+        in: path
+        required: true
+        description: A unique integer value identifying the group.
+        schema:
+          type: string
+      responses:
+        '204':
+          description: "OK."
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - GroupsAPI.Properties
+
 # PROPERTIES
   /api/v1/properties/{properties:id}/:
     get:
@@ -1011,7 +1107,7 @@ paths:
           $ref: '#/components/responses/403_Forbidden'
       tags:
       - BookingsAPI
-  /api/v1/properties/{properties:id}/bookings/{bookings:id}:
+  /api/v1/properties/{properties:id}/bookings/{bookings:id}/:
     get:
       operationId: retrievePropertyBooking
       description: |
@@ -1149,6 +1245,53 @@ paths:
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
 
+      tags:
+      - BookingsAPI
+  /api/v1/properties/{properties:id}/bookings/{bookings:id}/cancel/:
+    post:
+      operationId: cancelPropertyBooking
+      description: ''
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying this property.
+        schema:
+          type: string
+      - name: bookings:id
+        in: path
+        required: true
+        description: A unique integer value identifying the booking.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelBooking'
+      responses:
+        '200':
+          description: 'Booking is now cancelled.'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '422':
+          $ref: '#/components/responses/422_Invalid_Data_Property'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - BookingsAPI
 # PROPERTIES OWNERS PATHS
@@ -2395,6 +2538,22 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - UserAPI.UserRelatedEntities
+  /api/v1/user/properties/favorite/:
+    get:
+      operationId: retrieveUserFavoriteProperties
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope"><br>
+        ---
+        Retrieve a list of favorite properties for the authenticated user.
+      responses:
+        '200':
+          $ref: '#/components/responses/200_OK_Properties_Paginated'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - UserAPI.UserRelatedEntities
+  
   /api/v1/user/bookings/:
     get:
       operationId: retrieveUserBookings
@@ -2416,6 +2575,10 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - UserAPI.UserRelatedEntities
+# COMMON ENDPOINTS
+
+# COMMS ENDPOINTS 
+# USER.LOCK-MESSAGES
 
 # USER USERPIC
   /api/v1/user/userpic/:
@@ -2499,6 +2662,13 @@ paths:
       - UserAPI.Security
 components:
   schemas:
+    Current_user_actions:
+          type: object
+          properties:
+            is_in_favorites:
+              type: boolean
+              example: true
+          readOnly: true
     PropertyList:
       type: object
       properties:
@@ -2537,6 +2707,10 @@ components:
           example: "http://testserver/media/5500e68537c740898615ad80466d0942.png"
         property_address:
           $ref: "#/components/schemas/PropertyAddress"
+        current_user_permissions:
+          $ref: "#/components/schemas/CurrentUserPermissions"
+        current_user_actions:
+          $ref: "#/components/schemas/Current_user_actions"
         client_greeting_message:
           type: string
           readOnly: false
@@ -2553,6 +2727,43 @@ components:
           type: string
           readOnly: true
           example: "2020-12-19T04:53:34+0300"
+    AddedBy:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        email:
+          type: string
+          example: "janedoe@test.com"
+        first_name:
+          type: string
+          example: "Имя"
+        last_name:
+          type: string
+          example: "Фамилия"
+        middle_name:
+          type: string
+          example: "Отчество"
+        timezone:
+          type: "string"
+          example: "Europe/Moscow"
+
+    PropertyGroupInfo:
+      type: object
+      readOnly: true
+      properties:
+        group_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Storages"
+        description:
+          type: string
+          example: "Storages"
+        added_by:
+          $ref: "#/components/schemas/AddedBy"
     Property:
       type: object
       properties:
@@ -2577,9 +2788,9 @@ components:
           example: true
           readOnly: true
         current_user_permissions:
-
           $ref: "#/components/schemas/CurrentUserPermissions"
-
+        current_user_actions:
+          $ref: "#/components/schemas/Current_user_actions"
         active:
           type: boolean
           example: true
@@ -2619,6 +2830,40 @@ components:
         requires_additional_confirmation:
           type: boolean
           example: false
+        groups_info:
+          type: array
+          readOnly: true
+          items:
+            $ref: "#/components/schemas/PropertyGroupInfo"
+        organisations_info:
+          type: integer
+          readOnly: true
+          example: null
+        favortires_marks:
+          type: integer
+          example: 1
+          readOnly: true
+        rating:
+          readOnly: true
+          type: string
+          example: "3.51"
+        views_info:
+          type: object
+          readOnly: true
+          properties:
+            views_today:
+              type: integer
+              example: 1
+
+            views_overall:
+              type: integer
+              example: 1
+            current_user_views_today: 
+              type: integer
+              example: 1
+            current_user_views_overall:
+              type: integer
+              example: 1
         created_at:
           type: string
           readOnly: true
@@ -3019,6 +3264,19 @@ components:
     Booking:
       type: object
       properties:
+        available_actions:
+          type: object
+          properties:
+            status_can_be_updated:
+              type: boolean
+              example: true
+            number_of_clients_can_be_updated:
+              type: boolean
+              example: true
+            can_be_cancelled_by_user:
+              type: boolean
+              example: true
+          readOnly: true
         id:
           type: number
           example: 1
@@ -3163,6 +3421,25 @@ components:
         phone_confirmed:
           type: boolean
           example: False
+        plan: 
+          type: string
+          example: "DEFAULT"
+        work_email:
+          type: string
+          example: "work_email@lockandrent.ru"
+        use_work_email_incbookings: 
+          type: boolean
+          example: false
+        use_work_email_outbookings:
+          type: boolean
+          example: false
+        show_work_email_in_contact_info:
+          type: boolean
+          example: false
+        client_rating:
+          type: string
+          example: "3.51"
+          readOnly: true
         two_factor_auth:
           type: boolean
           example: False
@@ -3184,33 +3461,55 @@ components:
         is_admin:
           type: boolean
           example: False
-        properties_url:
-          type: string
-          example: "http://testserver/api/v1/user/properties/"
-        organisations_url:
-          type: string
-          example: "http://testserver/api/v1/user/orgs/"
-        bookings_url:
-          type: string
-          example: "http://testserver/api/v1/user/bookings/"
-        documents_url:
-          type: string
-          example: "http://testserver/api/v1/user/docs/"
-        billing_addresses_url:
-          type: string
-          example: "http://testserver/api/v1/user/billing_addresses/"
-        phones_url:
-          type: string
-          example: "http://testserver/api/v1/user/phones/"
-        emails_url:
-          type: string
-          example: "http://testserver/api/v1/user/emails/"
         date_created:
           type: string
           example: "2020-11-25T23:36:11.562947+03:00"
         last_updated:
           type: string
           example: "2020-11-25T23:36:11.562947+03:00"
+    User_LockMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          example: 1
+        selected_lock_id:
+          type: integer
+          example: 1
+        selected_lock_info:
+          type: string
+          readOnly: true
+          example: "Lock Basic 1."
+        phone:
+          type: string
+          example: "string"
+        status:
+          type: string
+          readOnly: true
+          enum:
+            - "WAIT"
+            - "OK"
+            - "FAIL"
+          example: "WAIT"
+        comment:
+          type: string
+          example: "string"
+        company:
+          type: string
+          example: "string"
+        quantity:
+          type: integer
+          example: 1
+        final_price:
+          type: number
+          readOnly: true
+          example: 3000.99
+        last_status_change:
+          type: string
+          example: "2021-03-17T18:52:20+0300"
+          readOnly: true
+    
     Key:
       type: object
       properties:
@@ -3273,6 +3572,14 @@ components:
           type: string
       required:
       - token
+    CancelBooking:
+      type: object
+      properties:
+        cancelled_reason:
+          type: string
+          example: "A very good reason"
+          readOnly: false
+        
     ProPlan:
       type: object
       properties:
@@ -3341,7 +3648,14 @@ components:
           items:
             type: integer
             example: 1
-
+    DeleteMembersBulk:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            type: integer
+        
     PropertyGroupMembership:
       type: object
       properties:
@@ -3682,7 +3996,7 @@ components:
               results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/PropertyList"
+                    $ref: "#/components/schemas/Property"
     200_OK_Members_Paginated:
       description: Responce was processed
       content:
