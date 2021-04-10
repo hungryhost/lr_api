@@ -44,7 +44,7 @@ paths:
 # AUTH PATHS
   /api/v1/auth/register/:
     post:
-      operationId: createregistration
+      operationId: register
       description: |
         This method is used for account registration
         <br>
@@ -83,7 +83,7 @@ paths:
         - AuthAPI
   /api/v1/auth/token/:
     post:
-      operationId: createTokenObtainPair
+      operationId: createTokenPair
       description: |
         Takes a set of user credentials and returns an access and refresh
         JSON web token pair to prove the authentication of those credentials.
@@ -104,7 +104,7 @@ paths:
         - AuthAPI
   /api/v1/auth/token/refresh/:
     post:
-      operationId: createTokenRefresh
+      operationId: tokenRefresh
       description: 'Takes a refresh type JSON web token and returns an access type
           JSON web
 
@@ -128,7 +128,7 @@ paths:
         - AuthAPI
   /api/v1/auth/token/verify/:
     post:
-      operationId: createTokenVerify
+      operationId: tokenVerify
       description: 'Takes a token and indicates if it is valid.  This view provides
           no
 
@@ -151,7 +151,9 @@ paths:
       tags:
         - AuthAPI
   /api/v1/auth/logout/:
+    
     post:
+      operationId: logoutFromCurrentSession
       description: |
         Takes a given refresh token and blacklists it.
         - Requires access token (isAuthenticated permission) passed with the request.
@@ -170,6 +172,7 @@ paths:
         - AuthAPI
   /api/v1/auth/logoutall/:
     post:
+      operationId: logoutFromAllSessions
       description: |
         Blacklists all tokens associated with the user that sent the request.
         - Requires access token (isAuthenticated permission) passed with the request.
@@ -356,10 +359,11 @@ paths:
 # PROPERTY GROUPS MEMBERS
   /api/v1/property-groups/{group:id}/members/{member:id}/:
     get:
-      operationId: retrieveGroupMembers
+      operationId: retrieveGroupMember
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>
         This method is used for retrieving information about members of a particular group
@@ -404,10 +408,11 @@ paths:
       tags:
       - GroupsAPI.Members
     put:
-      operationId: patchGroupMember
+      operationId: updateGroupMember
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>This method is used for updating information about a particular group member.
 
@@ -459,10 +464,11 @@ paths:
       tags:
         - GroupsAPI.Members
     delete:
-      operationId: destroyGroupMember
+      operationId: deleteGroupMember
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>This method is used for delete action for a particular group member.
       parameters:
@@ -507,6 +513,7 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>This method is used for retrieving a list of group members.
 
@@ -520,6 +527,22 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/200_OK_Groups_Paginated'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
       tags:
       - GroupsAPI.Members
     post:
@@ -527,6 +550,7 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>This method is used for creating a group member.
       parameters:
@@ -547,7 +571,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Member'
-          description: ''
+          description: 'Success.'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
         '422':
           $ref: '#/components/responses/422_Invalid_Data_Property'
         '400':
@@ -560,6 +600,7 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>Use this method to delete members of a group.
         A `can_remove_members` permission of a group member is neccessary. 
@@ -607,12 +648,13 @@ paths:
   /api/v1/property-groups/{group:id}/properties/:
 
     get:
-      operationId: listGroupsProperties
+      operationId: listPropertiesOfGroup
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
-        <br>This method is used for retrieving a list of group properties.
+        <br>This method is used for retrieving a list of group's properties.
 
       parameters:
       - name: group:id
@@ -624,13 +666,30 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/200_OK_Property_Member_Paginated'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
       tags:
       - GroupsAPI.Properties
     post:
-      operationId: createGroupProperties
+      operationId: addPropertiesToGroup
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>This method is used for creating a group property member (adding a property to a group).
       parameters:
@@ -661,10 +720,11 @@ paths:
 
   /api/v1/property-groups/{group:id}/properties/delete/:
     post:
-      operationId: deleteGroupsProperties
+      operationId: deletePropertiesFromGroup
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>Use this method to delete proprerties from a group.
         A `can_delete_properties` permission of a group member is neccessary. 
@@ -2775,80 +2835,103 @@ components:
           type: string
           maxLength: 50
           example: "The Best Property Out There"
+          description: "Name of the property."
         body:
           type: string
           example: "Description of the Best Property"
+          description: "Description of the property"
+          maxLength: 1024
         price:
           type: number
           example: 999
+          description: "Price of the property."
+          maximum: 500000
         availability:
           $ref: "#/components/schemas/Availability"
+          description: "Availability parameters of the property."
         is_owner:
           type: boolean
           example: true
           readOnly: true
+          description: "Whether the authenticated user is an owner."
         current_user_permissions:
           $ref: "#/components/schemas/CurrentUserPermissions"
+          description: "Current permissions of the authenticated user."
         current_user_actions:
           $ref: "#/components/schemas/Current_user_actions"
+          description: "Current action flags of the authenticated user."
         active:
           type: boolean
           example: true
+          description: "Whether the property shows in search and list of all properties."
         property_type:
           type: integer
-          enum: [100, 200, 300]
           example: 100
+          description: "Code for the type of the property."
         booking_type:
           type: integer
           enum: [100, 200]
           example: 100
+          description: "Code for the booking type of the property."
         visibility:
           type: integer
-          enum: [100, 200, 300]
+          enum: [100, 200, 300, 400]
           example: 100
+          description: "Code for the visibility of the property."
         main_image:
           type: string
           readOnly: true
           example: "http://testserver/media/5500e68537c740898615ad80466d0942.png"
+          description: "Main image of the property."
         contacts:
           type: array
           items:
             $ref: "#/components/schemas/Contact"
           readOnly: true
+          description: "Contact info of owners."
         property_address:
           $ref: "#/components/schemas/PropertyAddress"
+          description: "Address of the property."
         property_images:
           type: array
           items:
             $ref: "#/components/schemas/PropertyImageToRepr"
           readOnly: true
+          description: "Images of the property."
         client_greeting_message:
           type: string
           readOnly: false
           example:
             "Some nice message to greet a client."
+          description: "Greeting message for clients from the owners."
         requires_additional_confirmation:
           type: boolean
           example: false
+          description: "Whether the owner needs to approve bookings."
         groups_info:
           type: array
           readOnly: true
           items:
             $ref: "#/components/schemas/PropertyGroupInfo"
+          description: "Information about tied groups."
         organisations_info:
           type: integer
           readOnly: true
           example: null
+          description: "Information about tied organisations."
         favortires_marks:
           type: integer
           example: 1
           readOnly: true
+          description: "Number of favorite marks."
         rating:
           readOnly: true
           type: string
           example: "3.51"
+          description: "Rating of the property."
         views_info:
           type: object
+          description: "Information about views."
           readOnly: true
           properties:
             views_today:
@@ -2885,15 +2968,12 @@ components:
           type: array
           items:
             type: integer
-
         departure_time_until:
           type: string
           example: "11:00"
-
         arrival_time_from:
           type: string
           example: "14:00"
-
         maximum_number_of_clients:
           type: integer
           example: 11
@@ -2903,6 +2983,8 @@ components:
         available_from:
           type: integer
           example: "08:00"
+        
+        
     Contact:
       type: object
       properties:
@@ -3006,16 +3088,20 @@ components:
           type: integer
           example: 11
           readOnly: true
+          description: "Id of the group"
         title:
           type: string
           example: "Storages"
+          description: "Name of the group"
         description:
           type: string
           example: "Storages"
+          description: "Description of the group"
         is_my_group:
           type: boolean
           example: true
           readOnly: true
+          description: "Whether the authenticated user created a group."
         created_at:
           type: string
           example: "2021-03-19T02:33:08+0300"
@@ -3024,6 +3110,7 @@ components:
           type: integer
           example: "2021-03-19T02:33:08+0300"
           readOnly: true
+    
     Owner:
       type: object
       readOnly: true

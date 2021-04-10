@@ -60,6 +60,9 @@ urlpatterns = [
     path('api/v1/service-api-docs/', TemplateView.as_view(
                       template_name='service-api-docs.html',
                   ), name='swagger-ui'),
+    path('api/v1/service-api-redocs/', TemplateView.as_view(
+                      template_name='service-api-docs-redoc.html',
+                  ), name='redoc'),
     path('api/v1/service-specs/general/', TemplateView.as_view(
                       template_name='294_UserAndPropertiesFunctions.html',
                   ), name='workflow'),
