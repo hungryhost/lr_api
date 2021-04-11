@@ -18,6 +18,45 @@ class LockSerializer(serializers.ModelSerializer):
 		fields = ('id', 'uuid', 'description', 'is_on', 'is_approved')
 
 
+class LockAndPropertyUpdateSerializer(serializers.ModelSerializer):
+	added_at = serializers.DateTimeField(source='created_at', read_only=True, required=False)
+	updated_at = serializers.DateTimeField(read_only=True, required=False)
+	last_access_attempt = serializers.SerializerMethodField('get_last_access')
+	added_by = serializers.SerializerMethodField('get_added_by')
+	manufacturing_id = serializers.IntegerField(source='lock.id', read_only=True, required=False)
+
+	class Meta:
+		model = LockWithProperty
+		fields = (
+			'id',
+			'manufacturing_id',
+			'description',
+			'last_access_attempt',
+			'added_by',
+			'added_at',
+			'updated_at'
+		)
+		read_only_fields = [
+			'id',
+			'manufacturing_id',
+			'last_access_attempt',
+			'added_by',
+			'added_at',
+			'updated_at'
+		]
+
+	def get_last_access(self, obj):
+		return {
+			"try_time": datetime.datetime(2020, 3, 1),
+			"result"  : True
+		}
+
+	def get_added_by(self, obj):
+		user = obj.added_by
+		serializer = UserSerializer(user)
+		return serializer.data
+
+
 class LockAndPropertySerializer(serializers.ModelSerializer):
 	added_at = serializers.DateTimeField(source='created_at')
 	updated_at = serializers.DateTimeField()
@@ -36,9 +75,20 @@ class LockAndPropertySerializer(serializers.ModelSerializer):
 			'added_at',
 			'updated_at'
 		)
+		read_only_fields = [
+			'id',
+			'manufacturing_id',
+			'last_access_attempt',
+			'added_by',
+			'added_at',
+			'updated_at'
+		]
 
 	def get_last_access(self, obj):
-		return datetime.datetime(2020, 3, 1)
+		return {
+			"try_time": datetime.datetime(2020, 3, 1),
+			"result"  : True
+		}
 
 	def get_added_by(self, obj):
 		user = obj.added_by
