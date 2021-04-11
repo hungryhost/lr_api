@@ -16,7 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from bookings.models import Booking
-from locks.serializers import AddLockToPropertySerializer, LockAndPropertySerializer
+from locks.serializers import AddLockToPropertySerializer, LockAndPropertySerializer, LockAndPropertyUpdateSerializer
 from .availability_utils import available_days_from_db, available_hours_from_db, confirm_open_days
 from .filters import PropertyFilter
 from .logger_helpers import get_client_ip
@@ -342,7 +342,7 @@ class LocksViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericView
 			lock = LockWithProperty.objects.get(pk=lock_id, property_id=pk)
 		except LockWithProperty.DoesNotExist:
 			raise Http404
-		serializer = AddLockToPropertySerializer(
+		serializer = LockAndPropertyUpdateSerializer(
 			lock,
 			data=self.request.data,
 			partial=False,
