@@ -167,7 +167,12 @@ class BookingsAllList(generics.ListAPIView):
 		queryset = Booking.objects.prefetch_related(
 			'booked_property', 'booked_property__property_address',
 			'booked_property__property_address__city',
-			'booked_property__property_images'
+			'booked_property__property_images',
+			'booked_property__owners',
+			'booked_property__owners__user'
+
+		).select_related(
+			'booked_by'
 		).all().filter(
 			query
 		).order_by('booked_from')
@@ -240,7 +245,7 @@ class BookingsViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericV
 		)
 		serializer.is_valid(raise_exception=True)
 		serializer.save()
-		return Response(status=status.HTTP_204_NO_CONTENT)
+		return Response(status=status.HTTP_200_OK)
 
 	def get_queryset(self):
 		return Booking.objects.all()
