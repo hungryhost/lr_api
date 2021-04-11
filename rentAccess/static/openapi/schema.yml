@@ -190,6 +190,7 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>
         This method is used for retrieving information about a
@@ -229,10 +230,11 @@ paths:
       tags:
       - GroupsAPI
     put:
-      operationId: patchGroup
+      operationId: updateGroup
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>This method is used for updating information about a particular group.
 
@@ -282,6 +284,7 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>This method is used for delete action for a particular group.
       parameters:
@@ -320,6 +323,7 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>This method is used for retrieving a list of groups.
 
@@ -334,6 +338,7 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>This method is used for creating a group.
       parameters: []
@@ -647,7 +652,7 @@ paths:
   /api/v1/property-groups/{group:id}/properties/:
 
     get:
-      operationId: listPropertiesOfGroup
+      operationId: listGroupProperties
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
@@ -2645,6 +2650,156 @@ paths:
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - PropertiesAPI.Availability
+# PropertiesAPI.AvailabilityExceptions
+  /api/v1/properties/{properties:id}/availability-exceptions/:
+    post:
+      operationId: addPropertyAvailabilityException
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        <br>
+        This method is used for adding availability exceptions for the property.
+        
+        <br> Requires `can_edit` permissions for the property.
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvailabilityException'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityException'
+          description: 'OK. Created.'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.AvailabilityExceptions
+    get:
+      operationId: getPropertyAvailabilityExcetions
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        <br>
+        This method is used for accessing a list of availability exceptions for the property.
+        
+        <br> Requires `can_edit` permissions for the property.
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/200_OK_AvailabilityException_Paginated'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.AvailabilityExceptions
+  /api/v1/properties/{properties:id}/availability-exceptions/delete/:
+    post:
+      operationId: deletePropertyAvailabilityExceptions
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        <br>
+        This method is used for adding availability exceptions for the property.
+        
+        <br> Requires `can_edit` permissions for the property.
+      parameters:
+      - name: properties:id
+        in: path
+        required: true
+        description: A unique integer value identifying the property.
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkDeleteById'
+      responses:
+        '204':
+          description: 'Ok. Deleted.'
+
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - PropertiesAPI.AvailabilityExceptions
+
+
 # USER PATHS
   /api/v1/user/:
     get:
@@ -3216,6 +3371,7 @@ components:
           type: "string"
           example: "Europe/Moscow"
     PropertyGroupMemberPermissions:
+      readOnly: true
       type: object
       properties:
         can_add_properties:
@@ -3449,7 +3605,14 @@ components:
           example: "08:00"
           description: "Time from which the property is available (valid only for __HOURLY__ bookings)"
         
-        
+    BulkDeleteById:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+            example: 1    
     Contact:
       type: object
       properties:
@@ -3505,10 +3668,27 @@ components:
         timezone:
           type: boolean
           example: false
-
+    AvailabilityException:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 11
+          readOnly: true
+        datetime_start:
+          type: string
+          example: "2021-04-01T12:00:00+0300"
+        datetime_end:
+          type: string
+          example: "2021-04-01T13:00:00+0300"
+        
     Member:
       type: object
       properties:
+        id:
+          type: integer
+          example: 11
+          readOnly: true
         user:
           $ref: "#/components/schemas/UserMember"
         email:
@@ -3517,6 +3697,7 @@ components:
         is_creator:
           type: boolean
           example: false
+          readOnly: true
         can_add_properties:
           type: boolean
           example: false
@@ -3546,6 +3727,16 @@ components:
           type: string
           example: "2021-03-19T02:33:36+0300"
           readOnly: true
+      required:
+        - email
+        - can_add_properties
+        - can_delete_properties
+        - can_book_properties
+        - recursive_ownership
+        - can_add_members
+        - can_manage_members
+        - can_remove_members
+          
     Group:
       type: object
       properties:
@@ -3563,6 +3754,7 @@ components:
           example: "Storages"
           description: "Description of the group"
         current_user_permissions:
+          readOnly: true
           $ref: "#/components/schemas/PropertyGroupMemberPermissions"
         is_my_group:
           type: boolean
@@ -3577,6 +3769,9 @@ components:
           type: integer
           example: "2021-03-19T02:33:08+0300"
           readOnly: true
+      required:
+        - title
+        - description
     CommonCities:
       type: object
       properties:
@@ -4423,7 +4618,7 @@ components:
     PropertyGroupMembership:
       type: object
       properties:
-        prop_member_id:
+        id:
           type: integer
           example: 1
         property:
@@ -4798,7 +4993,7 @@ components:
               results:
                   type: array
                   items:
-                    $ref: "#/components/schemas/PropertyGroupMembership"
+                    $ref: "#/components/schemas/Property"
     200_OK_Bookings_Paginated:
       description: Responce was processed
       content:
@@ -4875,6 +5070,26 @@ components:
                   type: array
                   items:
                     $ref: "#/components/schemas/Group"
+    200_OK_AvailabilityException_Paginated:
+      description: Responce was processed
+      content:
+        application/json:
+          schema:
+            properties:
+              count:
+                type: integer
+                example: 7
+              next:
+                type: string
+                example: "http://testserver/api/v1/properties/1/availability-exceptions/?page=4"
+              previous:
+                type: string
+                example: "http://testserver/api/v1/properties/1/availability-exceptions/?page=2"
+              results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/AvailabilityException"
+    
     200_OK_LockMessagePaginated:
       description: Responce was processed
       content:
@@ -5009,6 +5224,10 @@ tags:
     description: "Endpoints for managing locks for a property. "
   - name: PropertiesAPI.Availability
     description: "Endpoints for accessing a property availability."
+
+  - name: PropertiesAPI.AvailabilityExceptions
+    description: "Endpoints for accessing availability exceptions."
+
   - name: PropertiesAPI.Locks.Accesses
     description: "Endpoints for managing lock accesses for a property. "
   - name: PropertiesAPI.Locks.Cards
