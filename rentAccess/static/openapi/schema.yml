@@ -1091,6 +1091,7 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>This method is used for adding a property to favorites.
 
@@ -1129,6 +1130,7 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
         ---
         <br>This method is used for removing a property from favorites.
       parameters:
@@ -1331,13 +1333,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Booking'
+              $ref: '#/components/schemas/BookingUpdate'
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Booking'
+                $ref: '#/components/schemas/BookingUpdate'
           description: ''
         '404':
           $ref: '#/components/responses/404_Not_Found'
@@ -1468,8 +1470,15 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        
         This method is used for retrieving information about owners of a
         particular property
+        <br> Requires one of the permissions: 
+        
+        - `can_manage_owners`
+        - `is_creator`
       parameters:
       - name: properties:id
         in: path
@@ -1504,7 +1513,16 @@ paths:
       - PropertiesAPI.OwnersAPI
     post:
       operationId: addPropertyOwner
-      description: ''
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        This method is used to add an owner to the property.
+        <br> Requires one of the permissions: 
+        
+        - `can_add_owners`
+        - `is_creator`
       parameters:
       - name: properties:id
         in: path
@@ -1536,7 +1554,14 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
         This method is used for retrieving information about a single owner of a particular property
+        <br> Requires one of the permissions: 
+        
+        - `can_manage_owners`
+        - `is_creator`
+      
       parameters:
       - name: properties:id
         in: path
@@ -1547,7 +1572,7 @@ paths:
       - name: owners:id
         in: path
         required: true
-        description: A unique integer value identifying the booking.
+        description: A unique integer value identifying the owner.
         schema:
           type: string
       responses:
@@ -1582,7 +1607,11 @@ paths:
     put:
       operationId: updatePropertyOwner
       description: |
-        This endpoint updates owner's permissions
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        This endpoint updates owner's permissions and other information.
 
         Note: this endpoint is available only if the authenticated user
         has one of these permissions:
@@ -1600,7 +1629,7 @@ paths:
       - name: owners:id
         in: path
         required: true
-        description: A unique integer value identifying the booking.
+        description: A unique integer value identifying the owner.
         schema:
           type: string
       requestBody:
@@ -1639,7 +1668,18 @@ paths:
       - PropertiesAPI.OwnersAPI
     delete:
       operationId: removePropertyOwner
-      description: ''
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        This method is used to delete an owner.
+
+        <br> Requires one of the permissions or sets of permissions: 
+        
+        - `can_delete_owners` & `can_manage_owners` 
+        - `is_creator`
+
       parameters:
       - name: properties:id
         in: path
@@ -1650,7 +1690,7 @@ paths:
       - name: owners:id
         in: path
         required: true
-        description: A unique integer value identifying the booking.
+        description: A unique integer value identifying the owner.
         schema:
           type: string
       responses:
@@ -1691,6 +1731,12 @@ paths:
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
 
+        ---
+        This endpoint is used to upload one or many images of the property.
+        <br> Requires one of the permissions: 
+        
+        - `can_add_images`
+        - `is_creator`
       requestBody:
         content:
           multipart/form-data:
@@ -1727,7 +1773,16 @@ paths:
       - PropertiesAPI.Images
     delete:
       operationId: deletePropertyImages
-      description: ''
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+
+        ---
+        This endpoint is used to delete one or many images of the property.
+        <br> Requires one of the permissions: 
+        
+        - `can_delete_images`
+        - `is_creator`
       parameters:
       - name: images
         in: query
@@ -1774,6 +1829,15 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+
+        ---
+        This method is used to change main image of the property.
+        <br> Requires one of the permissions: 
+        
+        - `can_add_images`
+        - `can_edit`
+        - `is_creator`
+      
       responses:
         '200':
           content:
@@ -1810,9 +1874,15 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
         <br>
-        This method is used for retrieving information about locks of a
+        This method is used for retrieving information about a list of locks of a
         particular property
+        <br> Requires one of the permissions: 
+        
+        - `can_manage_locks`
+        - `is_creator`
       parameters:
       - name: properties:id
         in: path
@@ -1847,7 +1917,18 @@ paths:
       - PropertiesAPI.Locks
     post:
       operationId: addPropertyLock
-      description: ''
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        <br>
+        This method is used for adding a locks to a
+        particular property
+        <br> Requires one of the permissions: 
+        
+        - `can_add_locks`
+        - `is_creator`
       parameters:
       - name: properties:id
         in: path
@@ -1867,6 +1948,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Lock'
           description: ''
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
         '404':
           $ref: '#/components/responses/404_Not_Found'
         '422':
@@ -1881,8 +1964,14 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
-
-        This method is used for retrieving information about a single lock of a particular property
+        
+        ---
+        <br>
+        This method is used for retrieving information about a particular lock of the property.
+        <br> Requires one of the permissions: 
+        
+        - `can_manage_locks`
+        - `is_creator`
       parameters:
       - name: properties:id
         in: path
@@ -1928,14 +2017,16 @@ paths:
     put:
       operationId: updatePropertyLock
       description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        <br>
         This endpoint updates lock's description
-
-        Note: this endpoint is available only if the authenticated user
-        has one of these permissions:
-          - `can_manage_locks`
-
-          - `has_super_owner_permissions`
-          - `is_creator`
+        <br> Requires one of the permissions: 
+        
+        - `can_manage_locks`
+        - `is_creator`
       parameters:
       - name: properties:id
         in: path
@@ -1946,7 +2037,7 @@ paths:
       - name: lock:id
         in: path
         required: true
-        description: A unique integer value identifying the booking.
+        description: A unique integer value identifying the lock.
         schema:
           type: string
       requestBody:
@@ -1985,7 +2076,17 @@ paths:
       - PropertiesAPI.Locks
     delete:
       operationId: deletePropertyLock
-      description: ''
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        <br>
+        This endpoint deletes the lock from the property.
+        <br> Requires one of the permissions: 
+        
+        - `can_delete_locks`
+        - `is_creator`
       parameters:
       - name: properties:id
         in: path
@@ -1996,7 +2097,7 @@ paths:
       - name: lock:id
         in: path
         required: true
-        description: A unique integer value identifying the booking.
+        description: A unique integer value identifying the lock.
         schema:
           type: string
       responses:
@@ -2029,6 +2130,8 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
         <br>
         This method is used for retrieving information about cards of a lock of a
         particular property
@@ -2112,8 +2215,9 @@ paths:
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
-
-        This method is used for retrieving information about a single lock of a particular property
+        
+        ---
+        This method is used for retrieving information about a single card of the lock.
       parameters:
       - name: properties:id
         in: path
@@ -2164,7 +2268,13 @@ paths:
       - PropertiesAPI.Locks.Cards
     delete:
       operationId: deletePropertyLockCard
-      description: ''
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        This method is used to delete the card from the lock.
+      
       parameters:
       - name: properties:id
         in: path
@@ -2175,7 +2285,7 @@ paths:
       - name: lock:id
         in: path
         required: true
-        description: A unique integer value identifying the booking.
+        description: A unique integer value identifying the lock.
         schema:
           type: string
       - name: card:id
@@ -2211,11 +2321,12 @@ paths:
 # PROPERTIES LOCKS ACCESSES
   /api/v1/properties/{properties:id}/locks/{lock:id}/accesses/:
     get:
-      operationId: retrievePropertyLockAccesses
+      operationId: listPropertyLockAccesses
       description: |
         <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
         <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
 
+        ---
         This method is used for retrieving information about a single lock's accesses.
       parameters:
       - name: properties:id
@@ -2458,8 +2569,16 @@ paths:
 # PROPERTIES AVAILABILITY PATHS
   /api/v1/properties/{properties:id}/available/:
     post:
-      operationId: getPropertyDailyAvailability
-      description: 'This endpoint is used to check whether the property can be booked. Returns 200 OK if can be, 409 Conflict if cannot be booked.'
+      operationId: checkPropertyDailyAvailability
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        <br>
+        This method is used for retrieving information about availability of a property.
+        <br> 
+        ONLY WORKS FOR DAILY  BOOKING TYPE.
       parameters:
       - name: properties:id
         in: path
@@ -2486,6 +2605,11 @@ paths:
     get:
       operationId: getPropertyHourlySlotsAvailability
       description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope">
+        
+        ---
+        <br>
         This endpoint is used to retrieve free slots for a date. Works only on properties with HOURLY booking type - otherwise returns 400.
         Slots can be empty with 200 OK, which means the property can be booked today, but there are no available slots.
         <br>
@@ -2500,7 +2624,7 @@ paths:
       - name: date
         in: query
         required: true
-        description: A unique integer value identifying the property.
+        description: A date for the check.
         schema:
           type: string
           example: '2020-02-12'
@@ -2783,6 +2907,24 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/200_OK_Properties_Paginated'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
@@ -2799,6 +2941,24 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/200_OK_Properties_Paginated'
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
@@ -2818,12 +2978,100 @@ paths:
         '200':
           $ref: '#/components/responses/200_OK_Bookings_Paginated'
           description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
         '400':
           $ref: '#/components/responses/400_Bad_Request_Property'
       tags:
       - UserAPI.UserRelatedEntities
 # COMMON ENDPOINTS
+  /api/v1/common/property-types/:
+    get:
+      operationId: listPropertyTypes
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope"><br>
+        
+        ---
+        Retrieve a list of property types.
+      
+      responses:
+        '200':
+          $ref: '#/components/responses/200_OK_CommonPropertyTypes_Paginated'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
 
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - CommonAPI
+  /api/v1/common/cities/:
+    get:
+      operationId: listSupportedCities
+      description: |
+        <img src="https://icon-library.com/images/completed-icon/completed-icon-6.jpg" width="30" height="30" alt="Computer Hope">
+        <img src="https://icon-library.com/images/5752c5f99c.svg.svg" width="30" height="30" alt="Computer Hope"><br>
+        
+        ---
+        Retrieve a list of supported cities.
+      responses:
+        '200':
+          $ref: '#/components/responses/200_OK_CommonCities_Paginated'
+          description: ''
+        '404':
+          $ref: '#/components/responses/404_Not_Found'
+        '401':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/401BadToken'
+                  - $ref: '#/components/schemas/401Unauthorized'
+              example:
+                errors: [ "Invalid Token : Given token is not valid"
+                ]
+                status_code: 401
+
+
+          description: 'Might return 401 Invalid token or 401 Unauthorized, see "Schemas"'
+        '403':
+          $ref: '#/components/responses/403_Forbidden'
+        '400':
+          $ref: '#/components/responses/400_Bad_Request_Property'
+      tags:
+      - CommonAPI
 # COMMS ENDPOINTS 
 
   /api/v1/user/change_password/:
@@ -3329,7 +3577,41 @@ components:
           type: integer
           example: "2021-03-19T02:33:08+0300"
           readOnly: true
-    
+    CommonCities:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Moscow"
+          description: "Name of the city that must be used in requests due to validation"
+        display_name:
+          type: string
+          example: "Moscow, Russia"
+          description: "Name with country and region where available"
+        locale_name:
+          type: string
+          example: "Москва"
+          description: "Localized name of the city"
+        timezone:
+          type: string
+          example: "Europe/Moscow"
+          description: "Timezone of the city"
+    CommonPropertyTypes:
+      type: object
+      properties:
+        property_type:
+          type: integer
+          example: 100
+          description: "Code of the property type that must be used in requests."
+        title:
+          type: string
+          example: "Short name of the property type"
+          description: "Short name of the property type"
+        description:
+          type: string
+          example: "Description of the property type"
+          description: "Description of the property type"
+
     Owner:
       type: object
       readOnly: true
@@ -3356,7 +3638,6 @@ components:
             description: "Whether the user can delete the property."
         can_add_images:
             type: boolean
-            readOnly: true
             example: true
             description: "Whether the user can add images."
         can_delete_images:
@@ -3389,7 +3670,6 @@ components:
             description: "Whether the user can add locks."
         can_manage_locks:
             type: boolean
-            readOnly: true
             example: true
             description: "Whether the user can update locks."
         can_delete_locks:
@@ -3429,7 +3709,7 @@ components:
           type: integer
           enum: [100, 200]
           example: 100
-          description: "Whether the user is shown in contact (`100`) or not (`200`)."
+          description: "Whether the user is shown in contact info of the property (`100`) or not (`200`)."
         created_at:
           readOnly: true
           type: string
@@ -3585,27 +3865,37 @@ components:
             status_can_be_updated:
               type: boolean
               example: true
+              description: "Whether the current user can update status."
             number_of_clients_can_be_updated:
               type: boolean
               example: true
+              description: "Whether the current user can update the number of clients."
             can_be_cancelled_by_user:
               type: boolean
               example: true
+              description: "Whether the current user can cancel the booking."
           readOnly: true
         id:
           type: number
           example: 1
           readOnly: true
+          description: "Id of the booking"
         booked_property:
           type: array
+          description: "Information abouth the booked property."
           readOnly: true
           items:
             $ref: "#/components/schemas/PropertyList"
         number_of_clients:
           type: integer
           example: 1
+          minimum: 0
+          maximum: 1000
+          description: "Number of clients"
         client_email:
           type: string
+          description: "This parameter is required only if the booking is being created
+          by an owner."
           example: "example@test.com"
         status:
           readOnly: true
@@ -3614,23 +3904,44 @@ components:
         booked_from:
           type: string
           example: "2020-12-17T03:00+0300"
-          readOnly: true
+          description: |
+           - For `DAILY` bookings the accepted format is: `2020-12-17`
+           - For `HOURLY` bookings the accepted format is: `2020-12-17T03:00`
+           <br> For `HOURLY` bookings the time in the property timezone must be used.
         booked_until:
           type: string
           example: "2020-12-17T04:00+0300"
-          readOnly: true
+          description: |
+           - For `DAILY` bookings the accepted format is: `2020-12-17`
+           - For `HOURLY` bookings the accepted format is: `2020-12-17T03:00`
+           <br> For `HOURLY` bookings the time in the property timezone must be used.
         booked_by:
           type: integer
           example: 57
           readOnly: true
+        booked_by_info:
+          readOnly: true
+          description: "Information about the user who created the booking."
+          type: object
+          properties:
+            fist_name:
+              type: string
+              example: "String"
+              readOnly: true
+            email:
+              type: string
+              example: "String"
+              readOnly: true
         price:
           type: integer
           example: 5000
           readOnly: true
+          description: "Price of the booking."
         timezone:
           type: string
           example: "Europe/Moscow"
           readOnly: true
+          description: "Timezone in which the booked property is located."
         created_at:
           readOnly: true
           type: string
@@ -3641,9 +3952,108 @@ components:
           example: "2020-12-12T20:36:11+03:00"
       required:
       - number_of_clients
-      - client_email
+      #- client_email
       - booked_from
       - booked_until
+    BookingUpdate:
+      type: object
+      properties:
+        available_actions:
+          type: object
+          properties:
+            status_can_be_updated:
+              type: boolean
+              example: true
+              description: "Whether the current user can update status."
+            number_of_clients_can_be_updated:
+              type: boolean
+              example: true
+              description: "Whether the current user can update the number of clients."
+            can_be_cancelled_by_user:
+              type: boolean
+              example: true
+              description: "Whether the current user can cancel the booking."
+          readOnly: true
+        id:
+          type: number
+          example: 1
+          readOnly: true
+          description: "Id of the booking"
+        booked_property:
+          type: array
+          description: "Information abouth the booked property."
+          readOnly: true
+          items:
+            $ref: "#/components/schemas/PropertyList"
+        number_of_clients:
+          type: integer
+          example: 1
+          minimum: 0
+          maximum: 1000
+          description: "Number of clients"
+        client_email:
+          type: string
+          description: "Email of the client. <br> This parameter is required only if the booking is being created
+          by an owner."
+          readOnly: true
+          example: "example@test.com"
+        status:
+          type: string
+          enum: ["ACCEPTED", "AWAITING", "DECLINED", "EXPIRED", "CANCELLED_BY_OWNER", "CANCELLED_BY_USER"]
+          description: |
+           An owner can set following statuses:
+            - `ACCEPTED`
+            - `DECLINED`
+        booked_from:
+          type: string
+          readOnly: true
+          example: 
+            oneOf: 
+              - "2020-12-17T03:00+0300"
+              - "2020-12-17"
+        booked_until:
+          type: string
+          readOnly: true
+          example: 
+            oneOf: 
+              - "2020-12-17T03:00+0300"
+              - "2020-12-18"
+        booked_by:
+          type: integer
+          example: 57
+          readOnly: true
+          description: "Id of the user who created the booking."
+        booked_by_info:
+          readOnly: true
+          description: "Information about the user who created the booking."
+          type: object
+          properties:
+            fist_name:
+              type: string
+              example: "String"
+              readOnly: true
+            email:
+              type: string
+              example: "String"
+              readOnly: true
+        price:
+          type: integer
+          example: 5000
+          readOnly: true
+          description: "Price of the booking."
+        timezone:
+          type: string
+          example: "Europe/Moscow"
+          readOnly: true
+          description: "Timezone in which the booked property is located."
+        created_at:
+          readOnly: true
+          type: string
+          example: "2020-12-12T20:36:11+03:00"
+        updated_at:
+          readOnly: true
+          type: string
+          example: "2020-12-12T20:36:11+03:00"
     LockCreate:
       type: object
       properties:
@@ -3725,12 +4135,15 @@ components:
         booked_from:
           type: string
           example: "2021-02-01"
+          description: "Start date."
         booked_until:
           type: string
           example: "2021-02-12"
+          description: "End date"
         number_of_clients:
           type: integer
           example: 2
+          description: "Number of clients to be booked."
     User:
       type: object
       properties:
@@ -4405,6 +4818,44 @@ components:
                   type: array
                   items:
                     $ref: "#/components/schemas/Booking"
+    200_OK_CommonCities_Paginated:
+      description: Responce was processed
+      content:
+        application/json:
+          schema:
+            properties:
+              count:
+                type: integer
+                example: 7
+              next:
+                type: string
+                example: "http://testserver/api/v1/common/cities/?page=4"
+              previous:
+                type: string
+                example: "http://testserver/api/v1/common/cities/?page=2"
+              results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/CommonCities"
+    200_OK_CommonPropertyTypes_Paginated:
+      description: Responce was processed
+      content:
+        application/json:
+          schema:
+            properties:
+              count:
+                type: integer
+                example: 7
+              next:
+                type: string
+                example: "http://testserver/api/v1/common/property-types/?page=4"
+              previous:
+                type: string
+                example: "http://testserver/api/v1/common/property-types/?page=2"
+              results:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/CommonPropertyTypes"
     200_OK_Groups_Paginated:
       description: Responce was processed
       content:
