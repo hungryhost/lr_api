@@ -67,7 +67,7 @@ class UserMembersListCreateView(generics.ListCreateAPIView):
 				can_manage_members=True
 		).exists():
 			raise exceptions.PermissionDenied
-		super(UserMembersListCreateView, self).get(self, request, *args, **kwargs)
+		return super(UserMembersListCreateView, self).get(self, request, *args, **kwargs)
 
 	def post(self, request, *args, **kwargs):
 		if not UserGroupMembership.objects.filter(
@@ -76,7 +76,7 @@ class UserMembersListCreateView(generics.ListCreateAPIView):
 				can_add_members=True
 		).exists():
 			raise exceptions.PermissionDenied
-		super(UserMembersListCreateView, self).post(self, request, *args, **kwargs)
+		return super(UserMembersListCreateView, self).post(self, request, *args, **kwargs)
 
 	def get_queryset(self, *args, **kwargs):
 		queryset = UserGroupMembership.objects.prefetch_related(
@@ -118,7 +118,7 @@ class PropertyGroupMemberListCreateView(generics.ListCreateAPIView):
 				user_id=self.request.user.id
 		).exists():
 			raise exceptions.PermissionDenied
-		super(PropertyGroupMemberListCreateView, self).get(self, request, *args, **kwargs)
+		return super(PropertyGroupMemberListCreateView, self).get(self, request, *args, **kwargs)
 
 	def post(self, request, *args, **kwargs):
 		if not UserGroupMembership.objects.filter(
@@ -127,7 +127,7 @@ class PropertyGroupMemberListCreateView(generics.ListCreateAPIView):
 				can_add_properties=True
 		).exists():
 			raise exceptions.PermissionDenied
-		super(PropertyGroupMemberListCreateView, self).post(self, request, *args, **kwargs)
+		return super(PropertyGroupMemberListCreateView, self).post(self, request, *args, **kwargs)
 
 	def get_serializer_context(self):
 		context = super(PropertyGroupMemberListCreateView, self).get_serializer_context()
