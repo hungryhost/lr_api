@@ -214,6 +214,7 @@ INSTALLED_APPS = [
 	'cities_light',
 	'django_filters',
 	'django_countries',
+	'encrypted_fields',
 	'storages',
 	'phone_field',
 	'timezone_field',
@@ -235,7 +236,8 @@ INSTALLED_APPS = [
 ]
 
 API_KEY_CUSTOM_HEADER = "LR-CRM-Key"
-
+FIELD_ENCRYPTION_KEYS = env("LOCK_ENCRYPTION_KEYS").split(",")
+KEY_HASH = env.str('KEY_HASH')
 _locale._getdefaultlocale = (lambda *args: ['en_US', 'utf8'])
 MIDDLEWARE = [
 	'django.middleware.security.SecurityMiddleware',
@@ -474,8 +476,13 @@ if USE_S3:
 	PRIVATE_MEDIA_LOCATION = 'private'
 	PRIVATE_FILE_STORAGE = 'rentAccess.storage_backends.PrivateMediaStorage'
 else:
-	STATIC_URL = '/static/'
-	STATIC_ROOT = root('static')
+	if DEBUG:
+		STATICFILES_DIRS = (os.path.join('static'),)
+		STATIC_ROOT = ''
+		STATIC_URL = '/static/'
+	else:
+		STATIC_URL = '/static/'
+		STATIC_ROOT = root('static')
 	MEDIA_ROOT = root('media')
 	MEDIA_URL = '/media/'
 
