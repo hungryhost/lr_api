@@ -484,8 +484,9 @@ class HourlyBookingCreateFromOwnerSerializer(serializers.ModelSerializer):
 			price=price
 		)
 
-		if Ownership.objects.filter(premises_id=self.context["property_id"],
-		                            user=self.context["request"].user).exists() or (not
+		if Ownership.objects.filter(
+				premises_id=self.context["property_id"],
+				user=self.context["request"].user).exists() or (not
 		Property.objects.get(id=self.context["property_id"]).requires_additional_confirmation
 		):
 			created_booking.status = "ACCEPTED"
