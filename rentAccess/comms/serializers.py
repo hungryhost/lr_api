@@ -102,8 +102,6 @@ class LockMessageCreateSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = LockMessage
 		fields = [
-			'email',
-			'fio',
 			'selected_lock_id',
 			'phone',
 			'comment',
@@ -118,7 +116,6 @@ class LockMessageCreateSerializer(serializers.ModelSerializer):
 		]
 
 	def to_representation(self, instance):
-
 		selected_lock = LockInfoLightSerializer(
 			instance.selected_lock,
 			many=False, read_only=True
@@ -155,6 +152,8 @@ class LockMessageCreateSerializer(serializers.ModelSerializer):
 		message = LockMessage(
 			**validated_data,
 			selected_lock=lock_to_db,
+			fio=self.context['request'].user.full_name,
+			email=self.context['request'].user.email,
 			status='WAIT'
 		)
 		message.save()
