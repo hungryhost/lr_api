@@ -41,6 +41,7 @@ class Property(models.Model):
 	VISIBILITY_CHOICES = [
 		(100, 'Publicly Visible'),
 		(150, 'Only within the organisation'),
+		(250, 'Only within the group'),
 		(200, 'Only owner and admins can see'),
 	]
 	BOOKING_CHOICES = [
