@@ -9,6 +9,45 @@ from properties.models import Property
 User = get_user_model()
 
 
+class UserGroupPermissionsSerializer(serializers.ModelSerializer):
+	can_add_properties = serializers.BooleanField(required=True)
+	can_delete_properties = serializers.BooleanField(required=True)
+	can_book_properties = serializers.BooleanField(required=True)
+	recursive_ownership = serializers.BooleanField(required=False)
+	can_add_members = serializers.BooleanField(required=True)
+	can_remove_members = serializers.BooleanField(required=True)
+	can_manage_members = serializers.BooleanField(required=True)
+
+	class Meta:
+		model = UserGroupMembership
+		fields = [
+			"can_add_properties",
+			"can_delete_properties",
+			"can_book_properties",
+			"recursive_ownership",
+			"can_add_members",
+			"can_remove_members",
+			"can_manage_members",
+			"can_update_info",
+			"can_delete_group",
+			"created_at",
+			"updated_at"
+		]
+		read_only_fields = [
+			"can_add_properties",
+			"can_delete_properties",
+			"can_book_properties",
+			"recursive_ownership",
+			"can_add_members",
+			"can_remove_members",
+			"can_manage_members",
+			"can_update_info",
+			"can_delete_group",
+			"created_at",
+			"updated_at"
+		]
+
+
 class UserGroupMemberListSerializer(serializers.ModelSerializer):
 	user = UserSerializer(many=False, read_only=True)
 	id = serializers.IntegerField(source='user.id', read_only=True)
@@ -25,6 +64,7 @@ class UserGroupMemberListSerializer(serializers.ModelSerializer):
 		fields = [
 			'id',
 			"user",
+			"is_creator",
 			"can_add_properties",
 			"can_delete_properties",
 			"can_book_properties",
@@ -40,6 +80,7 @@ class UserGroupMemberListSerializer(serializers.ModelSerializer):
 		read_only_fields = [
 			'id',
 			"user",
+			"is_creator",
 			"can_add_properties",
 			"can_delete_properties",
 			"can_book_properties",
@@ -135,12 +176,14 @@ class UserGroupMemberCreateSerializer(serializers.ModelSerializer):
 
 
 class GroupRetrieveSerializer(serializers.ModelSerializer):
+	is_my_group = serializers.SerializerMethodField("get_is_my_group")
 	current_user_permissions = serializers.SerializerMethodField('get_current_user_permissions')
 
 	class Meta:
 		model = PropertyGroup
 		fields = [
 			"id",
+			"is_my_group",
 			"current_user_permissions",
 			"title",
 			"description",
@@ -148,18 +191,32 @@ class GroupRetrieveSerializer(serializers.ModelSerializer):
 			"updated_at"
 		]
 		read_only_fields = [
-			'current_user_permissions',
-			'id',
-			'created_at',
-			'updated_at'
+			"id",
+			"is_my_group",
+			"current_user_permissions",
+			"title",
+			"description",
+			"created_at",
+			"updated_at"
 		]
+
+	def get_is_my_group(self, obj):
+		user = self.context["request"].user
+		membership = obj.property_groups.all()
+		_member = None
+		for member in membership:
+			if member.user == user:
+				_member = member
+		if _member is not None and _member.is_creator:
+			return True
+		return False
 
 	def get_current_user_permissions(self, obj):
 		members = obj.property_groups.all()
 		current_user = None
 		for member in members:
 			if member.user == self.context['request'].user:
-				current_user = UserGroupMemberListSerializer(member, many=False)
+				current_user = UserGroupPermissionsSerializer(member, many=False)
 				return current_user.data
 		return current_user
 
@@ -213,11 +270,13 @@ class GroupCreateSerializer(serializers.ModelSerializer):
 
 class GroupListSerializer(serializers.ModelSerializer):
 	is_my_group = serializers.SerializerMethodField("get_is_my_group")
+	current_user_permissions = serializers.SerializerMethodField('get_current_user_permissions')
 
 	class Meta:
 		model = PropertyGroup
 		fields = [
 			"id",
+			"current_user_permissions",
 			"title",
 			"is_my_group",
 			"description",
@@ -226,12 +285,22 @@ class GroupListSerializer(serializers.ModelSerializer):
 		]
 		read_only_fields = [
 			"id",
+			"current_user_permissions",
 			"title",
 			"is_my_group",
 			"description",
 			"created_at",
 			"updated_at"
 		]
+
+	def get_current_user_permissions(self, obj):
+		members = obj.property_groups.all()
+		current_user = None
+		for member in members:
+			if member.user == self.context['request'].user:
+				current_user = UserGroupPermissionsSerializer(member, many=False)
+				return current_user.data
+		return current_user
 
 	def get_is_my_group(self, obj):
 		user = self.context["request"].user
