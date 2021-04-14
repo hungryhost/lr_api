@@ -63,6 +63,7 @@ class LockAndPropertySerializer(serializers.ModelSerializer):
 	last_access_attempt = serializers.SerializerMethodField('get_last_access')
 	added_by = serializers.SerializerMethodField('get_added_by')
 	manufacturing_id = serializers.IntegerField(source='lock.id')
+	local_ip = serializers.SerializerMethodField('get_local_ip')
 
 	class Meta:
 		model = LockWithProperty
@@ -73,6 +74,7 @@ class LockAndPropertySerializer(serializers.ModelSerializer):
 			'last_access_attempt',
 			'added_by',
 			'added_at',
+			'local_ip',
 			'updated_at'
 		)
 		read_only_fields = [
@@ -81,6 +83,7 @@ class LockAndPropertySerializer(serializers.ModelSerializer):
 			'last_access_attempt',
 			'added_by',
 			'added_at',
+			'local_ip',
 			'updated_at'
 		]
 
@@ -94,6 +97,10 @@ class LockAndPropertySerializer(serializers.ModelSerializer):
 		user = obj.added_by
 		serializer = UserSerializer(user)
 		return serializer.data
+
+	def get_local_ip(self, obj):
+		addresses = obj.lock.ip_addresses.all()
+		return addresses.last().private_ip
 
 
 class AddLockToPropertySerializer(serializers.ModelSerializer):
