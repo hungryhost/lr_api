@@ -10,7 +10,7 @@ def key_validator(value):
         ValidationError: Error, occurred when string doesn't match the regular expression.
     """
 
-    if not re.fullmatch(r'\d{6,9}', value):
+    if not re.fullmatch(r'\d{6,9}', str(value)):
         raise ValidationError('Code must contain only digits and have from 6 to 9 characters')
 
 
