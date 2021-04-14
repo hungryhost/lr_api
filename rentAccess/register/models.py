@@ -37,7 +37,7 @@ class Lock(models.Model):
     ]
     id = models.BigAutoField('id', primary_key=True)
     uuid = models.UUIDField('uuid', default=uuid.uuid4, unique=True, editable=True)
-    hash_id = models.CharField('hash_id', max_length=256, unique=True, blank=True, editable=False)
+    hash_id = models.CharField('hash_id', max_length=256, unique=True, blank=True, editable=True)
     description = models.TextField('description', blank=True, max_length=200, default="")
     is_on = models.BooleanField('is_on', null=False, default=True)
     is_approved = models.BooleanField('is_approved', default=True)
@@ -82,8 +82,8 @@ class Card(models.Model):
     """
     id = models.BigAutoField('id', primary_key=True)
     _card_data = fields.EncryptedCharField(validators=[card_validator], null=False, max_length=9)
-    card_id = fields.SearchField(hash_key=settings.CARD_HASH, encrypted_field_name='_card_data')
-    hash_id = models.CharField('hash_id', max_length=256, unique=True, editable=False)
+    card_id = fields.SearchField(hash_key=settings.CARD_HASH, encrypted_field_name='_card_data', editable=False)
+    hash_id = models.CharField('hash_id', max_length=256, unique=False, editable=False)
     is_master = models.BooleanField('is_master', null=False, default=False)
     lock = models.ForeignKey(Lock, models.CASCADE, 'lock_key',
                              null=False, verbose_name='lock_id',
@@ -119,7 +119,7 @@ class Key(models.Model):
     """
     id = models.BigAutoField('id', primary_key=True)
     _code_data = fields.EncryptedPositiveIntegerField(validators=[key_validator], null=False)
-    code = fields.SearchField(hash_key=settings.KEY_HASH, encrypted_field_name='_code_data')
+    code = fields.SearchField(hash_key=settings.KEY_HASH, encrypted_field_name='_code_data', editable=False)
     code_secure = models.TextField(editable=True, blank=True, null=False)
     hash_code = models.CharField('hash_code', max_length=256, unique=False, blank=True)
     lock = models.ForeignKey(Lock, models.CASCADE, 'lock_code',
