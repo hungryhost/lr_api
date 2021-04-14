@@ -106,10 +106,11 @@ class PropertyGroupMemberListCreateView(generics.ListCreateAPIView):
 
 	def get_queryset(self, *args, **kwargs):
 		queryset = Property.objects.all().select_related(
-			'availability', 'property_address', 'property_address__city', 'property_type')
+			'availability', 'property_address',
+			'property_address__city', 'property_type')
 		queryset = queryset.filter(
 			Q(mem_groups__group_id=self.kwargs["pk"])
-		).prefetch_related('property_images')
+		).prefetch_related('property_images', 'owners')
 		return queryset
 
 	def get(self, request, *args, **kwargs):
