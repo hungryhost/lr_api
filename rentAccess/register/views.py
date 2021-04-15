@@ -21,7 +21,12 @@ class LockList(generics.ListCreateAPIView):
 
 class CardList(generics.ListCreateAPIView):
     serializer_class = CardSerializer
-    queryset = Card.objects.all()
+
+    def get_queryset(self):
+        queryset = Card.objects.all()
+        lock_id = self.kwargs.get('lock_id', None)
+        queryset = queryset.filter(lock_id__tied_lock=lock_id)
+        return queryset
 
 
 class KeyList(generics.ListCreateAPIView):
@@ -32,8 +37,8 @@ class KeyList(generics.ListCreateAPIView):
         Return new key with generated code
         """
         queryset = Key.objects.all()
-        key_id = self.request.query_params.get('id', None)
-        queryset = queryset.filter(id=key_id)
+        lock_id = self.kwargs.get('lock_id', None)
+        queryset = queryset.filter(lock_id__tied_lock=lock_id)
         return queryset
 
 
