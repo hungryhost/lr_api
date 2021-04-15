@@ -1,5 +1,7 @@
 from django.urls import path
 from django.views.generic import TemplateView
+
+from checkAccess.views import GetAccessList
 from .views import PropertiesViewSet, PropertyListCreate, PropertyImagesViewSet, \
 	LockList, OwnersListCreate, OwnershipViewSet, LocksViewSet
 from register.views import CardList, KeyList
@@ -56,6 +58,8 @@ urlpatterns = [
 	path('bookings/', BookingsAllList.as_view(), name='properties-bookings-list-all'),
 	path('<int:pk>/availability-exceptions/', AvailabilityExceptionListCreateView.as_view(),
 	     name='properties-availability-exceptions'),
+	path('<int:pk>/availability-exceptions/delete/', AvailabilityExceptionListCreateView.as_view(),
+	     name='properties-availability-exceptions'),
 	path('<int:pk>/images/set_main_image/', PropertiesViewSet.as_view(
 		{
 			'put': 'change_main_image',
@@ -69,11 +73,7 @@ urlpatterns = [
 			'put': 'update'
 		}
 	)),
-	path('<int:pk>/locks/<int:lock_id>/accesses/', LocksViewSet.as_view(
-		{
-			'get': 'get_accesses',
-		}
-	)),
+	path('<int:pk>/locks/<int:lock_id>/accesses/', GetAccessList.as_view()),
 	path('<int:pk>/locks/<int:lock_id>/cards/', CardList.as_view(), name='properties-cards-list'),
 	path('<int:pk>/locks/<int:lock_id>/keys/', KeyList.as_view(), name='properties-keys-list'),
 	# path('<int:pk>/images/<int:image_id>/', PropertyImagesViewSet.as_view(

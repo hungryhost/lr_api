@@ -9,4 +9,7 @@ class AccessListSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = AccessLog
-		fields = '__all__'
+		fields = [
+			'result',
+			'try_time'
+		]
