@@ -44,7 +44,7 @@ class Lock(models.Model):
     last_echo = models.DateTimeField('last_echo', auto_now_add=True)
     version = models.IntegerField(choices=VERSION_CHOICES, default=1, null=False, blank=True)
     firmware = models.IntegerField(choices=FIRMWARE_CHOICES, default=1, null=False, blank=True)
-    linking_code = models.TextField('linking_code', default=None, editable=False, null=True, blank=True, unique=True)
+    linking_code = models.TextField('linking_code', default=None, editable=True, null=True, blank=True, unique=True)
 
     class Meta:
         managed = True
