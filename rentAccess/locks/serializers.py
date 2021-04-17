@@ -99,26 +99,28 @@ class LockAndPropertySerializer(serializers.ModelSerializer):
 		return serializer.data
 
 	def get_local_ip(self, obj):
-		addresses = obj.lock.ip_addresses.all()
-		return addresses.last().private_ip
+		try:
+			addresses = obj.lock.ip_addresses.all()
+			ip = addresses.last().private_ip
+			return ip
+		except Exception as e:
+			return ""
 
 
 class AddLockToPropertySerializer(serializers.ModelSerializer):
-	uuid = serializers.UUIDField(format='urn', source='lock.uuid', required=True)
-	description = serializers.CharField(max_length=200, required=True)
+	code = serializers.CharField(max_length=20, required=True, source='lock.linking_code')
 
 	class Meta:
 		model = LockWithProperty
-		fields = ('id', 'uuid', 'description')
-		read_only_fields = ['is_on', 'is_approved']
+		fields = ('code', )
 
 	def create(self, validated_data):
 
-		uuid_ = validated_data["lock"]["uuid"]
+		code = validated_data['lock']['linking_code']
 
 		description = validated_data.get('description', None)
 		try:
-			lock = Lock.objects.get(uuid=uuid_)
+			lock = Lock.objects.get(linking_code=code)
 		except Lock.DoesNotExist:
 			raise Http404("Lock not found with such uuid.")
 		if LockWithProperty.objects.filter(lock=lock).exists():

@@ -70,7 +70,8 @@ urlpatterns = [
 	path('<int:pk>/locks/<int:lock_id>/', LocksViewSet.as_view(
 		{
 			'get': 'retrieve',
-			'put': 'update'
+			'put': 'update',
+			'delete': 'destroy'
 		}
 	)),
 	path('<int:pk>/locks/<int:lock_id>/accesses/', GetAccessList.as_view()),

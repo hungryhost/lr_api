@@ -48,6 +48,7 @@ ERROR_409 = {
 class LockList(generics.ListCreateAPIView):
 
 	def create(self, request, *args, **kwargs):
+
 		property_owners = self.get_property_object()
 		if not property_owners.owners.filter(
 				premises_id=self.kwargs["pk"],
@@ -56,11 +57,22 @@ class LockList(generics.ListCreateAPIView):
 				can_add_locks=True
 		).exists():
 			raise exceptions.PermissionDenied
-		serializer = self.get_serializer(data=request.data)
-		serializer.is_valid(raise_exception=True)
-		self.perform_create(serializer)
-		headers = self.get_success_headers(serializer.data)
-		return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+		context = self.get_serializer_context()
+		write_serializer = AddLockToPropertySerializer(
+			data=request.data,
+			context=context
+		)
+		write_serializer.is_valid(raise_exception=True)
+		instance = self.perform_create(write_serializer)
+
+		read_serializer = LockAndPropertySerializer(instance, many=False)
+		headers = self.get_success_headers(read_serializer.data)
+		return Response(read_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+	def perform_create(self, serializer):
+		obj = serializer.save()
+		return obj
 
 	def get(self, request, *args, **kwargs):
 		try:
@@ -335,6 +347,15 @@ class LocksViewSet(viewsets.ViewSet, mixins.ListModelMixin, viewsets.GenericView
 			context={'request': request, 'property_id': pk}
 		)
 		return Response(serializer.data, status=status.HTTP_200_OK)
+
+	@action(detail=True, methods=['delete'])
+	def destroy(self, request, pk=None, lock_id=None):
+		try:
+			lock = LockWithProperty.objects.get(pk=lock_id, property_id=pk)
+		except LockWithProperty.DoesNotExist:
+			raise Http404
+		lock.delete()
+		return Response(status=status.HTTP_204_NO_CONTENT)
 
 	@action(detail=True, methods=['put'])
 	def update(self, request, pk=None, lock_id=None):

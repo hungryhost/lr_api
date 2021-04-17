@@ -236,7 +236,7 @@ class LockWithProperty(models.Model):
 							related_name='tied_lock')
 	added_by = models.ForeignKey(settings.AUTH_USER_MODEL,
 		related_name='added_locks', on_delete=models.CASCADE, null=False, blank=False)
-	description = models.CharField(max_length=200, blank=True, null=False)
+	description = models.CharField(max_length=200, blank=True, null=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now_add=True)
 
