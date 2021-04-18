@@ -56,6 +56,10 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 	userpic = serializers.SerializerMethodField('get_userpic', default="")
 
 	plan = serializers.SerializerMethodField("get_plan")
+	work_email = serializers.EmailField(allow_null=True, allow_blank=True)
+	use_work_email_incbookings = serializers.BooleanField()
+	use_work_email_outbookings = serializers.BooleanField()
+	show_work_email_in_contact_info = serializers.BooleanField()
 
 	def get_plan(self, obj):
 		try:
@@ -106,43 +110,6 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 		except Exception as e:
 			return str(e)
 
-	def to_representation(self, data):
-		# consider overriding it further in order to enforce permissions
-		representation = super(ProfileUpdateSerializer, self).to_representation(data)
-		return representation
-
-	def update(self, instance, validated_data):
-		first_name = validated_data.get('first_name', None)
-		last_name = validated_data.get('last_name', None)
-		middle_name = validated_data.get('middle_name', None)
-		phone = validated_data.get('phone', -1)
-
-		dob = validated_data.get('dob', None)
-		gender = validated_data.get('gender', None)
-		bio = validated_data.get('bio', None)
-		_timezone = validated_data.get('timezone', None)
-
-		if phone != -1:
-			instance.phone = phone
-			instance.phone_confirmed = True
-		if not phone:
-			instance.phone_confirmed = False
-		if dob:
-			instance.dob = dob
-		if middle_name:
-			instance.middle_name = middle_name
-		if gender and gender in ['M', 'F']:
-			instance.gender = gender
-		if bio is not None:
-			instance.bio = bio
-		if first_name:
-			instance.first_name = first_name
-		if last_name:
-			instance.last_name = last_name
-		instance.updated_at = datetime.datetime.now()
-		instance.save()
-		return instance
-
 	class Meta:
 		fields = [
 			'id',
@@ -155,6 +122,10 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 			'bio',
 			'timezone',
 			'plan',
+			'work_email',
+			'use_work_email_incbookings',
+			'use_work_email_outbookings',
+			'show_work_email_in_contact_info',
 			'email_confirmed',
 			'phone_confirmed',
 			'client_rating',
