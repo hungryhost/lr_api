@@ -1,40 +1,51 @@
-This project is created with `react-create-app`
+# Серверное приложение для веб-приложения Сервиса аренды помещений 
 
-## Как запустить проект:
-1. Клонируйте проект с gitlab командой `git clone https://git.miem.hse.ru/294/web-294.git <folder_name>`
-2. Установите платформу для исполнения javascript `node.js` с [сайта](https://nodejs.org/en/)
-3. Перейдите в папку проекта и установите все зависимости проекта командой `npm install`
-4. Запустите проект командой `npm start`
+# Основная информация
+## Стек проекта
+- Python
+- Django
+- Django Rest Framework
+- Redis
+- S3 хранилище файлов
+- Docker
 
+## Архитектура базы данных
+Архитектура базы данных в программном варианте рассредоточена в файлах models.py каждого модуля приложения.
+Описание функций каждой из моделей приведено в комментарии к классу модели.
 
-## Project structure and libraries:
+# Развёртывание на сервере
+Развёртывание на сервере состоит из двух этапов.
+## Этап первый - заполнение переменных среды
+```
+DEBUG=<on/off - режим работы>
+SQL_DEBUG=<True/False - режим отладки запросов к БД>
+ALLOWED_HOSTS=<внутренняя настройка Django, см. документацию Django Framework>
+SECRET_KEY=<внутренняя настройка Django, см. документацию Django Framework>
+CORS_ORIGIN_ALLOW_ALL=<внутренняя настройка Django, см. документацию Django Framework>
+CORS_ALLOWED_ORIGINS=<внутренняя настройка Django, см. документацию Django Framework>
 
-####General architecture
-    1. Functional components only for comfort work with hooks
-    2. State managment with redux (@redux-toolkit)
-    3. React-router for routing
-## Available scripts
+LOG_ROOT=<путь к папке для хранения log-файлов>
+DB_NAME=<название базы данных>
+DB_HOST=<адрес базы данных>
+DB_PORT=<порт базы данных>
+DB_USER=<пользователь базы данных>
+DB_PASSWORD=<пароль базы данных>
+DEV_DATABASE_URL=<адрес локальной БД для разработки, пример: sqlite:////C:/web-294/web-294/rentAccess/db.sqlite3> 
 
-In the project directory, you can run:
+EMAIL_HOST=<адрес mail-сервера>
+EMAIL_HOST_USER=<адрес отправки сообщений по умолчанию>
+EMAIL_HOST_PASSWORD=<пароль для пользователя почты>
+EMAIL_PORT=<порт mail-сервера>
 
+CACHE_URL_1=<адрес БД для кэша (REDIS)>
 
+CELERY_BROKER_URL=<адрес брокера сообщений CELERY>
+CELERY_RESULT_BACKEND=<адрес брокера сообщений CELERY>
 
-### `yarn start`
-
-By default, this script runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-1. Регистрация
-    1. Сразу авторизировано
-2. Новый access и новый refresh
-3. Логинизация
-    1. Email и password
-    2. Пока без сессий
-3. Личный кабинет
-    1. Список помещений
-    2. Можно добавлять и удалять помещения
-    3. Можно сдать в аренду (???)
-    4. Есть данные того, кому сдаём
-    5. Данные - email 
-    6. Каталог помещений (в будущем для тех, кто хочет снять)
-    7. 
+USE_POSTGRES=<True/False, выбор БД для использования>
+USE_S3=<True/False, выбор хранилища для использования>
+USE_REDIS_CACHE=<True/False, выбор REDIS для кэша>
+LOCK_ENCRYPTION_KEYS=<base64 ключ для шифрования кодов замка>
+KEY_HASH=<хэш ключ для шифрования кодов замка>
+CARD_HASH=<хэщ ключ для шифрования карт замка>
+```
