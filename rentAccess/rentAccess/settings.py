@@ -17,6 +17,7 @@ environ.Env.read_env(env_file=root('.env'))
 # site root points to rentAccess root folder
 SITE_ROOT = root()
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+CORS_ALLOW_CREDENTIALS = True
 DEBUG = env.bool('DEBUG', default=False)
 SECRET_KEY = env.str('SECRET_KEY')
 ALLOWED_HOSTS = env("ALLOWED_HOSTS").split(",")
@@ -290,7 +291,7 @@ if USE_POSTGRES:
 			"HOST": env("DB_HOST"),
 			"PORT": env("DB_PORT"),
 			"OPTIONS": {
-				'options': '-c search_path=django'
+				'options': '-c search_path=main'
 			}
 		}
 	}
@@ -331,7 +332,7 @@ USE_TZ = True
 DEFAULT_RENDERER_CLASSES = (
 	'rest_framework.renderers.JSONRenderer',
 )
-APPEND_SLASH = True
+APPEND_SLASH = False
 ################################################
 # when DEBUG == True DRF will render errors as html pages
 if DEBUG:
