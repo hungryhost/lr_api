@@ -7,7 +7,7 @@
 
 # testing
 /coverage
-
+.coverage
 # production
 /build
 
@@ -26,6 +26,8 @@ yarn-error.log*
 ############### backend ##############
 /.idea/
 __pycache__/
+**/migrations/**
+**/**/migrations
 *.py[cod]
 *.log
 .log
@@ -39,3 +41,6 @@ venv/
 .env.development.server
 .env
 /rentAccess/static/
+/settings.zip
+rentAccess/htmlcov
+log.*

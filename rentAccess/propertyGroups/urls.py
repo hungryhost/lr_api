@@ -13,7 +13,6 @@ urlpatterns = [
     path('<int:pk>/', GroupRetrieveUpdateDeleteView.as_view()),
     path('<int:pk>/members/', UserMembersListCreateView.as_view(), name='group-members'),
     path('<int:pk>/members/delete/', bulk_delete_members, name='delete-group-members'),
-
     path('<int:pk>/properties/', PropertyGroupMemberListCreateView.as_view(), name='group-properties'),
     path('<int:pk>/properties/delete/', bulk_delete_properties, name='delete-group-properties'),
 
