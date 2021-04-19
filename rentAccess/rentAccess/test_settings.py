@@ -1,3 +1,4 @@
+import _locale
 import os
 import environ
 from pathlib import Path
@@ -212,6 +213,10 @@ INSTALLED_APPS = [
 ]
 
 API_KEY_CUSTOM_HEADER = "LR-CRM-Key"
+FIELD_ENCRYPTION_KEYS = env("LOCK_ENCRYPTION_KEYS").split(",")
+KEY_HASH = env.str('KEY_HASH')
+CARD_HASH = env.str('CARD_HASH')
+_locale._getdefaultlocale = (lambda *args: ['en_US', 'utf8'])
 
 MIDDLEWARE = [
 	'django.middleware.security.SecurityMiddleware',

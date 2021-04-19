@@ -109,10 +109,11 @@ class LockAndPropertySerializer(serializers.ModelSerializer):
 
 class AddLockToPropertySerializer(serializers.ModelSerializer):
 	code = serializers.CharField(max_length=20, required=True, source='lock.linking_code')
+	description = serializers.CharField(max_length=255, required=False, allow_null=True, allow_blank=True)
 
 	class Meta:
 		model = LockWithProperty
-		fields = ('code', )
+		fields = ('code', 'description')
 
 	def create(self, validated_data):
 
