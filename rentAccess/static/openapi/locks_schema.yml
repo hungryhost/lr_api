@@ -3,6 +3,108 @@ info:
   title: ''
   version: 0.0.0
 paths:
+  /api/v2/echo/:
+    post:
+      operationId: createecho
+      description: Handles service requests for monitoring connection to locks.
+      parameters: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema: { }
+          application/x-www-form-urlencoded:
+            schema: { }
+          multipart/form-data:
+            schema: { }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: { }
+          description: ''
+      tags:
+        - LockAPI.V2.Echo
+  /api/v2/check-access/card/:
+      post:
+        operationId: createcheck_access_by_card
+        description: 'Checks, if card from request has privilege to open lock.
+
+          Detailed description provided in API documentation.'
+        parameters: [ ]
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card_v2_check'
+        responses:
+          '200':
+            content:
+              application/json:
+                example: "#"
+            description: 'Returns `#` if card is valid, otherwise `*`.'
+          '403':
+            content:
+              application/json:
+                example: {
+                  "detail": "You do not have permission to perform this action."
+                     }
+            description: 'Returned if api-key is invalid.'
+        tags:
+          - LockAPI.V2.CheckAccess
+  /api/v2/check-access/key/:
+      post:
+        operationId: createcheck_access_by_code
+        description: 'Checks, if code from request has privilege to open lock.
+
+          Detailed description provided in API documentation.'
+        parameters: [ ]
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Key_v2_check'
+        responses:
+          '200':
+            content:
+              application/json:
+                example: "#"
+            description: 'Returns `#` if card is valid, otherwise `*`.'
+          '403':
+            content:
+              application/json:
+                example: {
+                  "detail": "You do not have permission to perform this action."
+                     }
+            description: 'Returned if api-key is invalid.'
+        tags:
+          - LockAPI.V2.CheckAccess
+  /api/v2/api-key/:
+      post:
+        operationId: createget_api_key
+        description: ''
+        parameters: [ ]
+        requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyPost'
+        responses:
+          '201':
+            content:
+              application/json:
+                example: {
+                  "api-key": "bwDK6KwK.uPnXtKmkq0dC7ctfauBRMcncFZGJx20t"
+                  }
+            description: 'Returns api key.'
+          '400':
+            content:
+              application/json:
+                example: {
+                "hash_id": "Lock with given hash_id does not exist."
+                    }
+            description: 'Returned if lock with given hash_id does not exist.'
+        tags:
+          - LockAPI.V2.APIKey
   /lock-api/v1/access/{id}/:
     get:
       operationId: lock_api_v1_access_list
@@ -772,6 +874,24 @@ paths:
           description: ''
 components:
   schemas:
+    Card_v2_check:
+      type: object
+      properties:
+          card_id:
+            type: string
+            maxLength: 9
+    Key_v2_check:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 9
+    ApiKeyPost:
+      type: object
+      properties:
+        hash_id:
+          type: string
+          maxLength: 256
     Card:
       type: object
       properties:

@@ -169,6 +169,7 @@ class PropertyJson:
 		self._main_image = ""
 		self._visibility_list = [100, 200, 300]
 		self._property_types = [100, 200]
+		self._bookings_types = [100, 200]
 		self._requires_additional_confirmation = requires_additional_confirmation
 		self._maximum_booking_length = maximum_booking_length
 		self._maximum_number_of_bookings_daily = maximum_number_of_bookings_daily
@@ -178,6 +179,11 @@ class PropertyJson:
 			self._title = self._generate_invalid_title()
 		else:
 			self._title = self._generate_valid_title()
+
+		if self._invalid_property_params and "booking_type" in self._invalid_property_params:
+			self._booking_type = self._generate_invalid_booking_type()
+		else:
+			self._booking_type = self._generate_valid_booking_type()
 
 		if self._invalid_property_params and "body" in self._invalid_property_params:
 			self._body = self._generate_invalid_body()
@@ -236,6 +242,10 @@ class PropertyJson:
 		choice = random.randint(1, 3)
 		return self._visibility_list[choice-1]
 
+	def _generate_valid_booking_type(self):
+		choice = random.randint(1, 3)
+		return self._bookings_types[choice - 1]
+
 	def _generate_valid_type(self):
 		choice = random.randint(1, 2)
 		return self._property_types[choice-1]
@@ -250,6 +260,10 @@ class PropertyJson:
 
 	@staticmethod
 	def _generate_invalid_type():
+		return random.randint(300, 600)
+
+	@staticmethod
+	def _generate_invalid_booking_type():
 		return random.randint(300, 600)
 
 	def _generate_request_json(

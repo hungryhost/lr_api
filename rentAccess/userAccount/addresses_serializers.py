@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import BillingAddresses
+from .models import BillingAddress
 
 
 class BillingAddressSerializer(serializers.ModelSerializer):
@@ -16,7 +16,7 @@ class BillingAddressSerializer(serializers.ModelSerializer):
 	addr_is_active = serializers.BooleanField(required=False)
 
 	class Meta:
-		model = BillingAddresses
+		model = BillingAddress
 		fields = [
 			'addr_type',
 			'addr_country',

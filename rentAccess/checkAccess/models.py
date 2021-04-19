@@ -2,7 +2,7 @@ from django.db import models
 from register.models import Lock, Key, Card
 
 
-class Logs(models.Model):
+class AccessLog(models.Model):
     """Model, representing access attempts.
     Fields:
         lock (Lock): Locks uuid that was attempted to access.
@@ -21,6 +21,6 @@ class Logs(models.Model):
 
     class Meta(object):
         ordering = ['-try_time']
-        db_table = 'Logs'
+        db_table = 'lock_access_logs'
 
 

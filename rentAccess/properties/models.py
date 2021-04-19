@@ -1,33 +1,56 @@
+import os
+from uuid import uuid4
+
 from django.db import models
 import datetime
-from common.models import PermissionLevels
 from register.models import Lock
-from userAccount.models import *
+from django.conf import settings
+from common.models import SupportedCity
 
 
-class PropertyTypes(models.Model):
+class PermissionLevel(models.Model):
+	class Meta:
+		db_table = 'property_permission_levels'
+	p_level = models.PositiveIntegerField(primary_key=True)
+	description = models.CharField(max_length=150, null=True, blank=True)
+
+
+class PropertyType(models.Model):
 	r"""
 	Property types are defined by following codes:
 		- 100: Ordinary non-inhabitable property, like an office
 		- 200: Inhabitable property, a flat or a house
 	"""
+	class Meta:
+		db_table = 'property_types'
 	property_type = models.IntegerField(primary_key=True, null=False, blank=False)
-	description = models.CharField(max_length=150, null=False, blank=False)
+	title = models.CharField(max_length=150, null=False, blank=False)
+	description = models.CharField(max_length=255, null=False, blank=True)
 
 	def __int__(self):
 		return self.property_type
 
 
 class Property(models.Model):
+	r"""
+	Main model for storing information about properties.
+	"""
+	class Meta:
+		db_table = 'properties'
+
 	VISIBILITY_CHOICES = [
 		(100, 'Publicly Visible'),
-		(200, 'Only within the organisation'),
-		(300, 'Only owner and admins can see'),
+		(150, 'Only within the organisation'),
+		(250, 'Only within the group'),
+		(200, 'Only owner and admins can see'),
 	]
-	author = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='properties', on_delete=models.CASCADE)
+	BOOKING_CHOICES = [
+		(200, 'Hourly booking'),
+		(100, 'Daily booking'),
+	]
 	title = models.CharField(max_length=50, null=False, blank=False)
 	body = models.TextField(max_length=500, null=False, blank=False)
-	price = models.PositiveIntegerField()
+	price = models.PositiveIntegerField(null=True, blank=True)
 	visibility = models.IntegerField(
 		choices=VISIBILITY_CHOICES,
 		default=100,
@@ -38,50 +61,102 @@ class Property(models.Model):
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 	property_type = models.ForeignKey(
-		PropertyTypes,
+		PropertyType,
 		to_field='property_type',
 		related_name='property_types',
 		on_delete=models.CASCADE,
 		null=False,
 		blank=False
 	)
-	maximum_number_of_clients = models.IntegerField(default=1, null=False, blank=False)
 	client_greeting_message = models.CharField(max_length=500, null=False, blank=True)
 	requires_additional_confirmation = models.BooleanField(default=False, null=False, blank=True)
+
+	booking_type = models.IntegerField(
+		choices=BOOKING_CHOICES,
+		default=100,
+		null=False,
+		blank=False
+	)
+
+	def __str__(self):
+		return self.title
+
+
+class Availability(models.Model):
+	r"""
+	This model is used for storing information about property's availability.
+	"""
+	class Meta:
+		db_table = 'property_availability'
+
+	premises = models.OneToOneField(Property, related_name='availability',
+		on_delete=models.CASCADE, null=False, blank=False)
+	open_days = models.CharField(max_length=7, default='1111111', null=False, blank=False)
 
 	# interval between bookings in minutes
 	booking_interval = models.IntegerField(default=0, null=False, blank=True)
 
 	# maximum number of bookings a day (from 0:00 until 23:59
 	# if -1, then no limit
-	maximum_number_of_bookings_daily = models.IntegerField(default=-1, null=False, blank=True)
+	# maximum_number_of_bookings_daily = models.IntegerField(default=-1, null=False, blank=True)
 
 	# maximum length of bookings for the property in minutes
 	# if -1, then no limit
-	maximum_booking_length = models.IntegerField(default=-1, null=False, blank=True)
+	# maximum_booking_length = models.IntegerField(default=-1, null=False, blank=True)
 
-	def __str__(self):
-		return self.title
+	maximum_number_of_clients = models.IntegerField(default=1, null=False, blank=False)
+
+	available_from = models.TimeField(null=True, blank=True)
+	available_until = models.TimeField(null=True, blank=True)
+	available_hours = models.CharField(max_length=255, null=True, blank=True, default='111111111111111111111111')
+	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
+	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 
 
 class Ownership(models.Model):
+	r"""
+	This model is used to store information about property's owners.
+	"""
+	class Meta:
+		db_table = 'property_ownership'
+
 	VISIBILITY_CHOICES = [
 		(100, 'Publicly Visible'),
-		(150, 'Visible for those who booked the property'),
-		(200, 'Only within the organisation scope'),
-		(250, 'Only within the property owners scope'),
-		(300, 'Only property initial owner and admins can see'),
+		(200, 'Not visible'),
 	]
 
-	visibility = models.IntegerField(choices=VISIBILITY_CHOICES, default=250, null=False, blank=True)
+	visibility = models.IntegerField(choices=VISIBILITY_CHOICES, default=100, null=False, blank=True)
 	premises = models.ForeignKey(Property, related_name='owners', on_delete=models.CASCADE, null=False, blank=False)
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='ownership', on_delete=models.CASCADE, null=False, blank=False)
 	is_creator = models.BooleanField(default=False, null=False, blank=True)
+	is_super_owner = models.BooleanField(default=False, null=False, blank=True)
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
-	permission_level = models.ForeignKey(PermissionLevels, to_field='p_level',
-										related_name='permission_levels',
-										on_delete=models.CASCADE)
+	permission_level = models.ForeignKey(PermissionLevel, to_field='p_level',
+	                                     related_name='permission_levels',
+	                                     on_delete=models.CASCADE)
+	can_edit = models.BooleanField(default=False, null=False)
+	can_delete = models.BooleanField(default=False, null=False)
+
+	can_add_images = models.BooleanField(default=False, null=False)
+	can_delete_images = models.BooleanField(default=False, null=False)
+
+	can_add_bookings = models.BooleanField(default=False, null=False)
+	can_manage_bookings = models.BooleanField(default=False, null=False)
+
+	can_add_owners = models.BooleanField(default=False, null=False)
+	can_manage_owners = models.BooleanField(default=False, null=False)
+	can_delete_owners = models.BooleanField(default=False, null=False)
+
+	can_add_locks = models.BooleanField(default=False, null=False)
+	can_manage_locks = models.BooleanField(default=False, null=False)
+	can_delete_locks = models.BooleanField(default=False, null=False)
+
+	can_add_to_group = models.BooleanField(default=False, null=False)
+	# can_remove_from_group = models.BooleanField(default=False, null=False)
+
+	can_add_to_organisation = models.BooleanField(default=False, null=False)
+	# can_remove_from_organisation = models.BooleanField(default=False, null=False)
 	#    initial_owner_object = InitialOwnershipManager()
 
 	def __str__(self):
@@ -89,6 +164,7 @@ class Ownership(models.Model):
 
 
 class PropertyLog(models.Model):
+
 	listed_prop = models.ForeignKey(Property, on_delete=models.CASCADE)
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 	CHOICES = [
@@ -105,7 +181,7 @@ class PropertyLog(models.Model):
 
 
 def path_and_rename(instance, filename):
-	path = ''
+	path = 'property-images'
 	ext = filename.split('.')[-1]
 	# get filename
 	if instance.pk:
@@ -117,7 +193,10 @@ def path_and_rename(instance, filename):
 	return os.path.join(path, filename)
 
 
-class PremisesImages(models.Model):
+class PremisesImage(models.Model):
+	class Meta:
+		db_table = 'property_images'
+	# TODO: add uploaded_by
 	premises = models.ForeignKey(Property, to_field='id',
 								related_name='property_images', on_delete=models.CASCADE)
 	image = models.ImageField(upload_to=path_and_rename, blank=True, null=True)
@@ -128,13 +207,15 @@ class PremisesImages(models.Model):
 		self.is_main = True
 
 
-class PremisesAddresses(models.Model):
+class PremisesAddress(models.Model):
+	class Meta:
+		db_table = 'property_address'
 	premises = models.OneToOneField(Property, related_name='property_address', on_delete=models.CASCADE,
 									null=False, blank=False)
 	country = models.CharField(max_length=100, blank=False, null=False)
-	city = models.CharField(max_length=100, blank=False, null=False)
-	street_1 = models.CharField(max_length=100, blank=False, null=False)
-	street_2 = models.CharField(max_length=100, blank=True, null=False)
+	city = models.ForeignKey(SupportedCity, to_field='name', on_delete=models.CASCADE,
+	                         related_name='property_city', blank=False, null=False)
+	street = models.CharField(max_length=255, blank=False, null=False)
 	building = models.CharField(max_length=20, blank=True, null=False)
 	floor = models.CharField(max_length=20, blank=True, null=False)
 	number = models.CharField(max_length=30, blank=True, null=False)
@@ -144,37 +225,76 @@ class PremisesAddresses(models.Model):
 	updated_at = models.DateTimeField(auto_now_add=True)
 
 
-class Bookings(models.Model):
-	booked_from = models.DateTimeField(null=False, blank=False)
-	booked_until = models.DateTimeField(null=False, blank=False)
-	booked_property = models.ForeignKey(Property, related_name="booked_property",
-										on_delete=models.CASCADE, null=False, blank=False)
-	created_at = models.DateTimeField(auto_now_add=True)
-	updated_at = models.DateTimeField(auto_now_add=True)
-	client_email = models.EmailField(null=False, blank=True)
-	number_of_clients = models.IntegerField(null=False, blank=True, default=1)
-	STATUS_CHOICES = [
-		('ACCEPTED', 'Approved'),
-		('AWAITING', 'Awaiting action from the owner'),
-		('DECLINED', 'The owner declined the request')
-	]
-	status = models.CharField(max_length=100, choices=STATUS_CHOICES,
-							null=False, blank=False, default='AWAITING')
-	booked_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="created_by",
-								on_delete=models.CASCADE, null=True, blank=True)
+class LockWithProperty(models.Model):
+	class Meta:
+		db_table = 'property_locks'
 
-	is_deleted = models.BooleanField(default=False, null=False, blank=False)
-
-	def __str__(self):
-		return self.status + " " + "client: " + self.client_email + " from: " + str(self.booked_from.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)) \
-			+ " Until: " + str(self.booked_until.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None))
-
-
-class LocksWithProperties(models.Model):
+	# TODO: add added_by
 	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
 								related_name="property_with_lock")
 	lock = models.ForeignKey(Lock, to_field='uuid', on_delete=models.CASCADE,
 							related_name='tied_lock')
-	description = models.CharField(max_length=200, blank=True, null=False)
+	added_by = models.ForeignKey(settings.AUTH_USER_MODEL,
+		related_name='added_locks', on_delete=models.CASCADE, null=False, blank=False)
+	description = models.CharField(max_length=200, blank=True, null=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class FavoriteProperty(models.Model):
+	class Meta:
+		db_table = 'user_favored_properties'
+
+	user = models.ForeignKey(settings.AUTH_USER_MODEL,
+		related_name='user_fav_prop', on_delete=models.CASCADE, null=False, blank=False)
+	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
+	                             related_name="added_to_fav")
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class Trip(models.Model):
+	class Meta:
+		db_table = 'user_trips'
+
+	title = models.CharField(max_length=50, null=False, blank=False)
+	start_date = models.DateField(null=True, blank=True)
+	end_date = models.DateField(null=True, blank=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class TripProperty(models.Model):
+	class Meta:
+		db_table = 'user_trip_properties'
+
+	trip = models.ForeignKey(Trip, to_field='id', on_delete=models.CASCADE,
+	                             related_name="trip_w_props")
+	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
+	                             related_name="trips")
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class TripMember(models.Model):
+	class Meta:
+		db_table = 'user_trip_members'
+
+	trip = models.ForeignKey(Trip, to_field='id', on_delete=models.CASCADE,
+	                             related_name="trip_w_memb")
+	user = models.ForeignKey(settings.AUTH_USER_MODEL,
+	                         related_name='user_trips', on_delete=models.CASCADE, null=False, blank=False)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class AvailabilityException(models.Model):
+	class Meta:
+		db_table = 'property_availability_exceptions'
+
+	parent_availability = models.ForeignKey(
+		Availability, to_field='id', on_delete=models.CASCADE, related_name="av_exceptions")
+	exception_datetime_start = models.DateTimeField(null=False, blank=False)
+	exception_datetime_end = models.DateTimeField(null=False, blank=False)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now_add=True)

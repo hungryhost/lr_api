@@ -39,4 +39,3 @@ venv/
 .env.development.server
 .env
 /rentAccess/static/
-

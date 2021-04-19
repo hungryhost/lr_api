@@ -15,7 +15,7 @@ from .utils import username_generate_from_email
 from .tasks import email_confirmation_task
 from .serializers import UserCreateSerializer, UserLoginSerializer
 from django.contrib.sites.shortcuts import get_current_site
-
+from .throttles import LoginThrottle
 
 User = get_user_model()
 
@@ -54,12 +54,13 @@ def registration(request):
 		"link": absolute_url,
 		"email": user.email
 	}
-	email_confirmation_task.delay(0, data)
+	# email_confirmation_task.delay(0, data)
 	return response.Response(res, status.HTTP_201_CREATED)
 
 
 @decorators.api_view(["POST"])
 @decorators.permission_classes([permissions.AllowAny])
+@decorators.throttle_classes([LoginThrottle])
 def login(request):
 	"""
 	This method implements user login action.
@@ -68,6 +69,7 @@ def login(request):
 	:param request: incoming POST request
 	:return: JSON object with data
 	"""
+
 	serializer = UserLoginSerializer(data=request.data)
 	# permission_classes = (AllowAny,)
 	if not serializer.is_valid():
@@ -134,8 +136,8 @@ def email_verification(request):
 	try:
 		payload = jwt.decode(token, settings.SECRET_KEY)
 		user = User.objects.get(id=payload['user_id'])
-		if not user.is_confirmed:
-			user.is_confirmed = True
+		if not user.email_confirmed:
+			user.email_confirmed = True
 			user.save()
 		return Response({
 			'email': 'Email confirmed'

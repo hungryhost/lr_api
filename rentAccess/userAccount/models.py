@@ -4,6 +4,7 @@ from django.db import models
 import os
 from uuid import uuid4
 from timezone_field import TimeZoneField
+from phone_field import PhoneField
 #
 #
 #
@@ -93,6 +94,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 			'middle_name',
 			'email'
 		]
+		db_table = 'users'
 
 	GENDER_CHOICES = [
 		('M', 'Male'),
@@ -101,14 +103,23 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 	]
 	email = models.EmailField('email', null=False, blank=False, max_length=64,
 		unique=True, db_index=True)
+	work_email = models.EmailField('work_email', null=True, blank=True, max_length=64,
+		unique=True, db_index=True)
+
+	use_work_email_incbookings = models.BooleanField('use_work_email_incbookings', default=False)
+	use_work_email_outbookings = models.BooleanField('use_work_email_outbookings', default=False)
+	show_work_email_in_contact_info = models.BooleanField('show_work_email_in_contact_info', default=False)
+	show_main_email_in_contact_info = models.BooleanField('show_work_email_in_contact_info', default=False)
+
 	first_name = models.CharField('first_name', null=False, blank=False, max_length=50)
 	last_name = models.CharField('last_name', null=False, blank=False, max_length=50)
 
 	middle_name = models.CharField('middle_name', null=False, blank=True, max_length=50)
 	bio = models.CharField('bio', null=False, blank=True, max_length=500, default="")
-
-	is_confirmed = models.BooleanField('is_confirmed', default=False)
-	dob = models.DateField('dob', null=False, blank=True, default="1970-01-01")
+	phone = PhoneField(blank=True, help_text='Contact phone number')
+	email_confirmed = models.BooleanField('email_confirmed', default=False)
+	phone_confirmed = models.BooleanField('phone_confirmed', default=False)
+	dob = models.DateField('dob', null=True, blank=True)
 	gender = models.CharField('gender', max_length=1, choices=GENDER_CHOICES, null=False,
 	blank=True, default='')
 	timezone = TimeZoneField('timezone', default='Europe/Moscow')
@@ -118,6 +129,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 	two_factor_auth = models.BooleanField(default=False)
 	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
 	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	client_rating = models.CharField(default='', max_length=15, null=False, blank=True)
+	is_banned = models.BooleanField(default=False)
+	additional_info = models.CharField(max_length=1024, null=False, blank=True)
+	last_password_update = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	tos_version = models.CharField(max_length=20, null=True, blank=False, default='1.0')
 
 	EMAIL_FIELD = 'email'
 	USERNAME_FIELD = 'email'
@@ -140,12 +156,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 		"""
 		return f'{self.last_name} {self.first_name}'
 
-	def has_module_perms(self, app_label):
-		return self.is_admin
-
-	def has_perm(self, perm, obj=None):
-		return self.is_admin
-
 	def __str__(self):
 		return "{}".format(self.email)
 
@@ -163,9 +173,90 @@ def path_and_rename(instance, filename):
 	return os.path.join(path, filename)
 
 
-class UserImages(models.Model):
+class MetaBannedInfo(models.Model):
+	class Meta:
+		db_table = 'users_banned_info'
+
+	banned_user = models.ForeignKey(
+		settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+	)
+	reason = models.CharField(max_length=500, null=False, blank=True)
+	employee_id = models.IntegerField(null=False, blank=False)
+	expiration = models.DateTimeField(blank=True, null=True)
+
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+
+
+class ClientPlan(models.Model):
+	class Meta:
+		db_table = 'user_available_plans'
+	code = models.CharField(max_length=255, primary_key=True)
+	description = models.CharField(max_length=500, null=False, blank=True)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+
+
+class PlannedClient(models.Model):
+	class Meta:
+		db_table = 'user_plans'
+
+	plan = models.ForeignKey(
+		ClientPlan, to_field='code', on_delete=models.CASCADE)
+	client = models.ForeignKey(
+		settings.AUTH_USER_MODEL, related_name='user_plans', on_delete=models.CASCADE
+	)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+
+
+class PlanRequests(models.Model):
+	class Meta:
+		db_table = 'user_plan_requests'
+
+	CHOICES = [
+		("APPROVED", 'OK'),
+		("WAIT", 'Pending'),
+		("DECLINED", 'Bad'),
+	]
+
+	requested_plan = models.ForeignKey(
+		ClientPlan, null=True, on_delete=models.SET_NULL)
+	client = models.ForeignKey(
+		settings.AUTH_USER_MODEL, related_name='user_plan_requests', on_delete=models.CASCADE
+	)
+
+	status = models.CharField(
+		'status', max_length=20, choices=CHOICES, null=False, blank=True, default='WAIT')
+	status_changed_reason = models.CharField(max_length=255, null=False, blank=True)
+	status_changed_by = models.CharField(max_length=255, null=False, blank=True)
+
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+
+
+class KYCOperation(models.Model):
+	class Meta:
+		db_table = 'user_kyc_info'
+
+	KYC_CHOICES = [
+		("OK", 'OK'),
+		("PENDING", 'Pending'),
+		("BAD", 'Bad'),
+	]
+	user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
+	                         related_name='kyc_info', on_delete=models.SET_NULL)
+	kys_status = models.CharField(
+		'kyc_status', max_length=10, choices=KYC_CHOICES, null=False, blank=True, default='')
+	kyc_last_performed = models.DateTimeField(blank=True, null=True)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+
+
+class UserImage(models.Model):
 	class Meta:
 		app_label = 'userAccount'
+		db_table = 'user_avatars'
 
 	account = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='account_images',
 	                            on_delete=models.CASCADE)
@@ -174,8 +265,9 @@ class UserImages(models.Model):
 	uploaded_at = models.DateTimeField(auto_now_add=True)
 
 
-class PhoneTypes(models.Model):
+class PhoneType(models.Model):
 	class Meta:
+		db_table = 'lr_user_phone_types'
 		app_label = 'userAccount'
 
 	phone_type = models.CharField(max_length=20, primary_key=True)
@@ -185,19 +277,23 @@ class PhoneTypes(models.Model):
 		return self.phone_type
 
 
-class Phones(models.Model):
+class Phone(models.Model):
 	class Meta:
+		db_table = 'user_phones'
 		app_label = 'userAccount'
 
 	account = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='account_phones',
 	                            on_delete=models.CASCADE)
 	phone_number = models.CharField(max_length=13, null=False, blank=False)
-	phone_type = models.ForeignKey(PhoneTypes, on_delete=models.RESTRICT)
+	phone_type = models.ForeignKey(PhoneType, on_delete=models.RESTRICT)
 	is_deleted = models.BooleanField(default=False)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
 
 
-class DocumentTypes(models.Model):
+class DocumentType(models.Model):
 	class Meta:
+		db_table = 'lr_user_document_types'
 		app_label = 'userAccount'
 
 	doc_type = models.CharField(max_length=40, primary_key=True)
@@ -207,8 +303,9 @@ class DocumentTypes(models.Model):
 		return self.doc_type
 
 
-class AddressTypes(models.Model):
+class AddressType(models.Model):
 	class Meta:
+		db_table = 'lr_user_address_types'
 		app_label = 'userAccount'
 
 	addr_type = models.CharField(max_length=40, primary_key=True)
@@ -218,22 +315,27 @@ class AddressTypes(models.Model):
 		return self.addr_type
 
 
-class Documents(models.Model):
+class Document(models.Model):
+	class Meta:
+		db_table = 'user_documents'
 	account = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='documents', on_delete=models.CASCADE)
-	doc_type = models.ForeignKey(DocumentTypes, to_field='doc_type', on_delete=models.CASCADE)
+	doc_type = models.ForeignKey(DocumentType, to_field='doc_type', on_delete=models.CASCADE)
 	doc_serial = models.PositiveIntegerField(null=True, blank=True, unique=True)
 	doc_number = models.PositiveIntegerField(null=True, blank=True, unique=True)
 	doc_issued_at = models.DateField(null=True, blank=True)
 	doc_issued_by = models.CharField(max_length=100, blank=True, null=True)
 	doc_is_confirmed = models.BooleanField(default=False)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
 
 
-class BillingAddresses(models.Model):
+class BillingAddress(models.Model):
 	class Meta:
+		db_table = 'user_billing_addresses'
 		app_label = 'userAccount'
 
 	account = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='billing_addresses', on_delete=models.CASCADE)
-	addr_type = models.ForeignKey(AddressTypes, on_delete=models.RESTRICT)
+	addr_type = models.ForeignKey(AddressType, on_delete=models.RESTRICT)
 	addr_country = models.CharField(max_length=100, blank=True, null=True)
 	addr_city = models.CharField(max_length=100, blank=True, null=True)
 	addr_street_1 = models.CharField(max_length=100, blank=True, null=True)
@@ -243,3 +345,5 @@ class BillingAddresses(models.Model):
 	addr_number = models.CharField(max_length=30, blank=True, null=True)
 	zip_code = models.CharField(max_length=10, blank=True)
 	addr_is_active = models.BooleanField(default=True)
+	created_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
+	updated_at = models.DateTimeField(auto_now_add=True, blank=True, null=False)
