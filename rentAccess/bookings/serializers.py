@@ -276,13 +276,6 @@ class DailyBookingCreateFromClientSerializer(serializers.ModelSerializer):
 				detail="Dates are not valid. booked_until <= date_now"
 			)
 
-		if self.context["request"].user.email == attrs["client_email"]:
-			raise CustomValidation(
-				status_code=400,
-				field='client_email',
-				detail="Cannot book property you own for yourself."
-			)
-
 		query_1 = Q()
 		# query_1.add(Q(booked_property_id=1), Q.AND)
 		# query_1.add(Q(booked_from__lte=datetime_start), Q.OR)
