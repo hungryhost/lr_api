@@ -239,7 +239,7 @@ class LockWithProperty(models.Model):
 	# TODO: add added_by
 	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
 								related_name="property_with_lock")
-	lock = models.ForeignKey(Lock, to_field='uuid', on_delete=models.CASCADE,
+	lock = models.ForeignKey(Lock, to_field='id', on_delete=models.CASCADE,
 							related_name='tied_lock')
 	added_by = models.ForeignKey(settings.AUTH_USER_MODEL,
 		related_name='added_locks', on_delete=models.CASCADE, null=False, blank=False)
