@@ -38,6 +38,7 @@ django-rest-passwordreset==1.1.0
 django-rest-swagger==2.2.0
 django-searchable-encrypted-fields==0.1.9
 django-settings-json==1.0.2
+django-simple-history==3.0.0
 django-storages==1.11.1
 django-template-preview==0.1.5
 django-timezone-field==4.1.1

@@ -208,6 +208,7 @@ INSTALLED_APPS = [
 	'django.contrib.staticfiles',
 	'rest_framework',
 	"rest_framework_api_key",
+	"simple_history",
 	'debug_toolbar',
 	'rest_framework_swagger',
 	'rest_framework_simplejwt.token_blacklist',
@@ -254,6 +255,7 @@ MIDDLEWARE = [
 
 
 ]
+SIMPLE_HISTORY_HISTORY_ID_USE_UUID = True
 AUTH_USER_MODEL = 'userAccount.CustomUser'
 
 ROOT_URLCONF = 'rentAccess.urls'
@@ -475,6 +477,9 @@ if USE_S3:
 	PUBLIC_MEDIA_LOCATION = 'media'
 	MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
 	DEFAULT_FILE_STORAGE = 'rentAccess.storage_backends.PublicMediaStorage'
+	# s3 private media settings
+	PRIVATE_MEDIA_LOCATION = 'private'
+	PRIVATE_FILE_STORAGE = 'rentAccess.storage_backends.PrivateMediaStorage'
 
 else:
 	if DEBUG:

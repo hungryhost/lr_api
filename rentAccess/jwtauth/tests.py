@@ -82,7 +82,7 @@ class TestsOfJWT(APITestCase):
 				"middle_name": "",
 				"bio": "",
 				"timezone": "Europe/Moscow",
-				"is_confirmed": False,
+				"email_confirmed": False,
 				"is_staff": False,
 				'two_factor_auth': False,
 				"dob": "1970-01-01",

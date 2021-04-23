@@ -2,6 +2,7 @@ from django.db import models
 from properties.models import Property
 # Create your models here.
 from django.conf import settings
+from simple_history.models import HistoricalRecords
 
 
 class PropertyGroup(models.Model):
@@ -12,6 +13,7 @@ class PropertyGroup(models.Model):
 	description = models.TextField(max_length=500, null=False, blank=False)
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+	history = HistoricalRecords(table_name='property_groups_history')
 
 	def __str__(self):
 		return self.title
@@ -39,6 +41,8 @@ class PropertyGroupMembership(models.Model):
 		on_delete=models.SET_NULL, null=True, blank=True)
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
+
+	history = HistoricalRecords(table_name='property_group_properties_history')
 
 	def __str__(self):
 		return self.premises.title + " in " + self.group.title
@@ -74,6 +78,6 @@ class UserGroupMembership(models.Model):
 
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=False)
-
+	history = HistoricalRecords(table_name='property_group_members_history')
 	def __str__(self):
 		return self.user.full_name + " is a member of " + self.group.title

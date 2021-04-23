@@ -57,7 +57,21 @@ class LockMessage(models.Model):
 	CHOICES = [
 		('OK', 'Approved'),
 		('FAIL', 'Rejected'),
-		('WAIT', 'Await')
+		('WAIT', 'Await'),
+		('FINALIZED', 'Finalized'),
+		('CLOSED', 'Closed')
+	]
+	INTERNAL_STATUS = [
+		('IN_PROGRESS', 'In progress - sales'),
+		('HANDED_TO_MAN', 'In progress - manufacturing'),
+		('ARCHIVE', 'Archived'),
+		('HOLD', 'On hold'),
+		('NEW', 'New')
+	]
+
+	VERSION_CHOICES = [
+		(1, 'Ethernet'),
+		(2, 'Wi-Fi'),
 	]
 	email = models.EmailField(max_length=255, null=False, blank=True)
 	fio = models.CharField(max_length=255, null=False, blank=False)
@@ -69,6 +83,26 @@ class LockMessage(models.Model):
 	company = models.CharField(max_length=255, null=False, blank=True)
 	quantity = models.IntegerField(default=1, null=False, blank=False)
 	final_price = models.FloatField(null=True, blank=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+	preferred_type = models.IntegerField(choices=VERSION_CHOICES, default=1, null=False, blank=True)
+	internal_status = models.CharField(max_length=255, choices=INTERNAL_STATUS, default='NEW', null=False, blank=True)
+	internal_comment = models.TextField(blank=True, null=False)
+	employee_id_sales = models.BigIntegerField(null=True, blank=True)
+
+
+class LockManufacturingInternalMessage(models.Model):
+	class Meta:
+		managed = True
+		db_table = 'lock_internal_manufacturing_requests'
+	VERSION_CHOICES = [
+		(1, 'Ethernet'),
+		(2, 'Wi-Fi'),
+	]
+	version_lock = models.IntegerField(choices=VERSION_CHOICES, default=1, null=False, blank=True)
+	quantity = models.IntegerField(default=1, null=False, blank=False)
+	lock_message = models.ForeignKey(LockMessage, null=True, blank=True,
+	                                  on_delete=models.CASCADE)
 
 
 class ShippingAddress(models.Model):

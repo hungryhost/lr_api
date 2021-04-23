@@ -5,6 +5,8 @@ import os
 from uuid import uuid4
 from timezone_field import TimeZoneField
 from phone_field import PhoneField
+from simple_history.models import HistoricalRecords
+
 #
 #
 #
@@ -96,6 +98,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 		]
 		db_table = 'users'
 
+	history = HistoricalRecords(table_name='users_history')
 	GENDER_CHOICES = [
 		('M', 'Male'),
 		('F', 'Female'),

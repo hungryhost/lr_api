@@ -2,6 +2,7 @@ from django.db import models
 from properties.models import Property
 import datetime
 from django.conf import settings
+from simple_history.models import HistoricalRecords
 
 
 class Booking(models.Model):
@@ -32,6 +33,7 @@ class Booking(models.Model):
 
 	is_deleted = models.BooleanField(default=False, null=False, blank=False)
 	cancelled_reason = models.CharField(max_length=255, null=False, blank=True, default='')
+	history = HistoricalRecords(table_name='bookings_history')
 
 	def __str__(self):
 		return self.status + " " + "client: " + self.client_email + " from: " + str(self.booked_from.replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)) \

@@ -1,5 +1,6 @@
 import os
 from uuid import uuid4
+from simple_history.models import HistoricalRecords
 
 from django.db import models
 import datetime
@@ -78,6 +79,8 @@ class Property(models.Model):
 		blank=False
 	)
 
+	history = HistoricalRecords(table_name='properties_history')
+
 	def __str__(self):
 		return self.title
 
@@ -111,6 +114,7 @@ class Availability(models.Model):
 	available_hours = models.CharField(max_length=255, null=True, blank=True, default='111111111111111111111111')
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
+	history = HistoricalRecords(table_name='property_availability_history')
 
 
 class Ownership(models.Model):
@@ -159,6 +163,8 @@ class Ownership(models.Model):
 	# can_remove_from_organisation = models.BooleanField(default=False, null=False)
 	#    initial_owner_object = InitialOwnershipManager()
 
+	history = HistoricalRecords(table_name='property_ownership_history')
+
 	def __str__(self):
 		return str(self.premises.title) + " " + str(self.permission_level_id)
 
@@ -202,7 +208,7 @@ class PremisesImage(models.Model):
 	image = models.ImageField(upload_to=path_and_rename, blank=True, null=True)
 	uploaded_at = models.DateTimeField(auto_now_add=True)
 	is_main = models.BooleanField(default=False)
-
+	history = HistoricalRecords(table_name='property_images_history')
 	def set_main(self):
 		self.is_main = True
 
@@ -223,6 +229,7 @@ class PremisesAddress(models.Model):
 	directions_description = models.CharField(max_length=500, blank=True, null=False)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now_add=True)
+	history = HistoricalRecords(table_name='property_address_history')
 
 
 class LockWithProperty(models.Model):
@@ -232,13 +239,14 @@ class LockWithProperty(models.Model):
 	# TODO: add added_by
 	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
 								related_name="property_with_lock")
-	lock = models.ForeignKey(Lock, to_field='uuid', on_delete=models.CASCADE,
+	lock = models.ForeignKey(Lock, to_field='id', on_delete=models.CASCADE,
 							related_name='tied_lock')
 	added_by = models.ForeignKey(settings.AUTH_USER_MODEL,
 		related_name='added_locks', on_delete=models.CASCADE, null=False, blank=False)
 	description = models.CharField(max_length=200, blank=True, null=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now_add=True)
+	history = HistoricalRecords(table_name='property_locks_history')
 
 
 class FavoriteProperty(models.Model):
@@ -298,3 +306,4 @@ class AvailabilityException(models.Model):
 	exception_datetime_end = models.DateTimeField(null=False, blank=False)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now_add=True)
+	history = HistoricalRecords(table_name='property_availability_exceptions_history')
