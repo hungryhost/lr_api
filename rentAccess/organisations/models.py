@@ -6,6 +6,7 @@ from django_countries.fields import CountryField
 from cities_light.models import City
 from rest_framework_api_key.models import AbstractAPIKey
 from properties.models import Property
+from simple_history.models import HistoricalRecords
 
 
 class Organisation(models.Model):
@@ -17,6 +18,7 @@ class Organisation(models.Model):
 	LR_CRM_ID = models.TextField(null=False, blank=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now_add=True)
+	history = HistoricalRecords(table_name='organisations_history')
 
 	class Meta:
 		db_table = 'organisations'
@@ -44,6 +46,7 @@ class OrganisationAPIKey(AbstractAPIKey):
 class OrganisationAddress(models.Model):
 	class Meta:
 		db_table = 'organisation_addresses'
+	history = HistoricalRecords(table_name='organisation_addresses_history')
 
 	organisation = models.OneToOneField(Organisation, related_name='organisation_address', on_delete=models.CASCADE,
 	                                    null=False, blank=False)
@@ -68,6 +71,7 @@ class OrganisationMember(models.Model):
 		unique_together = [['organisation', 'user']]
 		db_table = 'organisation_members'
 
+	history = HistoricalRecords(table_name='organisation_members_history')
 	organisation = models.ForeignKey(
 		Organisation, null=False, related_name='member_tied_org', on_delete=models.CASCADE
 	)
@@ -147,6 +151,7 @@ class OrganisationProperty(models.Model):
 	class Meta:
 		unique_together = [['premises', 'organisation']]
 		db_table = 'organisation_properties'
+	history = HistoricalRecords(table_name='organisation_properties_history')
 
 	premises = models.ForeignKey(
 		Property,

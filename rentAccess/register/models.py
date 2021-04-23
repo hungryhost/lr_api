@@ -35,6 +35,25 @@ class Lock(models.Model):
     FIRMWARE_CHOICES = [
         (1, '1'),
     ]
+    STAGE_CHOICES = [
+        (1, 'TEST_IN_PROGRESS'),
+        (2, 'TEST_OK'),
+        (3, 'TEST_FAIL'),
+        (4, 'STORAGE'),
+        (5, 'SALES_LOCK'),
+        (6, 'DELIVERY_LOCK'),
+        (7, 'INSTALLED'),
+        (8, 'RECALLED'),
+        (9, 'STANDBY')
+
+    ]
+    TYPE_CHOICES = [
+        (1, 'TEST-ONLY'),
+        (2, 'CONSUMER_READY'),
+        (3, 'RETURNED'),
+        (4, 'FAULTY')
+
+    ]
     id = models.BigAutoField('id', primary_key=True)
     uuid = models.UUIDField('uuid', default=uuid.uuid4, unique=True, editable=True)
     hash_id = models.CharField('hash_id', max_length=256, unique=True, blank=True, editable=True)
@@ -45,6 +64,10 @@ class Lock(models.Model):
     version = models.IntegerField(choices=VERSION_CHOICES, default=1, null=False, blank=True)
     firmware = models.IntegerField(choices=FIRMWARE_CHOICES, default=1, null=False, blank=True)
     linking_code = models.TextField('linking_code', default=None, editable=True, null=True, blank=True, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    current_type = models.IntegerField(choices=TYPE_CHOICES, default=1, null=False, blank=True)
+    current_stage = models.IntegerField(choices=STAGE_CHOICES, default=1, null=False, blank=True)
 
     class Meta:
         managed = True
@@ -128,6 +151,7 @@ class Key(models.Model):
     access_start = models.DateTimeField('access_start')
     access_stop = models.DateTimeField('access_stop')
     created_manually = models.BooleanField(default=False)
+    is_master = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
