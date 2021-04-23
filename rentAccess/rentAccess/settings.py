@@ -208,6 +208,7 @@ INSTALLED_APPS = [
 	'django.contrib.staticfiles',
 	'rest_framework',
 	"rest_framework_api_key",
+	"simple_history",
 	'debug_toolbar',
 	'rest_framework_swagger',
 	'rest_framework_simplejwt.token_blacklist',
@@ -254,6 +255,7 @@ MIDDLEWARE = [
 
 
 ]
+SIMPLE_HISTORY_HISTORY_ID_USE_UUID = True
 AUTH_USER_MODEL = 'userAccount.CustomUser'
 
 ROOT_URLCONF = 'rentAccess.urls'
