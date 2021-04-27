@@ -16,6 +16,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
 from register.models import Key
+from .tasks import send_booking_email_to_client
 from .permissions import IsOwnerLevel100, IsOwnerLevel200, IsOwnerLevel300, IsOwnerLevel400, \
 	IsClientOfBooking, BookingIsAdminOfPropertyOrSuperuser, CanRetrieve, CanUpdateBooking
 from rest_framework import generics
@@ -96,10 +97,10 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 				)
 
 			data['keys'] = keys
-		# send_booking_email_to_client(has_key=True, data=data, duration=0)
+			data['has_key'] = True
 		else:
-			pass
-
+			data['has_key'] = False
+		send_booking_email_to_client(data=data, duration=0)
 		# send_booking_email_to_client(has_key=False, data=data, duration=0)
 
 	def get(self, request, *args, **kwargs):
