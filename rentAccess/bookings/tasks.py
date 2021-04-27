@@ -55,7 +55,10 @@ def send_booking_email_to_client(duration, data):
 	plaintext = get_template('generic_email_template.txt')
 	htmly = get_template('generic_email_template.html')
 	if full_name:
-		context = {'header': header, 'email_body': email_body}
+		context = {
+			'header': header, 'email_body': email_body, 'property_info': property_info,
+		    'property_addr': property_addr, 'property_dir': property_dir
+		           }
 	else:
 		context = {'header': header_empty, 'email_body': email_body}
 	text_content = plaintext.render(context)
