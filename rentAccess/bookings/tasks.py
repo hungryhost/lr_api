@@ -43,8 +43,11 @@ def send_booking_email_to_client(duration, data):
 	else:
 		email_body = f"Бронирование успешно создано! \n" \
 			f"Номер бронирования: {data['b_id']}. \n" \
-			f"Доступ к помещению с {data['b_start']} по {data['b_end']}. \n" \
-
+			f"Доступ к помещению с {data['b_start']} по {data['b_end']}. \n"
+	property_info = f"Помещение:  {booked_property.title}\n"
+	property_addr = f"Город: {address.city} " + f"Улица: {address.street} " + f"Дом: {address.building} " + \
+	                f"Этаж: {address.floor} " + f" Помещение: {address.number}"
+	property_dir = f"{address.directions_description}"
 	header = f'Здравствуйте, {full_name}!'
 	header_empty = f'Здравствуйте!'
 # print('started_task')
