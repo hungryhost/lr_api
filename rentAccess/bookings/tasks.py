@@ -35,7 +35,7 @@ def send_booking_email_to_client(duration, data):
 		full_name = None
 
 	if data['has_key']:
-		key = Key.objects.get(pk=data["key"])
+		key = Key.objects.get(pk=data["keys"][0]['key'])
 		email_body = f"Бронирование успешно создано! Ваш код доступа: {data['key']}.\n" \
 			f"Номер бронирования: {data['b_id']}. \n" \
 			f"Доступ к помещению с {data['b_start']} по {data['b_end']}.\n" \

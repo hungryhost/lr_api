@@ -88,6 +88,7 @@ class BookingsListCreateView(generics.ListCreateAPIView):
 			for lock in lwp:
 				key = Key(lock=lock.lock, access_start=obj.booked_from, access_stop=obj.booked_until)
 				key.save()
+
 				keys.append(
 					{
 						# "lock_id": lock.lock.id,
