@@ -3,13 +3,17 @@ from .models import Lock, Card, Key
 
 
 class CardSerializer(serializers.ModelSerializer):
+    manufacturing_id = serializers.IntegerField(source='lock.id')
+
     class Meta:
         model = Card
-        fields = ('id', 'lock', 'card_id', 'is_master')
+        fields = ('id', 'manufacturing_id', 'card_id', 'is_master')
 
 
 class KeySerializer(serializers.ModelSerializer):
+    manufacturing_id = serializers.IntegerField(source='lock.id')
+
     class Meta:
         model = Key
-        fields = ('id', 'lock', 'code', 'access_start', 'access_stop')
+        fields = ('id', 'manufacturing_id', 'code', 'access_start', 'access_stop')
 

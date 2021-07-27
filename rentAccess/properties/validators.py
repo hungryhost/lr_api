@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from common.models import SupportedCity
+from datetime import datetime, timedelta, time, date
 
 
 def validate_price(price: float):
@@ -26,3 +27,17 @@ def validate_city(city: str):
 		raise serializers.ValidationError(
 			"City with given name is not supported."
 		)
+
+
+def validate_available_time(
+		input_time
+):
+	try:
+		if input_time.minute != 0:
+			raise serializers.ValidationError(
+				"Time must not have minutes"
+			)
+	except Exception as e:
+		raise serializers.ValidationError(
+				str(e)
+			)

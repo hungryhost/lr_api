@@ -17,6 +17,27 @@ class IsClientOfBooking(permissions.BasePermission):
 		return False
 
 
+class CanUpdateBooking(permissions.BasePermission):
+	r"""
+	obj: booking object
+	"""
+	def has_permission(self, request, view):
+		return request.user and request.user.is_authenticated
+
+	def has_object_permission(self, request, view, obj):
+		try:
+			owner = obj.booked_property.owners.get(user=request.user)
+		except Exception as e:
+			owner = None
+		if owner:
+			if owner.can_manage_bookings:
+				return True
+		else:
+			if obj.client_email == request.user.email or request.user.is_superuser:
+				return True
+		return False
+
+
 class IsOwnerLevel100(permissions.BasePermission):
 	r"""
 	obj: booking object

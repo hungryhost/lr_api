@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import timedelta
 from celery.schedules import crontab
 from kombu import Exchange, Queue
-
+import _locale
 # finding a root directory of the project
 root = environ.Path(__file__) - 2
 
@@ -17,6 +17,7 @@ environ.Env.read_env(env_file=root('.env'))
 # site root points to rentAccess root folder
 SITE_ROOT = root()
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+CORS_ALLOW_CREDENTIALS = True
 DEBUG = env.bool('DEBUG', default=False)
 SECRET_KEY = env.str('SECRET_KEY')
 ALLOWED_HOSTS = env("ALLOWED_HOSTS").split(",")
@@ -206,6 +207,8 @@ INSTALLED_APPS = [
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
 	'rest_framework',
+	"rest_framework_api_key",
+	"simple_history",
 	'debug_toolbar',
 	'rest_framework_swagger',
 	'rest_framework_simplejwt.token_blacklist',
@@ -213,6 +216,7 @@ INSTALLED_APPS = [
 	'cities_light',
 	'django_filters',
 	'django_countries',
+	'encrypted_fields',
 	'storages',
 	'phone_field',
 	'timezone_field',
@@ -221,7 +225,7 @@ INSTALLED_APPS = [
 	'organisations',
 	'jwtauth',
 	'comms',
-	'groups',
+	'propertyGroups',
 	'store',
 	'userAccount',
 	'corsheaders',
@@ -233,6 +237,11 @@ INSTALLED_APPS = [
 	'checkAccess',
 ]
 
+API_KEY_CUSTOM_HEADER = "LR-CRM-Key"
+FIELD_ENCRYPTION_KEYS = env("LOCK_ENCRYPTION_KEYS").split(",")
+KEY_HASH = env.str('KEY_HASH')
+CARD_HASH = env.str('CARD_HASH')
+_locale._getdefaultlocale = (lambda *args: ['en_US', 'utf8'])
 MIDDLEWARE = [
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
@@ -246,6 +255,7 @@ MIDDLEWARE = [
 
 
 ]
+SIMPLE_HISTORY_HISTORY_ID_USE_UUID = True
 AUTH_USER_MODEL = 'userAccount.CustomUser'
 
 ROOT_URLCONF = 'rentAccess.urls'
@@ -272,7 +282,8 @@ CITIES_LIGHT_INCLUDE_COUNTRIES = ['RU']
 CITIES_LIGHT_INCLUDE_CITY_TYPES = ['PPL', 'PPLA', 'PPLA2', 'PPLA3', 'PPLA4', 'PPLC', 'PPLF', 'PPLG', 'PPLL', 'PPLR', 'PPLS', 'STLMT',]
 
 # Databases
-if not DEBUG:
+USE_POSTGRES = env.bool("USE_POSTGRES", False)
+if USE_POSTGRES:
 	DATABASES = {
 		'default': {
 			'ENGINE': 'django.db.backends.postgresql',
@@ -282,7 +293,7 @@ if not DEBUG:
 			"HOST": env("DB_HOST"),
 			"PORT": env("DB_PORT"),
 			"OPTIONS": {
-				'options': '-c search_path=django'
+				'options': '-c search_path=main'
 			}
 		}
 	}
@@ -323,7 +334,7 @@ USE_TZ = True
 DEFAULT_RENDERER_CLASSES = (
 	'rest_framework.renderers.JSONRenderer',
 )
-
+APPEND_SLASH = False
 ################################################
 # when DEBUG == True DRF will render errors as html pages
 if DEBUG:
@@ -341,11 +352,14 @@ if DEBUG:
 		],
 		'DEFAULT_THROTTLE_CLASSES': [
 			'rest_framework.throttling.AnonRateThrottle',
-			'rest_framework.throttling.UserRateThrottle'
+			'rest_framework.throttling.UserRateThrottle',
+			'rest_framework.throttling.ScopedRateThrottle',
 		],
 		'DEFAULT_THROTTLE_RATES': {
 			'anon': '10000/day',
-			'user': '10000/day'
+			'user': '10000/day',
+			'login_throttle': '5/day'
+
 		},
 		'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%S%z",
 		'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -392,8 +406,8 @@ else:
 	################################################
 
 	SIMPLE_JWT = {
-		'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
-		'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+		'ACCESS_TOKEN_LIFETIME': timedelta(days=365),
+		'REFRESH_TOKEN_LIFETIME': timedelta(days=366),
 		'ROTATE_REFRESH_TOKENS': False,
 		'BLACKLIST_AFTER_ROTATION': True,
 
@@ -426,11 +440,13 @@ else:
 		],
 		'DEFAULT_THROTTLE_CLASSES': [
 			'rest_framework.throttling.AnonRateThrottle',
-			'rest_framework.throttling.UserRateThrottle'
+			'rest_framework.throttling.UserRateThrottle',
+			'rest_framework.throttling.ScopedRateThrottle'
 		],
 		'DEFAULT_THROTTLE_RATES': {
 			'anon': '10000/day',
-			'user': '10000/day'
+			'user': '30000/day',
+			'login_throttle': '5/day'
 		},
 		'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%S%z",
 		'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -446,16 +462,17 @@ else:
 }
 USE_S3 = env.bool('USE_S3', default=False)
 if USE_S3:
-	AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-	AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-	AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-	AWS_DEFAULT_ACL = None
+	STATICFILES_DIRS = (os.path.join('static'),)
+	AWS_ACCESS_KEY_ID = env.str('AWS_ACCESS_KEY_ID')
+	AWS_SECRET_ACCESS_KEY = env.str('AWS_SECRET_ACCESS_KEY')
+	AWS_STORAGE_BUCKET_NAME = env.str('AWS_STORAGE_BUCKET_NAME')
+	AWS_DEFAULT_ACL = 'public-read'
 	AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
 	AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
 	# s3 static settings
-	AWS_LOCATION = 'static'
+	AWS_LOCATION = 'static/'
 	STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
-	STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+	STATICFILES_STORAGE = 'rentAccess.storage_backends.StaticStorage'
 	# s3 public media settings
 	PUBLIC_MEDIA_LOCATION = 'media'
 	MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{PUBLIC_MEDIA_LOCATION}/'
@@ -463,15 +480,19 @@ if USE_S3:
 	# s3 private media settings
 	PRIVATE_MEDIA_LOCATION = 'private'
 	PRIVATE_FILE_STORAGE = 'rentAccess.storage_backends.PrivateMediaStorage'
+
 else:
-	STATIC_URL = '/static/'
-	STATIC_ROOT = 'C:/web-294/web-294/rentAccess/static/'
-	MEDIA_ROOT = os.path.join('media')
+	if DEBUG:
+		STATICFILES_DIRS = (os.path.join('static'),)
+		STATIC_ROOT = ''
+		STATIC_URL = '/static/'
+	else:
+		STATIC_URL = '/static/'
+		STATIC_ROOT = root('static')
+	MEDIA_ROOT = root('media')
 	MEDIA_URL = '/media/'
 
 # Static root and file definitions
-
-
 
 CELERY_BROKER_URL = env.str("CELERY_BROKER_URL", default='redis://127.0.0.1:6379')
 CELERY_RESULT_BACKEND = env.str('CELERY_RESULT_BACKEND', default='redis://127.0.0.1:6379')
@@ -494,7 +515,7 @@ CELERY_TIMEZONE = 'Europe/Moscow'
 # CELERY_DEFAULT_QUEUE = 'default'
 # CELERY_DEFAULT_EXCHANGE = 'default'
 # CELERY_DEFAULT_ROUTING_KEY = 'default'
-
+INTERNAL_IPS = ['127.0.0.1',]
 # EMAIL SETTINGS
 SERVER_EMAIL = 'server@lockandrent.ru'
 EMAIL_USE_TLS = True

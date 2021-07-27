@@ -1,3 +1,4 @@
+import _locale
 import os
 import environ
 from pathlib import Path
@@ -183,14 +184,24 @@ INSTALLED_APPS = [
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
 	'rest_framework',
+	"rest_framework_api_key",
+	'debug_toolbar',
 	'rest_framework_swagger',
 	'rest_framework_simplejwt.token_blacklist',
 	'watchman',
+	'cities_light',
+	'django_filters',
+	'django_countries',
+	'storages',
+	'phone_field',
 	'timezone_field',
 	'properties',
 	'bookings',
 	'organisations',
 	'jwtauth',
+	'comms',
+	'propertyGroups',
+	'store',
 	'userAccount',
 	'corsheaders',
 	'common',
@@ -200,6 +211,12 @@ INSTALLED_APPS = [
 	'locks',
 	'checkAccess',
 ]
+
+API_KEY_CUSTOM_HEADER = "LR-CRM-Key"
+FIELD_ENCRYPTION_KEYS = env("LOCK_ENCRYPTION_KEYS").split(",")
+KEY_HASH = env.str('KEY_HASH')
+CARD_HASH = env.str('CARD_HASH')
+_locale._getdefaultlocale = (lambda *args: ['en_US', 'utf8'])
 
 MIDDLEWARE = [
 	'django.middleware.security.SecurityMiddleware',
@@ -211,6 +228,9 @@ MIDDLEWARE = [
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'corsheaders.middleware.CorsMiddleware',
 
+]
+FIXTURE_DIRS = [
+	root('api_tests/fixtures')
 ]
 AUTH_USER_MODEL = 'userAccount.CustomUser'
 
@@ -234,8 +254,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rentAccess.wsgi.application'
 
-if env.bool('SQL_DEBUG', False):
-	MIDDLEWARE += ('sql_middleware.SqlPrintingMiddleware',)
 # Databases
 DATABASES = {
 	'default': {
@@ -288,12 +306,14 @@ REST_FRAMEWORK = {
 		"rest_framework.parsers.JSONParser",
 	],
 	'DEFAULT_THROTTLE_CLASSES': [
-		'rest_framework.throttling.AnonRateThrottle',
-		'rest_framework.throttling.UserRateThrottle'
-	],
+			'rest_framework.throttling.AnonRateThrottle',
+			'rest_framework.throttling.UserRateThrottle',
+			'rest_framework.throttling.ScopedRateThrottle'
+		],
 	'DEFAULT_THROTTLE_RATES': {
 		'anon': '10000/day',
-		'user': '10000/day'
+		'user': '30000/day',
+		'login_throttle': '5/day'
 	},
 	'DATETIME_FORMAT': "%Y-%m-%dT%H:%M:%S%z",
 	'DEFAULT_AUTHENTICATION_CLASSES': [

@@ -1,0 +1,1 @@
+[{"model": "properties.propertytype", "pk": 100, "fields": {"title": "", "description": "."}}, {"model": "properties.propertytype", "pk": 200, "fields": {"title": "", "description": "/"}}]

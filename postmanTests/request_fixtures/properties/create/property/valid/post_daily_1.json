@@ -1,0 +1,26 @@
+{
+    "title": "Best Property Ever",
+    "body": "A lot about a property ... ",
+    "visibility": 100,
+    "booking_type": 100,
+    "property_type": 100,
+    "availability": {
+        "arrival_time_from": "14:00",
+        "departure_time_until": "11:00",
+        "open_days": [
+            0,1,2,3,4,5
+        ],
+        "maximum_number_of_clients": 12
+    },
+    "property_address":
+        {
+            "country": "Россия",
+            "city": "Moscow",
+            "street": "Тверская",
+            "building": "1",
+            "floor": "1",
+            "number": "1",
+            "zip_code": "100000"
+        }
+
+}

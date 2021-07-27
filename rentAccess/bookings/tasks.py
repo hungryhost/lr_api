@@ -13,7 +13,7 @@ logger = get_task_logger(__name__)
 
 
 @task(name='send_booking_email_to_client')
-def send_booking_email_to_client(duration, data, has_key=False):
+def send_booking_email_to_client(duration, data):
 	"""
 	This method sends confirmation email to the new user.
 
@@ -22,7 +22,8 @@ def send_booking_email_to_client(duration, data, has_key=False):
 	:param data: dictionary of data
 
 	"""
-	from properties.models import Property, PremisesAddress
+	from properties.models import Property, PremisesAddress, LockWithProperty
+	from register.models import Key
 	User = get_user_model()
 	booked_property = Property.objects.get(id=data['p_id'])
 	address = PremisesAddress.objects.get(premises_id=data['p_id'])
@@ -32,18 +33,21 @@ def send_booking_email_to_client(duration, data, has_key=False):
 		full_name = user.first_name + ' ' + user.last_name
 	else:
 		full_name = None
-	if has_key:
-		email_body = f"Бронирование успешно создано! Ваш код доступа: {data['key']}.\n" \
+
+	if data['has_key']:
+		key = Key.objects.get(pk=data["keys"][0]['key'])
+		email_body = f"Бронирование успешно создано! \n" \
 			f"Номер бронирования: {data['b_id']}. \n" \
 			f"Доступ к помещению с {data['b_start']} по {data['b_end']}.\n" \
-			f"Сообщение от владельца: {booked_property.client_greeting_message}.\n" \
-			f"Как добраться: {address.directions_description}"
+			f"Код доступа: {key.code}.\n"
 	else:
 		email_body = f"Бронирование успешно создано! \n" \
-			f"Номер бронирования: {data['b_id']} \n" \
-			f"Доступ к помещению с {data['b_start']} по {data['b_end']}. \n" \
-			f"Сообщение от владельца: {booked_property.client_greeting_message}.\n" \
-			f"Как добраться: {address.directions_description}"
+			f"Номер бронирования: {data['b_id']}. \n" \
+			f"Доступ к помещению с {data['b_start']} по {data['b_end']}. \n"
+	property_info = f"Помещение:  {booked_property.title}\n"
+	property_addr = f"Город: Москва. " + f"Улица: {address.street}, {address.building}. " + \
+	                f"Этаж: {address.floor}. " + f"Номер помещения: {address.number}."
+	property_dir = f"{address.directions_description}"
 	header = f'Здравствуйте, {full_name}!'
 	header_empty = f'Здравствуйте!'
 # print('started_task')
@@ -51,7 +55,10 @@ def send_booking_email_to_client(duration, data, has_key=False):
 	plaintext = get_template('generic_email_template.txt')
 	htmly = get_template('generic_email_template.html')
 	if full_name:
-		context = {'header': header, 'email_body': email_body}
+		context = {
+			'header': header, 'email_body': email_body, 'property_info': property_info,
+		    'property_addr': property_addr, 'property_dir': property_dir
+		           }
 	else:
 		context = {'header': header_empty, 'email_body': email_body}
 	text_content = plaintext.render(context)

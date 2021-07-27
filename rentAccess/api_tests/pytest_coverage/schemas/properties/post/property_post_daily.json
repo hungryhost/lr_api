@@ -1,0 +1,92 @@
+{
+  "title": "Property hourly POST response schema",
+  "type": "object",
+  "properties": {
+    "id": {"type": "integer"},
+    "title": {"type": "string"},
+    "body": {"type": "string"},
+    "price": {"type": ["number", "null"]},
+    "visibility": {"type": "integer"},
+    "active": {"type": "boolean"},
+    "property_type": {"type": "integer"},
+    "main_image": {"type": "string"},
+    "availability": {
+      "type": "object",
+      "properties": {
+        "arrival_time_from": {"type": "string"},
+        "departure_time_until": {"type": "string"},
+        "open_days": {
+          "type": "array",
+          "maxItems": 7,
+          "items": {
+            "type": "integer",
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          }
+        },
+        "maximum_number_of_clients": {"type": "integer"}
+      },
+      "required": [
+        "arrival_time_from",
+        "departure_time_until",
+        "open_days",
+        "maximum_number_of_clients"
+      ]
+    },
+    "property_address": {
+      "type": "object",
+      "properties": {
+        "country": {"type": "string"},
+        "city": {"type": "string"},
+        "street": {"type": "string"},
+        "building": {"type": "string"},
+        "floor": {"type": "string"},
+        "number": {"type": "string"},
+        "zip_code": {"type": "string"},
+        "directions_description": {"type": "string"}
+      },
+      "required": [
+        "country",
+        "city",
+        "street",
+        "building",
+        "floor",
+        "number",
+        "zip_code"
+      ]
+    },
+    "requires_additional_confirmation": {"type": "boolean"},
+    "client_greeting_message": {"type": "string"},
+    "booking_type": {
+      "type": "integer",
+      "enum": [100, 200]
+    },
+    "created_at": {"type": "string"},
+    "updated_at": {"type": "string"}
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "body",
+    "price",
+    "active",
+    "property_type",
+    "main_image",
+    "availability",
+    "visibility",
+    "property_address",
+    "requires_additional_confirmation",
+    "client_greeting_message",
+    "booking_type",
+    "created_at",
+    "updated_at"
+  ]
+}

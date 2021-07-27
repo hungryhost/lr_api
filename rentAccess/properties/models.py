@@ -1,5 +1,6 @@
 import os
 from uuid import uuid4
+from simple_history.models import HistoricalRecords
 
 from django.db import models
 import datetime
@@ -9,20 +10,10 @@ from common.models import SupportedCity
 
 
 class PermissionLevel(models.Model):
+	class Meta:
+		db_table = 'property_permission_levels'
 	p_level = models.PositiveIntegerField(primary_key=True)
 	description = models.CharField(max_length=150, null=True, blank=True)
-
-
-class OwnershipPermission(models.Model):
-	r"""
-	Model for permissions available for owners.
-	Must be filled in manually on creation.
-	"""
-	codename = models.CharField(max_length=100, primary_key=True)
-	description = models.CharField(max_length=255, null=True, blank=True)
-
-	def __str__(self):
-		return self.codename
 
 
 class PropertyType(models.Model):
@@ -31,6 +22,8 @@ class PropertyType(models.Model):
 		- 100: Ordinary non-inhabitable property, like an office
 		- 200: Inhabitable property, a flat or a house
 	"""
+	class Meta:
+		db_table = 'property_types'
 	property_type = models.IntegerField(primary_key=True, null=False, blank=False)
 	title = models.CharField(max_length=150, null=False, blank=False)
 	description = models.CharField(max_length=255, null=False, blank=True)
@@ -43,9 +36,13 @@ class Property(models.Model):
 	r"""
 	Main model for storing information about properties.
 	"""
+	class Meta:
+		db_table = 'properties'
+
 	VISIBILITY_CHOICES = [
 		(100, 'Publicly Visible'),
 		(150, 'Only within the organisation'),
+		(250, 'Only within the group'),
 		(200, 'Only owner and admins can see'),
 	]
 	BOOKING_CHOICES = [
@@ -82,6 +79,8 @@ class Property(models.Model):
 		blank=False
 	)
 
+	history = HistoricalRecords(table_name='properties_history')
+
 	def __str__(self):
 		return self.title
 
@@ -90,6 +89,9 @@ class Availability(models.Model):
 	r"""
 	This model is used for storing information about property's availability.
 	"""
+	class Meta:
+		db_table = 'property_availability'
+
 	premises = models.OneToOneField(Property, related_name='availability',
 		on_delete=models.CASCADE, null=False, blank=False)
 	open_days = models.CharField(max_length=7, default='1111111', null=False, blank=False)
@@ -112,12 +114,16 @@ class Availability(models.Model):
 	available_hours = models.CharField(max_length=255, null=True, blank=True, default='111111111111111111111111')
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
+	history = HistoricalRecords(table_name='property_availability_history')
 
 
 class Ownership(models.Model):
 	r"""
 	This model is used to store information about property's owners.
 	"""
+	class Meta:
+		db_table = 'property_ownership'
+
 	VISIBILITY_CHOICES = [
 		(100, 'Publicly Visible'),
 		(200, 'Not visible'),
@@ -127,34 +133,44 @@ class Ownership(models.Model):
 	premises = models.ForeignKey(Property, related_name='owners', on_delete=models.CASCADE, null=False, blank=False)
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='ownership', on_delete=models.CASCADE, null=False, blank=False)
 	is_creator = models.BooleanField(default=False, null=False, blank=True)
+	is_super_owner = models.BooleanField(default=False, null=False, blank=True)
 	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
 	permission_level = models.ForeignKey(PermissionLevel, to_field='p_level',
 	                                     related_name='permission_levels',
 	                                     on_delete=models.CASCADE)
+	can_edit = models.BooleanField(default=False, null=False)
+	can_delete = models.BooleanField(default=False, null=False)
+
+	can_add_images = models.BooleanField(default=False, null=False)
+	can_delete_images = models.BooleanField(default=False, null=False)
+
+	can_add_bookings = models.BooleanField(default=False, null=False)
+	can_manage_bookings = models.BooleanField(default=False, null=False)
+
+	can_add_owners = models.BooleanField(default=False, null=False)
+	can_manage_owners = models.BooleanField(default=False, null=False)
+	can_delete_owners = models.BooleanField(default=False, null=False)
+
+	can_add_locks = models.BooleanField(default=False, null=False)
+	can_manage_locks = models.BooleanField(default=False, null=False)
+	can_delete_locks = models.BooleanField(default=False, null=False)
+
+	can_add_to_group = models.BooleanField(default=False, null=False)
+	# can_remove_from_group = models.BooleanField(default=False, null=False)
+
+	can_add_to_organisation = models.BooleanField(default=False, null=False)
+	# can_remove_from_organisation = models.BooleanField(default=False, null=False)
 	#    initial_owner_object = InitialOwnershipManager()
+
+	history = HistoricalRecords(table_name='property_ownership_history')
 
 	def __str__(self):
 		return str(self.premises.title) + " " + str(self.permission_level_id)
 
 
-class OwnerPermission(models.Model):
-	r"""
-	This model is used to store information about owner's permissions
-	A "trough" model for Ownership and OwnershipPermission
-	"""
-	permission_code = models.ForeignKey(OwnershipPermission, to_field='codename',
-		on_delete=models.CASCADE, null=False, blank=False)
-	owner = models.ForeignKey(Ownership, related_name='owner_permissions',
-		on_delete=models.CASCADE, null=False, blank=False)
-	created_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
-	updated_at = models.DateTimeField(auto_now_add=True, null=False, blank=True)
-
-	def __str__(self):
-		return str(self.owner.user) + " - " + str(self.permission_code.codename)
-
-
 class PropertyLog(models.Model):
+
 	listed_prop = models.ForeignKey(Property, on_delete=models.CASCADE)
 	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 	CHOICES = [
@@ -183,24 +199,23 @@ def path_and_rename(instance, filename):
 	return os.path.join(path, filename)
 
 
-class MainImageManager(models.Manager):
-	def get_queryset(self):
-		return super().get_queryset().filter(is_main=True)
-
-
 class PremisesImage(models.Model):
+	class Meta:
+		db_table = 'property_images'
+	# TODO: add uploaded_by
 	premises = models.ForeignKey(Property, to_field='id',
 								related_name='property_images', on_delete=models.CASCADE)
 	image = models.ImageField(upload_to=path_and_rename, blank=True, null=True)
 	uploaded_at = models.DateTimeField(auto_now_add=True)
 	is_main = models.BooleanField(default=False)
-
+	history = HistoricalRecords(table_name='property_images_history')
 	def set_main(self):
 		self.is_main = True
 
 
-
 class PremisesAddress(models.Model):
+	class Meta:
+		db_table = 'property_address'
 	premises = models.OneToOneField(Property, related_name='property_address', on_delete=models.CASCADE,
 									null=False, blank=False)
 	country = models.CharField(max_length=100, blank=False, null=False)
@@ -214,13 +229,81 @@ class PremisesAddress(models.Model):
 	directions_description = models.CharField(max_length=500, blank=True, null=False)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now_add=True)
+	history = HistoricalRecords(table_name='property_address_history')
 
 
 class LockWithProperty(models.Model):
+	class Meta:
+		db_table = 'property_locks'
+
+	# TODO: add added_by
 	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
 								related_name="property_with_lock")
-	lock = models.ForeignKey(Lock, to_field='uuid', on_delete=models.CASCADE,
+	lock = models.ForeignKey(Lock, on_delete=models.CASCADE,
 							related_name='tied_lock')
-	description = models.CharField(max_length=200, blank=True, null=False)
+	added_by = models.ForeignKey(settings.AUTH_USER_MODEL,
+		related_name='added_locks', on_delete=models.CASCADE, null=False, blank=False)
+	description = models.CharField(max_length=200, blank=True, null=True)
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now_add=True)
+	history = HistoricalRecords(table_name='property_locks_history')
+
+
+class FavoriteProperty(models.Model):
+	class Meta:
+		db_table = 'user_favored_properties'
+
+	user = models.ForeignKey(settings.AUTH_USER_MODEL,
+		related_name='user_fav_prop', on_delete=models.CASCADE, null=False, blank=False)
+	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
+	                             related_name="added_to_fav")
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class Trip(models.Model):
+	class Meta:
+		db_table = 'user_trips'
+
+	title = models.CharField(max_length=50, null=False, blank=False)
+	start_date = models.DateField(null=True, blank=True)
+	end_date = models.DateField(null=True, blank=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class TripProperty(models.Model):
+	class Meta:
+		db_table = 'user_trip_properties'
+
+	trip = models.ForeignKey(Trip, to_field='id', on_delete=models.CASCADE,
+	                             related_name="trip_w_props")
+	property = models.ForeignKey(Property, to_field='id', on_delete=models.CASCADE,
+	                             related_name="trips")
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class TripMember(models.Model):
+	class Meta:
+		db_table = 'user_trip_members'
+
+	trip = models.ForeignKey(Trip, to_field='id', on_delete=models.CASCADE,
+	                             related_name="trip_w_memb")
+	user = models.ForeignKey(settings.AUTH_USER_MODEL,
+	                         related_name='user_trips', on_delete=models.CASCADE, null=False, blank=False)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+
+
+class AvailabilityException(models.Model):
+	class Meta:
+		db_table = 'property_availability_exceptions'
+
+	parent_availability = models.ForeignKey(
+		Availability, to_field='id', on_delete=models.CASCADE, related_name="av_exceptions")
+	exception_datetime_start = models.DateTimeField(null=False, blank=False)
+	exception_datetime_end = models.DateTimeField(null=False, blank=False)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now_add=True)
+	history = HistoricalRecords(table_name='property_availability_exceptions_history')

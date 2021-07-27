@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import permissions
 
-from .models import Ownership
+from properties.models import Ownership
 
 
 class IsSuperUser(permissions.BasePermission):

@@ -11,7 +11,7 @@ class PropertyFilter(filters.FilterSet):
 		lookup_expr='gte'
 	)
 	city = filters.CharFilter(
-		field_name='property_address__city',
+		field_name='property_address__city__name',
 		lookup_expr='icontains'
 	)
 	street = filters.CharFilter(

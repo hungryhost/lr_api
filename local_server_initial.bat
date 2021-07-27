@@ -1,6 +1,6 @@
 @ECHO off
 ECHO In order to create a virtual environment you MUST have python3.8.6 present and called as python
-ECHO If you have python3.8.6 called as python3, change the script to accomodate it 
+ECHO If you have python3.8.6 called as python3, change the script to accommodate it
 ECHO PRESS CTRL + C IF YOU DO NOT HAVE PYTHON 3.8.6 AS DEFAULT AND RUN LATER
 PAUSE
 ECHO Installing virtualenv
